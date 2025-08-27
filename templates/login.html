@@ -15,6 +15,10 @@
       <button class="btn primary" type="submit">Entrar</button>
     </form>
 
+    <p class="muted small">
+      <a href="{{ url_for('reset_password_request') }}">Esqueci minha senha</a>
+    </p>
+
     <p class="muted">
       Não tem conta?
       <a href="{{ url_for('register') }}">Cadastre-se</a>
@@ -93,6 +97,12 @@
 
 .auth-card .muted a:hover {
   text-decoration: underline;
+}
+
+/* link pequeno para "esqueci a senha" */
+.auth-card .small {
+  margin-top: 10px;
+  font-size: 13px;
 }
 </style>
 {% endblock %}
