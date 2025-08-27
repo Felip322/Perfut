@@ -7,6 +7,8 @@ import socket
 import threading
 import webbrowser
 from sqlalchemy import func
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
@@ -30,6 +32,22 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
+
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer
+
+# Config e-mail (exemplo com Gmail, mas pode usar SendGrid, Mailtrap etc.)
+app.config["MAIL_SERVER"] = "smtp.gmail.com"
+app.config["MAIL_PORT"] = 587
+app.config["MAIL_USE_TLS"] = True
+app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USER")   # seu e-mail
+app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASS")   # senha/app password
+app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_USER")
+
+mail = Mail(app)
+
+# Gerador de tokens
+s = URLSafeTimedSerializer(app.config["SECRET_KEY"])
 
 # ----------------------
 # Models
