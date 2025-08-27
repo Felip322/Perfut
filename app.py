@@ -296,7 +296,11 @@ def ranking():
 
 @app.route("/game_setup", methods=["GET", "POST"])
 def game_setup():
+    if not require_login():
+        return redirect(url_for("login"))
+
     if request.method == "POST":
+        # Pega temas enviados pelo formulário
         selected = request.form.getlist("themes")
         valid_themes = [key for key, label in THEMES]
         selected = [t for t in selected if t in valid_themes]
@@ -305,7 +309,7 @@ def game_setup():
             flash("Selecione ao menos um tema.", "warning")
             return redirect(url_for("game_setup"))
 
-        # cria o jogo
+        # Cria um novo jogo vinculado ao usuário
         g = Game(
             user_id=session["user_id"],
             rounds_count=5,
@@ -314,10 +318,11 @@ def game_setup():
         db.session.add(g)
         db.session.commit()
 
-        # redireciona para a rota correta
+        # Redireciona corretamente para a partida
         return redirect(url_for("game_play", game_id=g.id))
 
     return render_template("game_setup.html", themes=THEMES)
+
 
 
 
