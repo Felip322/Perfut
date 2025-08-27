@@ -33,14 +33,16 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
 
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer
+
 # Config e-mail (exemplo com Gmail, mas pode usar SendGrid, Mailtrap etc.)
 app.config["MAIL_SERVER"] = "smtp.gmail.com"
 app.config["MAIL_PORT"] = 587
 app.config["MAIL_USE_TLS"] = True
-app.config["MAIL_USERNAME"] = os.getenv("MAIL_USER")
-app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASS")
-app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_USER")
-
+app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USER")   # seu e-mail
+app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASS")   # senha/app password
+app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_USER")
 
 mail = Mail(app)
 
@@ -445,6 +447,18 @@ def watch_ad():
     db.session.commit()
     flash("Obrigado por assistir! Você ganhou 10 moedas.", "success")
     return redirect(url_for("index"))
+
+@app.route("/termos")
+def termos():
+    return render_template("termos.html")
+
+@app.route("/privacidade")
+def privacidade():
+    return render_template("privacidade.html")
+
+@app.route("/aviso")
+def aviso():
+    return render_template("aviso.html")
 
 
 @app.route("/admin/add-card", methods=["GET","POST"])
