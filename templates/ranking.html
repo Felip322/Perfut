@@ -23,13 +23,13 @@
           {% elif loop.index == 3 %} third {% endif %}
           {% if user and user.name == r[0] %} highlight {% endif %}
         ">
-          <td class="pos">
+          <td class="pos" data-label="Posição">
             {% if loop.index == 1 %} 🥇 
             {% elif loop.index == 2 %} 🥈 
             {% elif loop.index == 3 %} 🥉 
             {% else %} {{ loop.index }} {% endif %}
           </td>
-          <td>
+          <td data-label="Jogador">
             <div class="player-info 
               {% if loop.index == 1 %} gold {% elif loop.index == 2 %} silver {% elif loop.index == 3 %} bronze {% endif %}
             ">
@@ -37,9 +37,9 @@
               <span>{{ r[0] }}</span>
             </div>
           </td>
-          <td class="score">{{ r[1] }}</td>
-          <td>{{ r[2] }}</td>
-          <td>{{ r[3] }}%</td>
+          <td class="score" data-label="Pontuação">{{ r[1] }}</td>
+          <td data-label="Rodadas">{{ r[2] }}</td>
+          <td data-label="Aproveitamento">{{ r[3] }}%</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -155,10 +155,49 @@
   color: #00ff88;
 }
 
-@media(max-width:480px){
-  .ranking-container { padding: 20px; }
-  .ranking-table th, .ranking-table td { padding: 10px; font-size: 14px; }
-  .avatar { width: 32px; height: 32px; font-size: 0.8rem; }
+/* Responsividade: tabela -> lista no celular */
+@media(max-width:600px){
+  .ranking-table, .ranking-table thead, .ranking-table tbody, .ranking-table th, .ranking-table td, .ranking-table tr {
+    display: block;
+  }
+
+  .ranking-table thead {
+    display: none; /* esconder cabeçalho */
+  }
+
+  .ranking-table tr {
+    margin-bottom: 15px;
+    border: 1px solid #1f3b2c;
+    border-radius: 10px;
+    padding: 12px;
+    background: #11241a;
+    text-align: left;
+  }
+
+  .ranking-table td {
+    border: none;
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 5px;
+    font-size: 14px;
+  }
+
+  .ranking-table td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    color: #00ff9d;
+    margin-right: 10px;
+  }
+
+  .player-info {
+    gap: 8px;
+  }
+
+  .avatar { 
+    width: 32px; 
+    height: 32px; 
+    font-size: 0.8rem; 
+  }
 }
 </style>
 {% endblock %}
