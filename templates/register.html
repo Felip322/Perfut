@@ -15,6 +15,24 @@
     <label>Senha
       <input type="password" name="password" placeholder="••••••••" required>
     </label>
+
+    <!-- Checkboxes obrigatórios -->
+    <div class="terms-wrapper">
+      <label class="terms-item">
+        <input type="checkbox" name="agree_terms" required>
+        <span>Li e concordo com os <a href="{{ url_for('termos') }}" target="_blank">Termos de Uso</a></span>
+      </label>
+
+      <label class="terms-item">
+        <input type="checkbox" name="agree_privacy" required>
+        <span>Li e concordo com a <a href="{{ url_for('privacidade') }}" target="_blank">Política de Privacidade</a></span>
+      </label>
+
+      <label class="terms-item">
+        <input type="checkbox" name="agree_notice" required>
+        <span>Li e concordo com o <a href="{{ url_for('aviso') }}" target="_blank">Aviso Legal</a></span>
+      </label>
+    </div>
     
     <button class="btn primary" type="submit">Continuar</button>
     
@@ -70,6 +88,37 @@ input[type="password"] {
   background: #0b2216;
   color: var(--text);
   margin-top: 5px;
+}
+
+.terms-wrapper {
+  margin: 15px 0;
+  text-align: left;
+}
+
+.terms-item {
+  display: flex;
+  align-items: flex-start;
+  font-size: 12px; /* menor */
+  margin-bottom: 8px;
+  line-height: 1.4;
+  font-style: italic; /*  agora em itálico */
+  font-weight: normal; /*  remove o negrito */
+}
+
+.terms-item input {
+  margin-right: 8px;
+  margin-top: 3px;
+}
+
+.terms-item a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: normal; /*  links também sem negrito */
+  font-style: italic; /*  links seguem o itálico */
+}
+
+.terms-item a:hover {
+  text-decoration: underline;
 }
 
 .btn {
