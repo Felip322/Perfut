@@ -18,18 +18,18 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("PERFUT_SECRET", "dev-secret-change-me")
 
-# Conexão direta com PostgreSQL no Render
-db_url = "postgresql://perfut_db_user:mHwy7aEijZuwpBJitgjPdqn1HUbrus1s@dpg-d2n6n8nfte5s7390ubag-a.oregon-postgres.render.com/perfut_db"
+# Usa DATABASE_URL do Render se existir, senão cai no SQLite local
+db_url = os.getenv("DATABASE_URL", "sqlite:///perfut.db")
+
+# Render fornece "postgres://", mas SQLAlchemy exige "postgresql://"
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-
-# Garante que as tabelas sejam criadas
-with app.app_context():
-    db.create_all()
 
 
 
@@ -404,12 +404,11 @@ def admin_add_card():
 
 @app.cli.command("init-db")
 def init_db():
-    db.drop_all()
     db.create_all()
-    print("Banco criado e pronto!")
+    print("Banco inicializado (sem apagar tabelas)!")
 
 
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
+
+
