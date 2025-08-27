@@ -227,19 +227,21 @@ def ranking():
 
     return render_template("ranking.html", rankings=rankings, user=current_user)
 
-@app.route("/game/setup", methods=["POST"])
+@app.route("/game_setup", methods=["GET", "POST"])
 def game_setup():
-    if not require_login(): return redirect(url_for("login"))
-    user = User.query.get(session["user_id"])
-    rounds = int(request.form.get("rounds", 5))
-    selected = request.form.getlist("themes")
-    if not selected:
-        flash("Selecione ao menos um tema.", "warning")
-        return redirect(url_for("index"))
-    g = Game(user_id=user.id, rounds_count=rounds, themes_json=json.dumps(selected))
-    db.session.add(g)
-    db.session.commit()
-    return redirect(url_for("game_play", game_id=g.id))
+    if request.method == "POST":
+        # Pega as chaves internas (sem acento), não os nomes bonitinhos
+        selected = request.form.getlist("themes")
+
+        # garante que só os válidos da lista THEMES entram
+        valid_themes = [key for key, label in THEMES]
+        selected = [t for t in selected if t in valid_themes]
+
+        session["themes"] = selected
+        return redirect(url_for("game"))
+
+    return render_template("game_setup.html", themes=THEMES)
+
 
 
 def pick_card_for_theme(theme, difficulty=1):
