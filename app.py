@@ -33,16 +33,13 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
 
-from flask_mail import Mail, Message
-from itsdangerous import URLSafeTimedSerializer
-
 # Config e-mail (exemplo com Gmail, mas pode usar SendGrid, Mailtrap etc.)
 app.config["MAIL_SERVER"] = "smtp.gmail.com"
 app.config["MAIL_PORT"] = 587
 app.config["MAIL_USE_TLS"] = True
-app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")  # seu email
-app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")  # senha/app password
-app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_USERNAME")  # 👈 remetente padrão
+app.config["MAIL_USERNAME"] = os.getenv("MAIL_USER")
+app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASS")
+app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_USER")
 
 
 mail = Mail(app)
