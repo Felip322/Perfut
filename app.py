@@ -227,6 +227,36 @@ def reset_password(token):
     return render_template("reset_password.html")
 
 
+
+@app.route("/forgot_password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form["email"].strip().lower()
+        user = User.query.filter_by(email=email).first()
+        if user:
+            token = s.dumps(email, salt="password-reset")
+            reset_url = url_for("reset_password", token=token, _external=True)
+
+            try:
+                msg = Message(
+                    subject="Redefinição de senha - PERFUT",
+                    recipients=[email],
+                    body=f"Olá {user.name},\n\n"
+                         f"Para redefinir sua senha clique no link abaixo (expira em 1 hora):\n"
+                         f"{reset_url}\n\n"
+                         "Se não foi você, ignore este e-mail."
+                )
+                mail.send(msg)
+                flash("Enviamos um link de redefinição para seu e-mail.", "info")
+            except Exception as e:
+                print("Erro ao enviar email:", e)
+                flash("Erro ao enviar o e-mail de recuperação.", "danger")
+        else:
+            flash("E-mail não encontrado.", "danger")
+        return redirect(url_for("login"))
+    return render_template("forgot_password.html")
+
+
 @app.route("/ranking")
 def ranking():
     if "user_id" not in session:
