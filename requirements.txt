@@ -1,5 +1,7 @@
 flask
 flask-sqlalchemy
 sqlalchemy
+flask-mail
+itsdangerous
 gunicorn
 psycopg2-binary
