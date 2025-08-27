@@ -401,11 +401,4 @@ def init_db():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-
-    # IP local e abre navegador automaticamente
-    hostname = socket.gethostname()
-    local_ip = socket.gethostbyname(hostname)
-    url = f"http://{local_ip}:8080"
-    threading.Timer(1, lambda: webbrowser.open(url)).start()
-
     app.run(host="0.0.0.0", port=8080, debug=False)
