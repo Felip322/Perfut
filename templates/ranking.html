@@ -6,44 +6,29 @@
     <h1>🏆 Ranking de Jogadores</h1>
 
     {% if rankings %}
-    <table class="ranking-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Jogador</th>
-          <th>Pontuação</th>
-          <th>Rodadas</th>
-          <th>Aproveitamento</th>
-        </tr>
-      </thead>
-      <tbody>
+      <div class="ranking-list">
         {% for r in rankings %}
-        <tr class="
-          {% if loop.index == 1 %} first {% elif loop.index == 2 %} second 
-          {% elif loop.index == 3 %} third {% endif %}
+        <div class="ranking-card 
+          {% if loop.index == 1 %} first {% elif loop.index == 2 %} second {% elif loop.index == 3 %} third {% endif %}
           {% if user and user.name == r[0] %} highlight {% endif %}
         ">
-          <td class="pos" data-label="Posição">
-            {% if loop.index == 1 %} 🥇 
-            {% elif loop.index == 2 %} 🥈 
-            {% elif loop.index == 3 %} 🥉 
-            {% else %} {{ loop.index }} {% endif %}
-          </td>
-          <td data-label="Jogador">
-            <div class="player-info 
-              {% if loop.index == 1 %} gold {% elif loop.index == 2 %} silver {% elif loop.index == 3 %} bronze {% endif %}
-            ">
-              <div class="avatar">{{ r[0][0] | upper }}</div>
-              <span>{{ r[0] }}</span>
-            </div>
-          </td>
-          <td class="score" data-label="Pontuação">{{ r[1] }}</td>
-          <td data-label="Rodadas">{{ r[2] }}</td>
-          <td data-label="Aproveitamento">{{ r[3] }}%</td>
-        </tr>
+          <div class="rank-position">
+            {% if loop.index == 1 %} 🥇 {% elif loop.index == 2 %} 🥈 {% elif loop.index == 3 %} 🥉 {% else %} {{ loop.index }} {% endif %}
+          </div>
+          <div class="player-info 
+            {% if loop.index == 1 %} gold {% elif loop.index == 2 %} silver {% elif loop.index == 3 %} bronze {% endif %}
+          ">
+            <div class="avatar">{{ r[0][0] | upper }}</div>
+            <span class="player-name">{{ r[0] }}</span>
+          </div>
+          <div class="player-stats">
+            <span><strong>Pontos:</strong> {{ r[1] }}</span>
+            <span><strong>Rodadas:</strong> {{ r[2] }}</span>
+            <span><strong>Aproveitamento:</strong> {{ r[3] }}%</span>
+          </div>
+        </div>
         {% endfor %}
-      </tbody>
-    </table>
+      </div>
     {% else %}
       <p>Nenhum jogador cadastrado ainda.</p>
     {% endif %}
@@ -51,6 +36,7 @@
 </section>
 
 <style>
+/* Container principal */
 .ranking { 
   display: flex; 
   justify-content: center; 
@@ -60,66 +46,70 @@
 }
 
 .ranking-container { 
-  max-width: 900px; 
+  max-width: 600px; 
   width: 100%; 
   background: #142820; 
-  padding: 35px; 
+  padding: 30px; 
   border-radius: 20px; 
   box-shadow: 0 10px 40px rgba(0,0,0,0.55); 
-  text-align: center; 
 }
 
 .ranking-container h1 { 
   color: #00ff88; 
   margin-bottom: 25px; 
-  font-size: 2.3rem; 
+  font-size: 2rem; 
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  text-align: center;
   text-shadow: 0 2px 10px rgba(0,255,150,0.4);
 }
 
-.ranking-table { 
-  width: 100%; 
-  border-collapse: collapse; 
-  border-radius: 12px;
-  overflow: hidden;
+/* Lista vertical */
+.ranking-list { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 15px; 
 }
 
-.ranking-table th, 
-.ranking-table td { 
-  padding: 16px; 
-  border-bottom: 1px solid #1f3b2c; 
-  color: #e6e6e6; 
-  font-size: 1rem;
-  text-align: center;
-}
-
-.ranking-table th { 
+/* Cada card */
+.ranking-card { 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between;
   background: #1f3b2c; 
-  font-weight: 700;
-  color: #00ff9d;
+  padding: 15px 20px; 
+  border-radius: 12px; 
+  box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+  transition: transform 0.2s ease, background 0.3s ease;
 }
 
-.ranking-table tr { 
-  transition: background 0.3s ease; 
+.ranking-card:hover { 
+  transform: scale(1.02);
+  background: #224030; 
 }
 
-.ranking-table tr:hover { 
-  background: rgba(0,255,130,0.08); 
+.rank-position {
+  font-size: 1.4rem;
+  font-weight: bold;
+  margin-right: 12px;
 }
 
+/* Jogador */
 .player-info { 
   display: flex; 
   align-items: center; 
   gap: 12px; 
+  flex: 1;
+}
+
+.player-name {
   font-weight: 600;
-  justify-content: flex-start;
+  color: #fff;
 }
 
 .avatar { 
-  width: 38px; 
-  height: 38px; 
+  width: 40px; 
+  height: 40px; 
   border-radius: 50%; 
   background: linear-gradient(135deg, #2e8b57, #3cb371); 
   display: flex; 
@@ -127,76 +117,48 @@
   justify-content: center; 
   color: #fff; 
   font-weight: bold; 
-  font-size: 0.95rem;
+  font-size: 1rem;
   box-shadow: 0 3px 6px rgba(0,0,0,0.4);
 }
 
-/* Top 3 avatars com borda especial */
+/* Top 3 bordas */
 .player-info.gold .avatar { border: 3px solid gold; }
 .player-info.silver .avatar { border: 3px solid silver; }
 .player-info.bronze .avatar { border: 3px solid #cd7f32; }
 
-/* Destaques top 3 */
-.ranking-table tr.first { background: rgba(255, 215, 0, 0.07); }
-.ranking-table tr.second { background: rgba(192, 192, 192, 0.07); }
-.ranking-table tr.third { background: rgba(205, 127, 50, 0.07); }
-
-.pos { font-weight: bold; }
-
-/* Jogador logado */
-.ranking-table tr.highlight { 
-  background: rgba(0,255,150,0.25) !important; 
-  font-weight: bold; 
-  color: #0a1912; 
+/* Estatísticas */
+.player-stats {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  font-size: 0.9rem;
+  color: #e6e6e6;
 }
 
-.score { 
-  font-weight: 700; 
+.player-stats span strong {
   color: #00ff88;
 }
 
-/* Responsividade: tabela -> lista no celular */
-@media(max-width:600px){
-  .ranking-table, .ranking-table thead, .ranking-table tbody, .ranking-table th, .ranking-table td, .ranking-table tr {
-    display: block;
-  }
+/* Destaque jogador logado */
+.ranking-card.highlight {
+  border: 2px solid #00ff88;
+  background: rgba(0,255,130,0.15);
+}
 
-  .ranking-table thead {
-    display: none; /* esconder cabeçalho */
+/* Responsivo */
+@media(max-width:500px){
+  .ranking-card { 
+    flex-direction: column; 
+    align-items: flex-start; 
+    gap: 8px; 
+    text-align: left; 
   }
-
-  .ranking-table tr {
-    margin-bottom: 15px;
-    border: 1px solid #1f3b2c;
-    border-radius: 10px;
-    padding: 12px;
-    background: #11241a;
-    text-align: left;
-  }
-
-  .ranking-table td {
-    border: none;
-    display: flex;
+  .player-stats { 
+    flex-direction: row; 
+    flex-wrap: wrap; 
+    gap: 10px; 
+    width: 100%; 
     justify-content: space-between;
-    padding: 8px 5px;
-    font-size: 14px;
-  }
-
-  .ranking-table td::before {
-    content: attr(data-label);
-    font-weight: bold;
-    color: #00ff9d;
-    margin-right: 10px;
-  }
-
-  .player-info {
-    gap: 8px;
-  }
-
-  .avatar { 
-    width: 32px; 
-    height: 32px; 
-    font-size: 0.8rem; 
   }
 }
 </style>
