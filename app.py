@@ -26,11 +26,10 @@ if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
-
-
 
 
 # ----------------------
@@ -404,11 +403,12 @@ def admin_add_card():
 
 @app.cli.command("init-db")
 def init_db():
+    db.drop_all()
     db.create_all()
-    print("Banco inicializado (sem apagar tabelas)!")
+    print("Banco criado e pronto!")
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
-
-
+    with app.app_context():
+        db.create_all()
+    app.run(host="0.0.0.0", port=8080, debug=False)
