@@ -17,10 +17,19 @@ from werkzeug.security import generate_password_hash, check_password_hash
 # ----------------------
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("PERFUT_SECRET", "dev-secret-change-me")
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///perfut.db"
+
+# Usa DATABASE_URL do Render se existir, senão cai no SQLite local
+db_url = os.getenv("DATABASE_URL", "sqlite:///perfut.db")
+
+# Render fornece "postgres://", mas SQLAlchemy exige "postgresql://"
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
+
 
 # ----------------------
 # Models
