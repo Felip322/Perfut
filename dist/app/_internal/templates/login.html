@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="auth">
+  <div class="auth-card">
+    <h2>Entrar</h2>
+
+    <form method="post">
+      <label>E-mail</label>
+      <input type="email" name="email" placeholder="seu@email.com" required>
+
+      <label>Senha</label>
+      <input type="password" name="password" placeholder="••••••••" required>
+
+      <button class="btn primary" type="submit">Entrar</button>
+    </form>
+
+    <p class="muted">
+      Não tem conta?
+      <a href="{{ url_for('register') }}">Cadastre-se</a>
+    </p>
+  </div>
+</section>
+
+<style>
+/* Container de login */
+.auth {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+}
+
+.auth-card {
+  background: var(--card);
+  padding: 35px 25px;
+  border-radius: 20px;
+  border: 1px solid #1d4b2b;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+}
+
+.auth-card h2 {
+  margin-bottom: 25px;
+  color: var(--accent);
+}
+
+.auth-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.auth-card label {
+  text-align: left;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.auth-card input {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #214e33;
+  background: #0b2216;
+  color: var(--text);
+  width: 100%;
+}
+
+.auth-card input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(255,203,63,0.2);
+}
+
+.auth-card .btn {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.auth-card .muted {
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.auth-card .muted a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-card .muted a:hover {
+  text-decoration: underline;
+}
+</style>
+{% endblock %}

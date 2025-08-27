@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PERFUT - Football Trivia</title>
+  <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+  <link rel="icon" href="{{ url_for('static', filename='logo.png') }}">
+  <style>
+    :root {
+      --accent: #ffcb3f;
+      --card: #0b2216;
+      --text: #e0e0e0;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background: #081a0d;
+      color: var(--text);
+    }
+
+    /* Topbar */
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      background: #0b2216;
+      border-bottom: 1px solid #214e33;
+    }
+
+    .topbar .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .topbar .brand .logo {
+      width: 50px;
+      height: 54px; 
+    }
+
+    .topbar .brand span {
+      font-weight: bold;
+      font-size: 18px;
+      color: #fff;
+    }
+
+    .top-nav {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .coins {
+      font-weight: bold;
+      font-size: 16px;
+      padding: 4px 8px;
+      background: #173f2a;
+      border-radius: 12px;
+    }
+
+    /* Botões */
+    .btn {
+      background: linear-gradient(135deg, #1f5f3a, #2e8b57);
+      border: none;
+      border-radius: 999px;
+      padding: 12px 26px;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      letter-spacing: 0.5px;
+      display: inline-block;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, #ffcb3f, #ffb300);
+      color: #0b1f14;
+      border: none;
+      box-shadow: 0 4px 12px rgba(255, 195, 0, 0.4);
+    }
+
+    .btn.primary:hover {
+      background: linear-gradient(135deg, #ffd74f, #ffc107);
+      box-shadow: 0 6px 16px rgba(255, 195, 0, 0.6);
+    }
+
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
+
+    /* Flash messages */
+    .flash {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 15px 0;
+    }
+
+    .flash li {
+      padding: 10px 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+
+    .flash li.success { background: #2a592a; color: #cde8c7; }
+    .flash li.warning { background: #665c2a; color: #fff3b0; }
+    .flash li.danger { background: #662a2a; color: #ffbaba; }
+    .flash li.info { background: #2a2a66; color: #c7c7ff; }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 15px 0;
+      background: #0b2216;
+      color: var(--text);
+      border-top: 1px solid #214e33;
+      margin-top: 40px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="brand">
+      <img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt="PERFUT">
+      <span>PERFUT</span>
+    </div>
+    <nav class="top-nav">
+  {% if user %}
+    <span class="coins">🪙 {{ user.coins }}</span>
+    <a href="{{ url_for('ranking') }}" class="btn">Ranking 🏆</a>
+    <a href="{{ url_for('index') }}" class="btn primary">Início 🏠</a>
+    <a href="{{ url_for('logout') }}" class="btn">Sair</a>
+  {% elif not rankings_page %}
+    <a href="{{ url_for('login') }}" class="btn">Entrar</a>
+    <a href="{{ url_for('register') }}" class="btn primary">Criar conta</a>
+  {% else %}
+    <!-- Se estiver no ranking e não logado -->
+    <a href="{{ url_for('index') }}" class="btn primary">Início 🏠</a>
+  {% endif %}
+</nav>
+
+  </header>
+
+  <!-- Main container -->
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash">
+          {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div>© {{ 2025 }} PERFUT • Trivia de Futebol • Pontuação por ranking</div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="result card">
+  <img src="{{ url_for('static', filename='logo.png') }}" alt="PERFUT" class="result-logo">
+
+  <h2>Fim de jogo</h2>
+  <p class="subtitle">Seu placar final</p>
+
+  <div class="scores">
+    <div class="score-box">
+      <span class="label">Pontuação</span>
+      <strong class="value">{{ game.user_score }}</strong>
+    </div>
+  </div>
+
+  {% if game.user_score >= 50 %}
+    <div class="trophy">Parabéns! Você entrou no ranking!</div>
+  {% elif game.user_score >= 30 %}
+    <div class="trophy">Bom resultado! Continue jogando para subir no ranking!</div>
+  {% else %}
+    <div class="trophy">Continue treinando — você consegue!</div>
+  {% endif %}
+
+  <a class="btn primary" href="{{ url_for('index') }}">Jogar novamente</a>
+</section>
+
+<style>
+.result.card {
+  background: linear-gradient(135deg, #142820, #0d1a13);
+  border-radius: 20px;
+  border: 1px solid #1d4b2b;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  padding: 40px 30px;
+  max-width: 480px;
+  margin: 50px auto;
+  text-align: center;
+  color: #fff;
+}
+
+.result-logo {
+  width: 120px; /* aumentei o logo */
+  margin-bottom: 20px;
+}
+
+.result h2 {
+  font-size: 1.9rem;
+  margin-bottom: 5px;
+  font-weight: 700;
+  color: #00ff88;
+}
+
+.result .subtitle {
+  font-size: 1rem;
+  color: #aaa;
+  margin-bottom: 20px;
+}
+
+.scores {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0 25px;
+}
+
+.score-box {
+  background: rgba(0, 255, 130, 0.1);
+  padding: 20px 40px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,255,130,0.3);
+  text-align: center;
+}
+
+.score-box .label {
+  display: block;
+  font-size: 1rem;
+  color: #bbb;
+  margin-bottom: 5px;
+}
+
+.score-box .value {
+  display: block;
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #00ff88;
+}
+
+.trophy {
+  font-size: 1.1rem;
+  margin: 15px 0 30px;
+  font-weight: 600;
+  color: #ffd700;
+}
+
+.btn.primary {
+  background: #00ff88;
+  color: #0b1f14;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 999px;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-block;
+  transition: 0.25s;
+  font-size: 1rem;
+  box-shadow: 0 4px 12px rgba(0,255,150,0.25);
+}
+
+.btn.primary:hover {
+  background: #00e07a;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,255,150,0.35);
+}
+</style>
+{% endblock %}

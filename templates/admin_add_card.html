@@ -1,0 +1,24 @@
+
+{% extends "base.html" %}
+{% block content %}
+<form class="card" method="post">
+  <h2>Nova cartinha</h2>
+  <label>Tema
+    <select name="theme">
+      {% for key, label in themes %}
+        <option value="{{ key }}">{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Título <input type="text" name="title" required></label>
+  <label>Resposta <input type="text" name="answer" required></label>
+  <label>Dificuldade <input type="number" name="difficulty" min="1" max="5" value="1"></label>
+  <fieldset>
+    <legend>Dicas (até 10)</legend>
+    {% for i in range(1, 11) %}
+      <label>{{ i }} <input type="text" name="hint{{ i }}"></label>
+    {% endfor %}
+  </fieldset>
+  <button class="btn primary">Salvar</button>
+</form>
+{% endblock %}

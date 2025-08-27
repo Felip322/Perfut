@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="game-container">
+
+  <!-- Scoreboard -->
+  <div class="scoreboard">
+    <div class="game-info">
+      Partida #{{ game.id }} • Rodada {{ round.number }}/{{ game.rounds_count }}
+    </div>
+    <div class="player-score">
+      Você: <span>{{ game.user_score }}</span>
+    </div>
+  </div>
+
+  <!-- Card do desafio -->
+  <div class="card">
+    <p class="theme"><em>Tema:</em> {{ round.card.theme|capitalize }}</p>
+
+    {% if round.requested_hints == 0 %}
+      <p class="hint-text">Peça uma dica para começar. Quanto menos dicas usar, mais pontos você marca.</p>
+    {% endif %}
+
+    <div class="hints">
+      {% for h in hints %}
+        <div class="hint">🔎 {{ loop.index }} - {{ h }}</div>
+      {% endfor %}
+    </div>
+
+    {% if not round.finished and round.used_extra_hints > 0 %}
+      <div class="extra-hints">
+        <div class="hint">ℹ Letras: {{ round.card.answer|length }}</div>
+        <div class="hint">ℹ Inicial: {{ round.card.answer[0] }}</div>
+      </div>
+    {% endif %}
+
+    {% if show_answer %}
+      <div class="answer">
+        <strong>Resposta:</strong> {{ round.card.answer }}
+      </div>
+    {% endif %}
+
+    <div class="timer-container">
+      <div class="timer-display">
+        <span id="timer">{{ seconds_left | default(30) }}</span>
+      </div>
+    </div>
+
+    {% if not round.finished %}
+      <div class="actions">
+        <form method="post" action="{{ url_for('game_hint', round_id=round.id) }}">
+          <button class="btn" type="submit" {% if round.requested_hints>=10 %}disabled{% endif %}>Pedir dica (máx 10)</button>
+        </form>
+
+        <form method="post" action="{{ url_for('game_extra_hint', round_id=round.id) }}">
+          <button class="btn">Dica extra (🪙 5)</button>
+        </form>
+      </div>
+
+      <form class="guess-form" method="post" action="{{ url_for('game_guess', round_id=round.id) }}">
+        <input type="text" name="guess" placeholder="Seu chute..." required>
+        <button class="btn primary" type="submit">Chutar ⚽</button>
+      </form>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Sons -->
+<audio id="sound-goal" src="{{ url_for('static', filename='goal.mp3') }}"></audio>
+<audio id="sound-error" src="{{ url_for('static', filename='error.mp3') }}"></audio>
+<audio id="sound-whistle" src="{{ url_for('static', filename='whistle.mp3') }}"></audio>
+
+<style>
+.game-container { max-width: 600px; margin: 40px auto; padding: 0 15px; font-family: 'Arial', sans-serif; }
+.scoreboard { display: flex; justify-content: space-between; align-items: center; background: #0b2216; border-radius: 12px; padding: 15px 20px; border: 1px solid #214e33; margin-bottom: 20px; color: #fff; font-weight: bold; box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
+.player-score span { color: var(--accent); font-size: 18px; }
+.card { background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid #1d4b2b; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+.theme { font-size: 16px; margin-bottom: 10px; color: var(--accent); }
+.hint-text { font-size: 14px; color: #cde8c7; margin-bottom: 15px; }
+.hints, .extra-hints { margin-bottom: 15px; }
+.hint { background: #173f2a; padding: 8px 12px; border-radius: 10px; margin-bottom: 5px; font-size: 14px; color: #fff; }
+.answer { background: #1d4b2b; padding: 12px; border-radius: 12px; margin-top: 10px; color: var(--accent); font-weight: bold; text-align: center; }
+.timer-container { display: flex; justify-content: center; margin-top: 20px; }
+.timer-display { font-family: 'Digital-7', monospace; font-size: 48px; color: #ffef00; background: #0b2216; border: 3px solid #214e33; padding: 10px 30px; border-radius: 12px; text-shadow: 0 0 8px #ffd850, 0 0 15px #ffd850; }
+.actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+.guess-form { display: flex; margin-top: 15px; gap: 10px; }
+.guess-form input[type="text"] { flex: 1; padding: 10px 12px; border-radius: 12px; border: 1px solid #214e33; background: #0b2216; color: #fff; font-size: 14px; }
+.btn { background: #173f2a; border: 1px solid #1d5a38; border-radius: 999px; padding: 10px 20px; font-weight: 600; color: #fff; cursor: pointer; transition: all 0.2s; }
+.btn:hover { background: #206b43; border-color: #2a9159; }
+.btn.primary { background: var(--accent); color: #0b1f14; border: none; }
+.btn.primary:hover { background: #ffd850; }
+@media(max-width:480px){ .actions { flex-direction: column; } .guess-form { flex-direction: column; } .guess-form input, .guess-form button { width: 100%; } }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  let secs = Number(document.getElementById("timer").textContent) || 30;
+  const el = document.getElementById("timer");
+
+  const soundGoal = document.getElementById("sound-goal");
+  const soundError = document.getElementById("sound-error");
+  const soundWhistle = document.getElementById("sound-whistle");
+
+  function feedPush(msg, cls=""){ 
+    const f = document.createElement("div"); 
+    f.textContent = msg; 
+    if(cls) f.className = cls; 
+    document.querySelector(".card").appendChild(f); 
+  }
+
+  function endRoundEmpty(){
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = "{{ url_for('game_guess', round_id=round.id) }}";
+
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'guess';
+    input.value = '';
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+  function tick(){
+    if(secs <= 0){ 
+      feedPush("⏱ Tempo esgotado!", "miss");
+      soundWhistle.play();
+      setTimeout(endRoundEmpty, 1000);
+      return;
+    }
+    secs -= 1;
+    el.textContent = secs < 10 ? "0"+secs : secs;
+    setTimeout(tick, 1000);
+  }
+
+  if(secs>0) setTimeout(tick, 1000);
+
+  const guessForm = document.querySelector("form.guess-form");
+  if(guessForm){
+    guessForm.addEventListener("submit", function(e){
+      e.preventDefault();
+      const input = this.querySelector("input[name='guess']");
+      const guess = input.value.trim().toLowerCase();
+      const correct = "{{ round.card.answer|lower }}";
+
+      if(guess === correct){
+        soundGoal.play();
+        feedPush("⚽ GOL! Você acertou!");
+        setTimeout(() => { this.submit(); }, 500);
+      } else {
+        soundError.play();
+        feedPush("❌ ERRO! Tente novamente.");
+        input.value = "";
+      }
+    });
+  }
+
+  window.addEventListener("load", () => {
+    soundWhistle.play();
+    feedPush("📢 Turno iniciado! Boa sorte!");
+  });
+
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,255 @@
+:root {
+  --bg: #0b1f14;
+  --card: #0f2c1b;
+  --accent: #ffd166;
+  --text: #f5f5f5;
+  --muted: #98a2b3;
+  --shadow: rgba(0, 0, 0, 0.4);
+  --radius: 16px;
+  --transition: 0.3s;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, 'Open Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.container {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0b1a11;
+  padding: 12px 20px;
+  border-bottom: 1px solid #113620;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 4px 10px var(--shadow);
+}
+
+.brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.logo {
+  height: 44px;
+  width: auto;
+}
+
+nav a {
+  color: var(--text);
+  margin-left: 16px;
+  text-decoration: none;
+  font-weight: 500;
+  opacity: 0.85;
+  transition: opacity var(--transition);
+}
+
+nav a:hover {
+  opacity: 1;
+  color: var(--accent);
+}
+
+nav .btn {
+  margin-left: 16px;
+}
+
+.coins {
+  display: flex;
+  align-items: center;
+  margin-right: 8px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.hero h1 {
+  font-size: 48px;
+  margin: 0.4em 0;
+  font-weight: 700;
+}
+
+.card {
+  background: var(--card);
+  padding: 24px;
+  border-radius: var(--radius);
+  border: 1px solid #1d4b2b;
+  box-shadow: 0 8px 24px var(--shadow);
+  margin: 16px 0;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px var(--shadow);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+input,
+select {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #214e33;
+  background: #0b2216;
+  color: var(--text);
+  font-size: 1rem;
+  transition: border-color var(--transition);
+}
+
+input:focus,
+select:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.btn {
+  background: #173f2a;
+  border: 1px solid #1d5a38;
+  border-radius: 999px;
+  padding: 12px 20px;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all var(--transition);
+}
+
+.btn.primary {
+  background: #206b43;
+  border-color: #2a9159;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px var(--shadow);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.actions.inline {
+  display: inline-flex;
+  margin-left: 8px;
+}
+
+.flash {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+
+.flash li {
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  font-weight: 500;
+  transition: background var(--transition);
+}
+
+.flash .success { background: #0f3b2a; }
+.flash .danger { background: #41201e; }
+.flash .warning { background: #403819; }
+.flash .info { background: #1d3042; }
+
+.muted {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.hints .hint {
+  padding: 12px;
+  background: #0b2216;
+  border: 1px solid #1f3c29;
+  border-radius: 14px;
+  margin: 8px 0;
+  font-weight: 500;
+  transition: background var(--transition), transform var(--transition);
+}
+
+.hints .hint:hover {
+  background: #0d2d19;
+  transform: translateY(-1px);
+}
+
+.timer {
+  margin: 12px 0;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.auth {
+  display: flex;
+  justify-content: center;
+}
+
+.scoreboard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  background: #0c2c17;
+  border: 1px solid #1b4a2b;
+}
+
+.scores {
+  display: flex;
+  gap: 24px;
+}
+
+.scores.big {
+  font-size: 1.4rem;
+  justify-content: center;
+}
+
+.trophy {
+  font-size: 1.5rem;
+  margin: 12px 0;
+  text-align: center;
+}
+
+.footer {
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth">
+  <form class="card register-card" method="post">
+    <h2>Criar conta</h2>
+    
+    <label>Nome
+      <input type="text" name="name" placeholder="Seu nome" required>
+    </label>
+    
+    <label>E-mail
+      <input type="email" name="email" placeholder="seu@email.com" required>
+    </label>
+    
+    <label>Senha
+      <input type="password" name="password" placeholder="••••••••" required>
+    </label>
+    
+    <button class="btn primary" type="submit">Continuar</button>
+    
+    <p class="muted">Já tem uma conta? <a href="{{ url_for('login') }}">Entrar</a></p>
+  </form>
+</div>
+
+<style>
+.auth {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  padding: 40px 20px;
+}
+
+.register-card {
+  background: var(--card);
+  padding: 30px 25px;
+  border-radius: 20px;
+  border: 1px solid #1d4b2b;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.register-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+}
+
+.register-card h2 {
+  margin-bottom: 20px;
+  color: var(--accent);
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+  font-weight: 500;
+  text-align: left;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #214e33;
+  background: #0b2216;
+  color: var(--text);
+  margin-top: 5px;
+}
+
+.btn {
+  background: #173f2a;
+  border: 1px solid #1d5a38;
+  border-radius: 999px;
+  padding: 12px 22px;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.btn:hover {
+  background: #206b43;
+  border-color: #2a9159;
+}
+
+.btn.primary {
+  background: var(--accent);
+  color: #0b1f14;
+  border: none;
+}
+
+.btn.primary:hover {
+  background: #ffcb3f;
+}
+
+.muted {
+  color: var(--muted);
+  margin-top: 15px;
+}
+
+.muted a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.muted a:hover {
+  text-decoration: underline;
+}
+</style>
+{% endblock %}
