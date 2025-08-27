@@ -207,6 +207,25 @@ def index():
         user = User.query.get(session["user_id"])
     return render_template("index.html", user=user, themes=THEMES)
 
+@app.route("/reset_password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    try:
+        email = s.loads(token, salt="password-reset", max_age=3600)  # expira em 1h
+    except Exception:
+        flash("Link inválido ou expirado.", "danger")
+        return redirect(url_for("forgot_password"))
+
+    user = User.query.filter_by(email=email).first_or_404()
+
+    if request.method == "POST":
+        new_pwd = request.form["password"]
+        user.set_password(new_pwd)
+        db.session.commit()
+        flash("Senha redefinida com sucesso! Faça login.", "success")
+        return redirect(url_for("login"))
+
+    return render_template("reset_password.html")
+
 
 @app.route("/ranking")
 def ranking():
