@@ -102,6 +102,15 @@ class Game(db.Model):
     def themes(self):
         return json.loads(self.themes_json)
 
+class CardAlias(db.Model):
+    __tablename__ = "card_aliases"
+    id = db.Column(db.Integer, primary_key=True)
+    card_id = db.Column(db.Integer, db.ForeignKey("cards.id"), nullable=False)
+    alias = db.Column(db.String(120), nullable=False)
+
+    card = db.relationship("Card", backref="aliases")
+
+
 
 class Round(db.Model):
     __tablename__ = "rounds"
@@ -492,7 +501,7 @@ def aviso():
     return render_template("aviso.html")
 
 
-@app.route("/admin/add-card", methods=["GET", "POST"])
+@app.route("/admin/add-card", methods=["GET","POST"])
 def admin_add_card():
     if not is_admin():
         flash("Acesso negado.", "danger")
@@ -502,37 +511,35 @@ def admin_add_card():
         theme = request.form["theme"]
         title = request.form["title"]
         answer = request.form["answer"]
-        difficulty = int(request.form.get("difficulty", 1))
-
-        # Dicas
         hints = [request.form.get(f"hint{i}", "").strip() for i in range(1, 11)]
         hints = [h for h in hints if h]
 
-        # Cria card
         c = Card(
             theme=theme,
             title=title,
             answer=answer,
             hints_json=json.dumps(hints, ensure_ascii=False),
-            difficulty=difficulty
+            difficulty=int(request.form.get("difficulty", 1))
         )
         db.session.add(c)
-        db.session.flush()  # gera c.id antes do commit
-
-        # Aliases
-        aliases_raw = request.form.get("aliases", "")
-        aliases = [a.strip() for a in aliases_raw.split(",") if a.strip()]
-        for alias in aliases:
-            db.session.execute(
-                "INSERT INTO card_aliases (card_id, alias) VALUES (:cid, :alias)",
-                {"cid": c.id, "alias": alias}
-            )
-
         db.session.commit()
-        flash("Cartinha criada com sucesso!", "success")
+
+        # --- salvar aliases ---
+        aliases = [answer]  # sempre inclui a resposta como alias
+        extra_aliases = request.form.get("aliases", "")
+        if extra_aliases:
+            aliases += [a.strip() for a in extra_aliases.split(",") if a.strip()]
+
+        for alias in aliases:
+            db.session.add(CardAlias(card_id=c.id, alias=alias))
+        db.session.commit()
+        # -----------------------
+
+        flash("Cartinha criada com sucesso, incluindo aliases!", "success")
         return redirect(url_for("admin_add_card"))
 
     return render_template("admin_add_card.html", themes=THEMES)
+
 
 
 
