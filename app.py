@@ -335,7 +335,9 @@ def pick_card_for_theme(theme, difficulty=1):
 
 @app.route("/game/play/<int:game_id>")
 def game_play(game_id):
-    if not require_login(): return redirect(url_for("login"))
+    if not require_login(): 
+        return redirect(url_for("login"))
+        
     g = Game.query.get_or_404(game_id)
     user = User.query.get(session["user_id"])
 
@@ -374,7 +376,12 @@ def game_play(game_id):
         return redirect(url_for("game_play", game_id=g.id))
 
     card = current.card
-    hints = card.hints[:current.requested_hints]
+
+    # Embaralhar as dicas a cada rodada
+    all_hints = card.hints[:]  
+    random.shuffle(all_hints)
+    hints = all_hints[:current.requested_hints]
+
     show_answer = current.finished and current.user_guess is not None
     seconds_left = max(0, int((current.ends_at - datetime.utcnow()).total_seconds()))
     round_points = card_points(current.requested_hints)
@@ -390,6 +397,7 @@ def game_play(game_id):
         user=user,
         card_points=round_points
     )
+
 
 
 @app.route("/game/hint/<int:round_id>", methods=["POST"])
