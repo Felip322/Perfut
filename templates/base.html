@@ -54,6 +54,17 @@
       color: #fff;
     }
 
+    /* Moedas sempre visíveis */
+    .coins {
+      font-weight: bold;
+      font-size: 16px;
+      padding: 6px 12px;
+      background: #173f2a;
+      border-radius: 12px;
+      white-space: nowrap;
+      margin-left: 15px;
+    }
+
     /* Botão hambúrguer */
     .menu-toggle {
       display: none;
@@ -72,17 +83,10 @@
       justify-content: flex-end;
     }
 
-    .coins {
-      font-weight: bold;
-      font-size: 16px;
-      padding: 4px 8px;
-      background: #173f2a;
-      border-radius: 12px;
-      white-space: nowrap;
-    }
-
-    /* Botões */
+    /* Botões padronizados */
     .btn {
+      min-width: 110px;
+      text-align: center;
       background: linear-gradient(135deg, #1f5f3a, #2e8b57);
       border: none;
       border-radius: 999px;
@@ -94,8 +98,12 @@
       transition: all 0.25s ease;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
       letter-spacing: 0.5px;
-      display: inline-block;
       font-size: 14px;
+      height: 38px;
+      line-height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .btn:hover {
@@ -187,19 +195,10 @@
         display: flex;
       }
 
-      .topbar {
-        flex-wrap: nowrap;
-      }
-
       .btn {
-        flex: 1;
-        text-align: center;
-        padding: 10px 16px;
-        font-size: 13px;
-      }
-
-      .coins {
-        font-size: 14px;
+        width: 100%;
+        max-width: 220px;
+        margin: 0 auto;
       }
     }
 
@@ -208,11 +207,11 @@
         font-size: 16px;
       }
       .btn {
-        font-size: 12px;
+        font-size: 13px;
         padding: 8px 14px;
       }
-      .container {
-        padding: 0 10px;
+      .coins {
+        font-size: 14px;
       }
     }
   </style>
@@ -223,11 +222,13 @@
     <div class="brand">
       <img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt="PERFUT">
       <span>PERFUT</span>
+      {% if user %}
+        <span class="coins">🪙 {{ user.coins }}</span>
+      {% endif %}
     </div>
     <button class="menu-toggle" onclick="toggleMenu()">☰</button>
     <nav class="top-nav">
       {% if user %}
-        <span class="coins">🪙 {{ user.coins }}</span>
         <a href="{{ url_for('ranking') }}" class="btn">Ranking 🏆</a>
         <a href="{{ url_for('index') }}" class="btn primary">Início 🏠</a>
         <a href="{{ url_for('logout') }}" class="btn">Sair</a>
