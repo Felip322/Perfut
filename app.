@@ -126,8 +126,12 @@ class Round(db.Model):
     started_at = db.Column(db.DateTime, default=datetime.utcnow)
     ends_at = db.Column(db.DateTime)
 
+    # 🔹 Novo campo para salvar a ordem embaralhada das dicas
+    hints_order = db.Column(db.Text)
+
     game = db.relationship("Game", backref="rounds")
     card = db.relationship("Card")
+
 
 
 # ----------------------
