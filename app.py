@@ -392,9 +392,15 @@ def game_play(game_id):
 
     card = current.card
 
-    # Embaralhar as dicas a cada rodada
-    all_hints = card.hints[:]  
-    random.shuffle(all_hints)
+    # 🔹 NOVO: Embaralha as dicas apenas uma vez por rodada
+    if not current.hints_order:
+        all_hints = card.hints[:]
+        random.shuffle(all_hints)
+        current.hints_order = json.dumps(all_hints, ensure_ascii=False)
+        db.session.commit()
+
+    # Sempre carrega da ordem salva
+    all_hints = json.loads(current.hints_order)
     hints = all_hints[:current.requested_hints]
 
     show_answer = current.finished and current.user_guess is not None
@@ -412,6 +418,7 @@ def game_play(game_id):
         user=user,
         card_points=round_points
     )
+
 
 
 
