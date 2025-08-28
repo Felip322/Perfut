@@ -606,36 +606,40 @@ def fix_hints_robust():
         print("Cards que falharam e precisam revisão manual:", failed_cards)
 
 
-@app.cli.command("fix-hints-robust")
-def fix_hints_robust():
-    """Corrige dicas corrompidas nos cards automaticamente."""
-    import codecs
+@app.cli.command("fix-hints")
+def fix_hints():
+    """Corrige os acentos quebrados nas dicas dos cards."""
     cards = Card.query.all()
     total = 0
+
     for c in cards:
         try:
             hints = json.loads(c.hints_json)
-            fixed = []
-            changed = False
-            for h in hints:
-                try:
-                    # tenta forçar UTF-8 limpo
-                    h_bytes = h.encode('latin1', errors='replace')
-                    h_fixed = h_bytes.decode('utf-8', errors='replace')
-                    if h_fixed != h:
-                        changed = True
-                    fixed.append(h_fixed)
-                except Exception as e:
-                    fixed.append(h)
-                    changed = True
-            if changed:
-                c.hints_json = json.dumps(fixed, ensure_ascii=False)
-                db.session.add(c)
-                total += 1
         except Exception as e:
-            print(f"Erro no card {c.id}: {e}")
-    db.session.commit()
-    print(f"Processados {total} cards com dicas corrompidas.")
+            print(f"Erro ao ler JSON do card {c.id}: {e}")
+            continue
+
+        changed = False
+        fixed_hints = []
+
+        for h in hints:
+            try:
+                # tenta normalizar UTF-8 direto
+                h.encode("utf-8")
+                fixed_hints.append(h)
+            except UnicodeEncodeError:
+                # reencode de Latin1 → UTF-8
+                h_fixed = h.encode("latin1").decode("utf-8", errors="ignore")
+                fixed_hints.append(h_fixed)
+                changed = True
+
+        if changed:
+            c.hints_json = json.dumps(fixed_hints, ensure_ascii=False)
+            db.session.commit()
+            total += 1
+            print(f"Corrigido card {c.id}")
+
+    print(f"Processo concluído. Total de cards corrigidos: {total}")
 
 
 if __name__ == "__main__":
