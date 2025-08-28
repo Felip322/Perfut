@@ -62,6 +62,8 @@ class User(db.Model):
     coins = db.Column(db.Integer, default=50)
     level = db.Column(db.Integer, default=1)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_admin = db.Column(db.Boolean, default=False)  # <<< aqui
+
 
     def set_password(self, pwd):
         self.password_hash = generate_password_hash(pwd)
@@ -151,7 +153,7 @@ def is_admin():
     if "user_id" not in session:
         return False
     u = User.query.get(session["user_id"])
-    return getattr(u, "is_admin", False)
+    return u.is_admin if u else False
 
 
 
