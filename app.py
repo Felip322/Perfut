@@ -2,6 +2,7 @@ import os
 import random
 import json
 import unicodedata
+import re
 from datetime import datetime, timedelta
 import socket
 import threading
@@ -140,11 +141,11 @@ def require_login():
     return True
 
 def normalize(text: str) -> str:
-    """Remove acentos e deixa lowercase para comparar respostas"""
-    return ''.join(
+    text = ''.join(
         c for c in unicodedata.normalize("NFD", text)
         if unicodedata.category(c) != 'Mn'
     ).lower().strip()
+    return re.sub(r'[^a-z0-9 ]', '', text)  # só letras, números e espaço
 
 def is_admin():
     return "user_id" in session and session["user_id"] == 1
@@ -488,8 +489,14 @@ def admin_add_card():
         answer = request.form["answer"]
         hints = [request.form.get(f"hint{i}", "").strip() for i in range(1, 11)]
         hints = [h for h in hints if h]
-        c = Card(theme=theme, title=title, answer=answer, hints_json=json.dumps(hints),
-                 difficulty=int(request.form.get("difficulty",1)))
+        c = Card(
+    theme=theme,
+    title=title,
+    answer=answer,
+    hints_json=json.dumps(hints, ensure_ascii=False),  # <<< aqui!
+    difficulty=int(request.form.get("difficulty", 1))
+)
+
         db.session.add(c)
         db.session.commit()
         flash("Cartinha criada!", "success")
