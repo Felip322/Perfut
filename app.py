@@ -492,30 +492,48 @@ def aviso():
     return render_template("aviso.html")
 
 
-@app.route("/admin/add-card", methods=["GET","POST"])
+@app.route("/admin/add-card", methods=["GET", "POST"])
 def admin_add_card():
     if not is_admin():
         flash("Acesso negado.", "danger")
         return redirect(url_for("index"))
+
     if request.method == "POST":
         theme = request.form["theme"]
         title = request.form["title"]
         answer = request.form["answer"]
+        difficulty = int(request.form.get("difficulty", 1))
+
+        # Dicas
         hints = [request.form.get(f"hint{i}", "").strip() for i in range(1, 11)]
         hints = [h for h in hints if h]
-        c = Card(
-    theme=theme,
-    title=title,
-    answer=answer,
-    hints_json=json.dumps(hints, ensure_ascii=False),  # <<< aqui!
-    difficulty=int(request.form.get("difficulty", 1))
-)
 
+        # Cria card
+        c = Card(
+            theme=theme,
+            title=title,
+            answer=answer,
+            hints_json=json.dumps(hints, ensure_ascii=False),
+            difficulty=difficulty
+        )
         db.session.add(c)
+        db.session.flush()  # gera c.id antes do commit
+
+        # Aliases
+        aliases_raw = request.form.get("aliases", "")
+        aliases = [a.strip() for a in aliases_raw.split(",") if a.strip()]
+        for alias in aliases:
+            db.session.execute(
+                "INSERT INTO card_aliases (card_id, alias) VALUES (:cid, :alias)",
+                {"cid": c.id, "alias": alias}
+            )
+
         db.session.commit()
-        flash("Cartinha criada!", "success")
+        flash("Cartinha criada com sucesso!", "success")
         return redirect(url_for("admin_add_card"))
+
     return render_template("admin_add_card.html", themes=THEMES)
+
 
 
 @app.cli.command("init-db")
