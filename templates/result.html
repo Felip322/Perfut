@@ -19,7 +19,7 @@
   {% elif game.user_score >= 30 %}
     <div class="trophy">Bom resultado! Continue jogando para subir no ranking!</div>
   {% else %}
-    <div class="trophy">Continue treinando — você consegue!</div>
+    <div class="trophy">Continue treinando - você consegue!</div>
   {% endif %}
 
   <a class="btn primary" href="{{ url_for('index') }}">Jogar novamente</a>
@@ -36,11 +36,13 @@
   margin: 50px auto;
   text-align: center;
   color: #fff;
+  animation: fadeIn 0.8s ease; /* card aparece suavemente */
 }
 
 .result-logo {
-  width: 120px; /* aumentei o logo */
+  width: 120px;
   margin-bottom: 20px;
+  animation: zoomIn 1s ease; /* logo cresce */
 }
 
 .result h2 {
@@ -60,6 +62,7 @@
   display: flex;
   justify-content: center;
   margin: 20px 0 25px;
+  animation: slideUp 1s ease;
 }
 
 .score-box {
@@ -89,6 +92,7 @@
   margin: 15px 0 30px;
   font-weight: 600;
   color: #ffd700;
+  animation: fadeIn 1.2s ease;
 }
 
 .btn.primary {
@@ -103,12 +107,36 @@
   transition: 0.25s;
   font-size: 1rem;
   box-shadow: 0 4px 12px rgba(0,255,150,0.25);
+  animation: pulse 2s infinite; /* botão pulsa continuamente */
 }
 
 .btn.primary:hover {
   background: #00e07a;
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.05);
   box-shadow: 0 6px 18px rgba(0,255,150,0.35);
+}
+
+/* ------------------ */
+/* Keyframes animações */
+/* ------------------ */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoomIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
 }
 </style>
 {% endblock %}
