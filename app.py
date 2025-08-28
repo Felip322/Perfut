@@ -148,7 +148,11 @@ def normalize(text: str) -> str:
     return re.sub(r'[^a-z0-9 ]', '', text)  # só letras, números e espaço
 
 def is_admin():
-    return "user_id" in session and session["user_id"] == 1
+    if "user_id" not in session:
+        return False
+    u = User.query.get(session["user_id"])
+    return getattr(u, "is_admin", False)
+
 
 
 # ----------------------
