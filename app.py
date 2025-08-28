@@ -564,14 +564,22 @@ def init_db():
     print("Banco criado e pronto!")
 
 
-def normalize_text(text):
-    """Remove caracteres inválidos e mantém UTF-8."""
-    return re.sub(r'[^\x00-\x7F]', '', text)
+def fix_text(text):
+    """
+    Tenta limpar texto para UTF-8, normalizando acentos e removendo caracteres inválidos.
+    """
+    if not text:
+        return ""
+    # Normaliza acentos
+    text = unicodedata.normalize("NFKC", text)
+    # Remove caracteres não imprimíveis
+    text = ''.join(c for c in text if c.isprintable())
+    return text
 
-@app.cli.command("fix-hints")
+@app.cli.command("fix-hints-robust")
 @with_appcontext
-def fix_hints():
-    """Percorre todos os cards e tenta corrigir hints_json."""
+def fix_hints_robust():
+    """Percorre todos os cards e corrige hints JSON, dica por dica."""
     cards = Card.query.all()
     fixed_count = 0
     failed_cards = []
@@ -581,26 +589,21 @@ def fix_hints():
             continue
         try:
             hints = json.loads(c.hints_json)
-        except Exception:
-            try:
-                cleaned = normalize_text(c.hints_json)
-                hints = json.loads(cleaned)
-                c.hints_json = json.dumps(hints, ensure_ascii=False)
-                db.session.commit()
-                fixed_count += 1
-                print(f"Card {c.id} corrigido.")
-            except Exception as e:
-                failed_cards.append(c.id)
-                print(f"Falha no card {c.id}: {e}")
-        else:
-            # se não deu erro, regrava normal para garantir UTF-8
-            c.hints_json = json.dumps(hints, ensure_ascii=False)
+            if not isinstance(hints, list):
+                raise ValueError("Hints não é uma lista")
+            # Corrige cada dica individualmente
+            fixed_hints = [fix_text(h) for h in hints]
+            c.hints_json = json.dumps(fixed_hints, ensure_ascii=False)
             db.session.commit()
+            fixed_count += 1
+            print(f"Card {c.id} corrigido com {len(fixed_hints)} dicas")
+        except Exception as e:
+            failed_cards.append(c.id)
+            print(f"Falha no card {c.id}: {e}")
 
     print(f"\nCorreção concluída. Cards corrigidos: {fixed_count}")
     if failed_cards:
         print("Cards que falharam e precisam revisão manual:", failed_cards)
-
 
 if __name__ == "__main__":
     with app.app_context():
