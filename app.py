@@ -605,6 +605,39 @@ def fix_hints_robust():
     if failed_cards:
         print("Cards que falharam e precisam revisão manual:", failed_cards)
 
+
+@app.cli.command("fix-hints-robust")
+def fix_hints_robust():
+    """Corrige dicas corrompidas nos cards automaticamente."""
+    import codecs
+    cards = Card.query.all()
+    total = 0
+    for c in cards:
+        try:
+            hints = json.loads(c.hints_json)
+            fixed = []
+            changed = False
+            for h in hints:
+                try:
+                    # tenta forçar UTF-8 limpo
+                    h_bytes = h.encode('latin1', errors='replace')
+                    h_fixed = h_bytes.decode('utf-8', errors='replace')
+                    if h_fixed != h:
+                        changed = True
+                    fixed.append(h_fixed)
+                except Exception as e:
+                    fixed.append(h)
+                    changed = True
+            if changed:
+                c.hints_json = json.dumps(fixed, ensure_ascii=False)
+                db.session.add(c)
+                total += 1
+        except Exception as e:
+            print(f"Erro no card {c.id}: {e}")
+    db.session.commit()
+    print(f"Processados {total} cards com dicas corrompidas.")
+
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
