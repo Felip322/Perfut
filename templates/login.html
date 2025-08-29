@@ -10,7 +10,10 @@
       <input type="email" name="email" placeholder="seu@email.com" required>
 
       <label>Senha</label>
-      <input type="password" name="password" placeholder="••••••••" required>
+      <div class="password-wrapper">
+        <input type="password" id="password" name="password" placeholder="••••••••" required>
+        <i class="fa-solid fa-eye toggle-password" onclick="togglePassword()"></i>
+      </div>
 
       <button class="btn primary" type="submit">Entrar</button>
     </form>
@@ -28,7 +31,6 @@
 </section>
 
 <style>
-  /* Container de login */
   .auth {
     display: flex;
     justify-content: center;
@@ -64,8 +66,14 @@
     font-weight: 500;
   }
 
-  .auth-card input {
-    padding: 10px 12px;
+  /* Campo de senha com ícone */
+  .password-wrapper {
+    position: relative;
+    width: 100%;
+  }
+
+  .password-wrapper input {
+    padding: 10px 40px 10px 12px;
     border-radius: 10px;
     border: 1px solid #214e33;
     background: #0b2216;
@@ -73,10 +81,24 @@
     width: 100%;
   }
 
-  .auth-card input:focus {
+  .password-wrapper input:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 2px rgba(255,203,63,0.2);
+  }
+
+  .toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--muted);
+  }
+
+  .toggle-password:hover {
+    color: var(--accent);
   }
 
   .auth-card .btn {
@@ -100,10 +122,26 @@
     text-decoration: underline;
   }
 
-  /* link pequeno para "esqueci a senha" */
   .auth-card .small {
     margin-top: 10px;
     font-size: 13px;
   }
 </style>
+
+<script>
+  function togglePassword() {
+    const passwordField = document.getElementById("password");
+    const toggleIcon = document.querySelector(".toggle-password");
+    
+    if (passwordField.type === "password") {
+      passwordField.type = "text";
+      toggleIcon.classList.remove("fa-eye");
+      toggleIcon.classList.add("fa-eye-slash");
+    } else {
+      passwordField.type = "password";
+      toggleIcon.classList.remove("fa-eye-slash");
+      toggleIcon.classList.add("fa-eye");
+    }
+  }
+</script>
 {% endblock %}
