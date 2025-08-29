@@ -13,7 +13,10 @@
     </label>
     
     <label>Senha
-      <input type="password" name="password" placeholder="••••••••" required>
+      <div class="password-wrapper">
+        <input type="password" id="password" name="password" placeholder="••••••••" required>
+        <i class="fa fa-eye toggle-password" data-target="password"></i>
+      </div>
     </label>
 
     <!-- Checkboxes obrigatórios -->
@@ -79,6 +82,29 @@ label {
   text-align: left;
 }
 
+/* Wrapper do campo de senha */
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrapper input {
+  flex: 1;
+  padding-right: 35px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.toggle-password:hover {
+  color: var(--accent);
+}
+
 input[type="text"],
 input[type="email"],
 input[type="password"] {
@@ -98,11 +124,11 @@ input[type="password"] {
 .terms-item {
   display: flex;
   align-items: flex-start;
-  font-size: 12px; /* menor */
+  font-size: 12px;
   margin-bottom: 8px;
   line-height: 1.4;
-  font-style: italic; /*  agora em itálico */
-  font-weight: normal; /*  remove o negrito */
+  font-style: italic;
+  font-weight: normal;
 }
 
 .terms-item input {
@@ -113,8 +139,8 @@ input[type="password"] {
 .terms-item a {
   color: var(--accent);
   text-decoration: none;
-  font-weight: normal; /*  links também sem negrito */
-  font-style: italic; /*  links seguem o itálico */
+  font-weight: normal;
+  font-style: italic;
 }
 
 .terms-item a:hover {
@@ -163,4 +189,25 @@ input[type="password"] {
   text-decoration: underline;
 }
 </style>
+
+<!-- Script para alternar visibilidade da senha -->
+<script>
+document.querySelectorAll(".toggle-password").forEach(icon => {
+  icon.addEventListener("click", function() {
+    const targetId = this.getAttribute("data-target");
+    const input = document.getElementById(targetId);
+    if (input.type === "password") {
+      input.type = "text";
+      this.classList.remove("fa-eye");
+      this.classList.add("fa-eye-slash");
+    } else {
+      input.type = "password";
+      this.classList.remove("fa-eye-slash");
+      this.classList.add("fa-eye");
+    }
+  });
+});
+</script>
+
+
 {% endblock %}
