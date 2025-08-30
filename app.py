@@ -320,20 +320,21 @@ def pick_card_for_theme(theme, difficulty=1):
 
 @app.route("/game/play/<int:game_id>")
 def game_play(game_id):
-    if not require_login():
+    if not require_login(): 
         return redirect(url_for("login"))
-
+        
     g = Game.query.get_or_404(game_id)
     user = User.query.get(session["user_id"])
 
-    # Número da rodada atual
+    # Próximo round baseado no número de rounds finalizados
     current_number = len([r for r in g.rounds if r.finished]) + 1
+
     if current_number > g.rounds_count:
         g.status = "finished"
         db.session.commit()
         return redirect(url_for("game_result", game_id=g.id))
 
-    # Recupera a rodada atual
+    # Pega o round existente ou cria um novo
     current = Round.query.filter_by(game_id=g.id, number=current_number).first()
     if not current:
         theme = g.themes[(current_number - 1) % len(g.themes)]
@@ -341,17 +342,18 @@ def game_play(game_id):
         if not card:
             flash(f"Nenhum card disponível para o tema '{theme}'.", "warning")
             return redirect(url_for("index"))
+
         current = Round(
             game_id=g.id,
             number=current_number,
             card_id=card.id,
             started_at=datetime.utcnow(),
-            ends_at=datetime.utcnow() + timedelta(seconds=60)
+            ends_at=datetime.utcnow() + timedelta(seconds=60),  # tempo padrão
         )
         db.session.add(current)
         db.session.commit()
 
-    # Verifica se o tempo da rodada acabou
+    # Controle de tempo
     if datetime.utcnow() > current.ends_at and not current.finished:
         current.finished = True
         db.session.commit()
@@ -359,21 +361,18 @@ def game_play(game_id):
         return redirect(url_for("game_play", game_id=g.id))
 
     card = current.card
-    all_hints = card.hints[:]
 
-    # Dicas normais pedidas (sempre as primeiras)
-    normal_hints = all_hints[:current.requested_hints]
+    # 🔹 NOVO: Embaralha as dicas apenas uma vez por rodada
+    if not current.hints_order:
+        all_hints = card.hints[:]
+        random.shuffle(all_hints)
+        current.hints_order = json.dumps(all_hints, ensure_ascii=False)
+        db.session.commit()
 
-    # Dicas extras compradas, sem repetir as normais
-    extra_hints_pool = all_hints[current.requested_hints:]  # remove normal
-    random.shuffle(extra_hints_pool)
-    extra_hints = extra_hints_pool[:current.used_extra_hints]
+    # Sempre carrega da ordem salva
+    all_hints = json.loads(current.hints_order)
+    hints = all_hints[:current.requested_hints]
 
-    # Junta as dicas que vão aparecer
-    hints = normal_hints + extra_hints
-    hints = hints[:10]  # garante máximo de 10 dicas
-
-    # Flags e informações para o template
     show_answer = current.finished and current.user_guess is not None
     seconds_left = max(0, int((current.ends_at - datetime.utcnow()).total_seconds()))
     round_points = card_points(current.requested_hints)
@@ -389,7 +388,6 @@ def game_play(game_id):
         user=user,
         card_points=round_points
     )
-
 
 
 @app.route("/game/guess/<int:round_id>", methods=["POST"])
