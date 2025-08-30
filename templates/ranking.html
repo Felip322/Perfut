@@ -11,6 +11,7 @@
         <tr>
           <th>#</th>
           <th>Jogador</th>
+          <th>Nível</th> <!-- nova coluna -->
           <th>Pontuação</th>
         </tr>
       </thead>
@@ -35,6 +36,7 @@
               <span>{{ r[0] }}</span>
             </div>
           </td>
+          <td class="level">{{ r[2] }}</td> <!-- nível do jogador -->
           <td class="score">{{ r[1] }}</td>
         </tr>
         {% endfor %}
@@ -137,6 +139,13 @@
 .ranking-table tr.third { background: rgba(205, 127, 50, 0.07); }
 
 .pos { font-weight: bold; }
+
+/* Nível do jogador */
+.level {
+  font-weight: 600;
+  color: #ffd700; /* dourado */
+  text-align: center;
+}
 
 /* Jogador logado */
 .ranking-table tr.highlight { 
