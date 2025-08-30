@@ -317,24 +317,20 @@ def pick_card_for_theme(theme, difficulty=1):
     q = Card.query.filter_by(theme=theme, difficulty=difficulty)
     return q.order_by(db.func.random()).first()
 
-
 @app.route("/game/play/<int:game_id>")
 def game_play(game_id):
-    if not require_login(): 
+    if not require_login():
         return redirect(url_for("login"))
-        
+
     g = Game.query.get_or_404(game_id)
     user = User.query.get(session["user_id"])
 
-    # Próximo round baseado no número de rounds finalizados
     current_number = len([r for r in g.rounds if r.finished]) + 1
-
     if current_number > g.rounds_count:
         g.status = "finished"
         db.session.commit()
         return redirect(url_for("game_result", game_id=g.id))
 
-    # Pega o round existente ou cria um novo
     current = Round.query.filter_by(game_id=g.id, number=current_number).first()
     if not current:
         theme = g.themes[(current_number - 1) % len(g.themes)]
@@ -342,18 +338,16 @@ def game_play(game_id):
         if not card:
             flash(f"Nenhum card disponível para o tema '{theme}'.", "warning")
             return redirect(url_for("index"))
-
         current = Round(
             game_id=g.id,
             number=current_number,
             card_id=card.id,
             started_at=datetime.utcnow(),
-            ends_at=datetime.utcnow() + timedelta(seconds=60),  # tempo padrão
+            ends_at=datetime.utcnow() + timedelta(seconds=60)
         )
         db.session.add(current)
         db.session.commit()
 
-    # Controle de tempo
     if datetime.utcnow() > current.ends_at and not current.finished:
         current.finished = True
         db.session.commit()
@@ -362,18 +356,14 @@ def game_play(game_id):
 
     card = current.card
 
-    # 🔹 NOVO: Embaralha as dicas apenas uma vez por rodada
-    if not current.hints_order:
-        all_hints = card.hints[:]
-        random.shuffle(all_hints)
-        current.hints_order = json.dumps(all_hints, ensure_ascii=False)
-        db.session.commit()
-
-    # Sempre carrega da ordem salva
-    all_hints = json.loads(current.hints_order)
+    # Gera dicas normais (requested_hints)
+    all_hints = card.hints[:]
+    random.shuffle(all_hints)
     hints = all_hints[:current.requested_hints]
 
+    # show_answer indica se a rodada terminou
     show_answer = current.finished and current.user_guess is not None
+
     seconds_left = max(0, int((current.ends_at - datetime.utcnow()).total_seconds()))
     round_points = card_points(current.requested_hints)
 
