@@ -326,12 +326,14 @@ def game_play(game_id):
     g = Game.query.get_or_404(game_id)
     user = User.query.get(session["user_id"])
 
+    # Número da rodada atual
     current_number = len([r for r in g.rounds if r.finished]) + 1
     if current_number > g.rounds_count:
         g.status = "finished"
         db.session.commit()
         return redirect(url_for("game_result", game_id=g.id))
 
+    # Recupera a rodada atual
     current = Round.query.filter_by(game_id=g.id, number=current_number).first()
     if not current:
         theme = g.themes[(current_number - 1) % len(g.themes)]
@@ -349,6 +351,7 @@ def game_play(game_id):
         db.session.add(current)
         db.session.commit()
 
+    # Verifica se o tempo da rodada acabou
     if datetime.utcnow() > current.ends_at and not current.finished:
         current.finished = True
         db.session.commit()
@@ -359,19 +362,33 @@ def game_play(game_id):
     all_hints = card.hints[:]
     random.shuffle(all_hints)
 
-    # Considera dicas extras
-    total_hints = min(current.requested_hints + current.used_extra_hints, len(all_hints))
-    hints = all_hints[:total_hints]
+    # Dicas normais pedidas
+    normal_hints = all_hints[:current.requested_hints]
 
+    # Dicas extras compradas, evitando repetir as normais
+    extra_hints = all_hints[current.requested_hints:current.requested_hints + current.used_extra_hints]
+
+    # Junta todas as dicas a serem exibidas, sem ultrapassar o total disponível
+    hints = normal_hints + extra_hints
+    hints = hints[:10]  # garante que no máximo 10 dicas apareçam
+
+    # Flags e informações para o template
     show_answer = current.finished and current.user_guess is not None
     seconds_left = max(0, int((current.ends_at - datetime.utcnow()).total_seconds()))
     round_points = card_points(current.requested_hints)
 
     return render_template(
-        "game.html", game=g, round=current, card=card, hints=hints,
-        seconds_left=seconds_left, show_answer=show_answer, user=user,
+        "game.html",
+        game=g,
+        round=current,
+        card=card,
+        hints=hints,
+        seconds_left=seconds_left,
+        show_answer=show_answer,
+        user=user,
         card_points=round_points
     )
+
 
 
 @app.route("/game/guess/<int:round_id>", methods=["POST"])
