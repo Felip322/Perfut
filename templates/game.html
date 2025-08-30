@@ -27,7 +27,7 @@
       {% endfor %}
     </div>
 
-    {% if not round.finished and round.used_extra_hints > 0 %}
+    {% if round.used_extra_hints > 0 %}
       <div class="extra-hints">
         <div class="hint">ℹ Letras: {{ round.card.answer|length }}</div>
         <div class="hint">ℹ Inicial: {{ round.card.answer[0] }}</div>
@@ -48,15 +48,20 @@
 
     {% if not round.finished %}
       <div class="actions">
+        <!-- Botão de dica normal -->
         <form method="post" action="{{ url_for('game_hint', round_id=round.id) }}">
-          <button class="btn" type="submit" {% if round.requested_hints>=10 %}disabled{% endif %}>Pedir dica</button>
+          <button class="btn" type="submit" {% if round.requested_hints >= 10 %}disabled{% endif %}>
+            Pedir dica
+          </button>
         </form>
 
+        <!-- Botão de dica extra -->
         <form method="post" action="{{ url_for('game_extra_hint', round_id=round.id) }}">
           <button class="btn">Dica extra (🪙 5)</button>
         </form>
       </div>
 
+      <!-- Formulário de chute -->
       <form class="guess-form" method="post" action="{{ url_for('game_guess', round_id=round.id) }}">
         <input type="text" name="guess" placeholder="Seu chute..." required>
         <button class="btn primary" type="submit">Chutar ⚽</button>
@@ -143,7 +148,7 @@
     guessForm.addEventListener("submit", function(e){
       e.preventDefault();
       const input = this.querySelector("input[name='guess']");
-      const guess = input.value.trim().toLowerCase();
+      const guess = input.value.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
       const correct = "{{ round.card.answer|lower }}";
 
       if(guess === correct){
