@@ -3,10 +3,17 @@ import random
 import json
 import unicodedata
 import re
+
+
+from flask.cli import with_appcontext
 from datetime import datetime, timedelta
+import socket
+import threading
+import webbrowser
 from sqlalchemy import func
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
+
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -17,23 +24,33 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("PERFUT_SECRET", "dev-secret-change-me")
 
+# Usa DATABASE_URL do Render se existir, senão cai no SQLite local
 db_url = os.getenv("DATABASE_URL", "sqlite:///perfut.db")
+
+# Render fornece "postgres://", mas SQLAlchemy exige "postgresql://"
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
+
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# Email
+
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer
+
+# Config e-mail (exemplo com Gmail, mas pode usar SendGrid, Mailtrap etc.)
 app.config["MAIL_SERVER"] = "smtp.gmail.com"
 app.config["MAIL_PORT"] = 587
 app.config["MAIL_USE_TLS"] = True
-app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USER")
-app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASS")
+app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USER")   # seu e-mail
+app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASS")   # senha/app password
 app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_USER")
+
 mail = Mail(app)
 
+# Gerador de tokens
 s = URLSafeTimedSerializer(app.config["SECRET_KEY"])
 
 # ----------------------
@@ -48,6 +65,8 @@ class User(db.Model):
     coins = db.Column(db.Integer, default=50)
     level = db.Column(db.Integer, default=1)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_admin = db.Column(db.Boolean, default=False)  # <<< aqui
+
 
     def set_password(self, pwd):
         self.password_hash = generate_password_hash(pwd)
@@ -86,6 +105,15 @@ class Game(db.Model):
     def themes(self):
         return json.loads(self.themes_json)
 
+class CardAlias(db.Model):
+    __tablename__ = "card_aliases"
+    id = db.Column(db.Integer, primary_key=True)
+    card_id = db.Column(db.Integer, db.ForeignKey("cards.id"), nullable=False)
+    alias = db.Column(db.String(120), nullable=False)
+
+    card = db.relationship("Card", backref="aliases")
+
+
 
 class Round(db.Model):
     __tablename__ = "rounds"
@@ -100,16 +128,13 @@ class Round(db.Model):
     finished = db.Column(db.Boolean, default=False)
     started_at = db.Column(db.DateTime, default=datetime.utcnow)
     ends_at = db.Column(db.DateTime)
-    shuffled_hints_json = db.Column(db.Text, nullable=True)  # ← NOVO
+
+    # 🔹 Novo campo para salvar a ordem embaralhada das dicas
+    hints_order = db.Column(db.Text)
 
     game = db.relationship("Game", backref="rounds")
     card = db.relationship("Card")
 
-    @property
-    def shuffled_hints(self):
-        if not self.shuffled_hints_json:
-            return []
-        return json.loads(self.shuffled_hints_json)
 
 
 # ----------------------
@@ -121,14 +146,11 @@ THEMES = [
     ("jogador_aposentado", "Jogador aposentado"),
     ("estadio", "Estádio"),
     ("tecnico", "Técnicos"),
-    ("ano", "Ano"), 
 ]
-
 
 def card_points(hints_used: int) -> int:
     base = 10 - max(hints_used - 1, 0)
     return max(base, 1)
-
 
 def require_login():
     if "user_id" not in session:
@@ -136,29 +158,23 @@ def require_login():
         return False
     return True
 
-
 def normalize(text: str) -> str:
     text = ''.join(
         c for c in unicodedata.normalize("NFD", text)
         if unicodedata.category(c) != 'Mn'
-    )
-    text = re.sub(r'[^a-z0-9 ]', '', text.lower())
-    return re.sub(r'\s+', ' ', text).strip()
-
+    ).lower().strip()
+    return re.sub(r'[^a-z0-9 ]', '', text)  # só letras, números e espaço
 
 def is_admin():
-    return "user_id" in session and session["user_id"] == 1
+    if "user_id" not in session:
+        return False
+    u = User.query.get(session["user_id"])
+    return u.is_admin if u else False
 
-def update_user_level(user):
-    # Soma todos os pontos das partidas do usuário
-    total_score = sum(game.user_score for game in user.games)
-    
-    # Calcula o nível (1 nível a cada 100 pontos)
-    user.level = total_score // 100 + 1
-    
-    db.session.commit()
+
+
 # ----------------------
-# Routes (Auth, Game, Admin)
+# Auth routes
 # ----------------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -204,6 +220,9 @@ def logout():
     return redirect(url_for("index"))
 
 
+# ----------------------
+# Index & setup
+# ----------------------
 @app.route("/")
 def index():
     user = None
@@ -211,23 +230,25 @@ def index():
         user = User.query.get(session["user_id"])
     return render_template("index.html", user=user, themes=THEMES)
 
-
-# --- Reset & Forgot Password
 @app.route("/reset_password/<token>", methods=["GET", "POST"])
 def reset_password(token):
     try:
-        email = s.loads(token, salt="password-reset", max_age=3600)
+        email = s.loads(token, salt="password-reset", max_age=3600)  # expira em 1h
     except Exception:
         flash("Link inválido ou expirado.", "danger")
         return redirect(url_for("forgot_password"))
+
     user = User.query.filter_by(email=email).first_or_404()
+
     if request.method == "POST":
         new_pwd = request.form["password"]
         user.set_password(new_pwd)
         db.session.commit()
         flash("Senha redefinida com sucesso! Faça login.", "success")
         return redirect(url_for("login"))
+
     return render_template("reset_password.html")
+
 
 
 @app.route("/forgot_password", methods=["GET", "POST"])
@@ -238,11 +259,15 @@ def forgot_password():
         if user:
             token = s.dumps(email, salt="password-reset")
             reset_url = url_for("reset_password", token=token, _external=True)
+
             try:
                 msg = Message(
                     subject="Redefinição de senha - PERFUT",
                     recipients=[email],
-                    body=f"Olá {user.name},\n\nPara redefinir sua senha clique no link abaixo (expira em 1 hora):\n{reset_url}\n\nSe não foi você, ignore este e-mail."
+                    body=f"Olá {user.name},\n\n"
+                         f"Para redefinir sua senha clique no link abaixo (expira em 1 hora):\n"
+                         f"{reset_url}\n\n"
+                         "Se não foi você, ignore este e-mail."
                 )
                 mail.send(msg)
                 flash("Enviamos um link de redefinição para seu e-mail.", "info")
@@ -255,14 +280,13 @@ def forgot_password():
     return render_template("forgot_password.html")
 
 
-# --- Ranking
 @app.route("/ranking")
 def ranking():
     if "user_id" not in session:
         flash("Faça login para ver o ranking.", "warning")
         return redirect(url_for("login"))
 
-    # soma dos pontos por usuário
+    # soma dos pontos de todas as partidas por usuário
     score_sum = (
         db.session.query(
             Game.user_id,
@@ -272,19 +296,11 @@ def ranking():
         .subquery()
     )
 
-    # atualiza nível de todos os usuários antes de gerar ranking
-    users = User.query.all()
-    for u in users:
-        total_score = sum(g.user_score for g in u.games)
-        u.level = total_score // 100 + 1
-    db.session.commit()
-
-    # busca dados para ranking
+    # pega (nome, total_score) e ordena: nível ↓, pontuação ↓, moedas ↓, nome ↑
     rows = (
         db.session.query(
             User.name,
-            func.coalesce(score_sum.c.total_score, 0).label("total_score"),
-            User.level
+            func.coalesce(score_sum.c.total_score, 0).label("total_score")
         )
         .outerjoin(score_sum, User.id == score_sum.c.user_id)
         .order_by(
@@ -296,48 +312,66 @@ def ranking():
         .all()
     )
 
-    rankings = [(name, int(total_score), level) for name, total_score, level in rows]
+    rankings = [(name, int(total)) for name, total in rows]
     current_user = User.query.get(session["user_id"])
+
     return render_template("ranking.html", rankings=rankings, user=current_user)
 
-
-# --- Game Setup & Play
 @app.route("/game_setup", methods=["GET", "POST"])
 def game_setup():
     if not require_login():
         return redirect(url_for("login"))
+
     if request.method == "POST":
+        # Pega temas enviados pelo formulário
         selected = request.form.getlist("themes")
         valid_themes = [key for key, label in THEMES]
         selected = [t for t in selected if t in valid_themes]
+
         if not selected:
             flash("Selecione ao menos um tema.", "warning")
             return redirect(url_for("game_setup"))
-        g = Game(user_id=session["user_id"], rounds_count=5, themes_json=json.dumps(selected))
+
+        # Cria um novo jogo vinculado ao usuário
+        g = Game(
+            user_id=session["user_id"],
+            rounds_count=5,
+            themes_json=json.dumps(selected)
+        )
         db.session.add(g)
         db.session.commit()
+
+        # Redireciona corretamente para a partida
         return redirect(url_for("game_play", game_id=g.id))
+
     return render_template("game_setup.html", themes=THEMES)
+
+
+
 
 
 def pick_card_for_theme(theme, difficulty=1):
     q = Card.query.filter_by(theme=theme, difficulty=difficulty)
     return q.order_by(db.func.random()).first()
 
+
 @app.route("/game/play/<int:game_id>")
 def game_play(game_id):
-    if not require_login():
+    if not require_login(): 
         return redirect(url_for("login"))
-
+        
     g = Game.query.get_or_404(game_id)
     user = User.query.get(session["user_id"])
 
+    # Próximo round baseado no número de rounds finalizados
     current_number = len([r for r in g.rounds if r.finished]) + 1
+
     if current_number > g.rounds_count:
         g.status = "finished"
         db.session.commit()
         return redirect(url_for("game_result", game_id=g.id))
 
+    # Pega o round existente ou cria um novo
     current = Round.query.filter_by(game_id=g.id, number=current_number).first()
     if not current:
         theme = g.themes[(current_number - 1) % len(g.themes)]
@@ -346,18 +380,17 @@ def game_play(game_id):
             flash(f"Nenhum card disponível para o tema '{theme}'.", "warning")
             return redirect(url_for("index"))
 
-        shuffled_hints = random.sample(card.hints, len(card.hints))  # embaralha só uma vez
         current = Round(
             game_id=g.id,
             number=current_number,
             card_id=card.id,
             started_at=datetime.utcnow(),
-            ends_at=datetime.utcnow() + timedelta(seconds=60),
-            shuffled_hints_json=json.dumps(shuffled_hints, ensure_ascii=False)
+            ends_at=datetime.utcnow() + timedelta(seconds=60),  # tempo padrão
         )
         db.session.add(current)
         db.session.commit()
 
+    # Controle de tempo
     if datetime.utcnow() > current.ends_at and not current.finished:
         current.finished = True
         db.session.commit()
@@ -366,12 +399,18 @@ def game_play(game_id):
 
     card = current.card
 
-    # Mostra apenas as dicas já solicitadas
-    hints = current.shuffled_hints[:current.requested_hints]
+    # 🔹 NOVO: Embaralha as dicas apenas uma vez por rodada
+    if not current.hints_order:
+        all_hints = card.hints[:]
+        random.shuffle(all_hints)
+        current.hints_order = json.dumps(all_hints, ensure_ascii=False)
+        db.session.commit()
 
-    # show_answer indica se a rodada terminou
+    # Sempre carrega da ordem salva
+    all_hints = json.loads(current.hints_order)
+    hints = all_hints[:current.requested_hints]
+
     show_answer = current.finished and current.user_guess is not None
-
     seconds_left = max(0, int((current.ends_at - datetime.utcnow()).total_seconds()))
     round_points = card_points(current.requested_hints)
 
@@ -388,82 +427,25 @@ def game_play(game_id):
     )
 
 
-@app.route("/game/guess/<int:round_id>", methods=["POST"])
-def game_guess(round_id):
-    # Verifica se o usuário está logado
-    if not require_login():
-        return redirect(url_for("login"))
 
-    # Recupera a rodada e o jogo correspondente
+
+@app.route("/game/hint/<int:round_id>", methods=["POST"])
+def game_hint(round_id):
+    if not require_login(): return redirect(url_for("login"))
     r = Round.query.get_or_404(round_id)
-    g = r.game
-    user = User.query.get(g.user_id)  # Pega o usuário da partida
-
-    # Se a rodada já estiver finalizada, redireciona para o jogo
-    if r.finished:
-        return redirect(url_for("game_play", game_id=g.id))
-
-    # Recupera o palpite do usuário
-    guess = request.form.get("guess", "").strip()
-    r.user_guess = guess
-
-    # Atualiza o contador de dicas, se necessário
-    if r.requested_hints == 0:
-        r.requested_hints = 1
-
-    # Verifica se o palpite está correto
-    correct = normalize(guess) == normalize(r.card.answer)
-    
-    # Calcula os pontos da rodada
-    r.user_points = card_points(r.requested_hints) if correct else 0
-    g.user_score += r.user_points
-    r.finished = True
-
-    # Salva alterações no banco
-    db.session.commit()
-
-    # Atualiza o nível do usuário
-    old_level = user.level
-    total_score = sum(game.user_score for game in user.games)
-    user.level = total_score // 100 + 1
-    db.session.commit()
-
-    # Mensagem de nível up
-    if user.level > old_level:
-        flash(f"🎉 Parabéns! Você subiu para o nível {user.level}!", "success")
-
-    # Mensagem de acerto ou erro
-    flash(
-        "Parabéns! Você acertou!" if correct else f"Errou! Resposta: {r.card.answer}",
-        "success" if correct else "danger"
-    )
-
-    # Redireciona para o jogo
-    return redirect(url_for("game_play", game_id=g.id))
-
-
-@app.route("/game/request_hint/<int:round_id>", methods=["POST"])
-def game_request_hint(round_id):
-    if not require_login():
-        return redirect(url_for("login"))
-
-    r = Round.query.get_or_404(round_id)
-    if r.requested_hints < 10:
+    if r.finished: return redirect(url_for("game_play", game_id=r.game_id))
+    if r.requested_hints < len(r.card.hints):
         r.requested_hints += 1
+        if r.ends_at is None:
+            r.started_at = datetime.utcnow()
+            r.ends_at = datetime.utcnow() + timedelta(seconds=30)
         db.session.commit()
-        flash("Dica solicitada! Veja abaixo.", "success")
-    else:
-        flash("Você já usou todas as 10 dicas.", "warning")
-    
     return redirect(url_for("game_play", game_id=r.game_id))
-
-
 
 
 @app.route("/game/extra_hint/<int:round_id>", methods=["POST"])
 def game_extra_hint(round_id):
-    if not require_login():
-        return redirect(url_for("login"))
+    if not require_login(): return redirect(url_for("login"))
     r = Round.query.get_or_404(round_id)
     user = User.query.get(session["user_id"])
     cost = 5
@@ -477,50 +459,56 @@ def game_extra_hint(round_id):
     return redirect(url_for("game_play", game_id=r.game_id))
 
 
+@app.route("/game/guess/<int:round_id>", methods=["POST"])
+def game_guess(round_id):
+    if not require_login(): return redirect(url_for("login"))
+    r = Round.query.get_or_404(round_id)
+    g = r.game
+    if r.finished:
+        return redirect(url_for("game_play", game_id=g.id))
+
+    guess = request.form.get("guess", "").strip()
+    r.user_guess = guess
+    if r.requested_hints == 0:
+        r.requested_hints = 1
+
+    correct = normalize(guess) == normalize(r.card.answer)
+    r.user_points = card_points(r.requested_hints) if correct else 0
+    g.user_score += r.user_points
+    r.finished = True
+    db.session.commit()
+
+    if correct:
+        flash("Parabéns! Você acertou!", "success")
+    else:
+        flash(f"Errou! Resposta: {r.card.answer}", "danger")
+
+    return redirect(url_for("game_play", game_id=g.id))
+
+
 @app.route("/game/result/<int:game_id>")
 def game_result(game_id):
     g = Game.query.get_or_404(game_id)
     user = User.query.get(g.user_id)
-
-    # Calcula se houve level up
-    total_score = sum(game.user_score for game in user.games)
-    new_level = total_score // 100 + 1
-    old_level = user.level
-    level_up = new_level > old_level
-
-    # Atualiza o nível do usuário no banco
-    user.level = new_level
-    db.session.commit()
-
-    return render_template(
-        "result.html",
-        game=g,
-        user=user,
-        level_up=level_up,
-        new_level=new_level
-    )
+    return render_template("result.html", game=g, user=user)
 
 
 @app.route("/coins/watch-ad", methods=["POST"])
 def watch_ad():
-    if not require_login():
-        return redirect(url_for("login"))
+    if not require_login(): return redirect(url_for("login"))
     user = User.query.get(session["user_id"])
     user.coins += 10
     db.session.commit()
     flash("Obrigado por assistir! Você ganhou 10 moedas.", "success")
     return redirect(url_for("index"))
 
-
 @app.route("/termos")
 def termos():
     return render_template("termos.html")
 
-
 @app.route("/privacidade")
 def privacidade():
     return render_template("privacidade.html")
-
 
 @app.route("/aviso")
 def aviso():
@@ -532,12 +520,14 @@ def admin_add_card():
     if not is_admin():
         flash("Acesso negado.", "danger")
         return redirect(url_for("index"))
+
     if request.method == "POST":
         theme = request.form["theme"]
         title = request.form["title"]
         answer = request.form["answer"]
         hints = [request.form.get(f"hint{i}", "").strip() for i in range(1, 11)]
         hints = [h for h in hints if h]
+
         c = Card(
             theme=theme,
             title=title,
@@ -547,17 +537,109 @@ def admin_add_card():
         )
         db.session.add(c)
         db.session.commit()
-        flash("Cartinha criada!", "success")
+
+        # --- salvar aliases ---
+        aliases = [answer]  # sempre inclui a resposta como alias
+        extra_aliases = request.form.get("aliases", "")
+        if extra_aliases:
+            aliases += [a.strip() for a in extra_aliases.split(",") if a.strip()]
+
+        for alias in aliases:
+            db.session.add(CardAlias(card_id=c.id, alias=alias))
+        db.session.commit()
+        # -----------------------
+
+        flash("Cartinha criada com sucesso, incluindo aliases!", "success")
         return redirect(url_for("admin_add_card"))
+
     return render_template("admin_add_card.html", themes=THEMES)
 
 
-# --- CLI
+
+
 @app.cli.command("init-db")
 def init_db():
     db.drop_all()
     db.create_all()
     print("Banco criado e pronto!")
+
+
+def fix_text(text):
+    """
+    Tenta limpar texto para UTF-8, normalizando acentos e removendo caracteres inválidos.
+    """
+    if not text:
+        return ""
+    # Normaliza acentos
+    text = unicodedata.normalize("NFKC", text)
+    # Remove caracteres não imprimíveis
+    text = ''.join(c for c in text if c.isprintable())
+    return text
+
+@app.cli.command("fix-hints-robust")
+@with_appcontext
+def fix_hints_robust():
+    """Percorre todos os cards e corrige hints JSON, dica por dica."""
+    cards = Card.query.all()
+    fixed_count = 0
+    failed_cards = []
+
+    for c in cards:
+        if not c.hints_json:
+            continue
+        try:
+            hints = json.loads(c.hints_json)
+            if not isinstance(hints, list):
+                raise ValueError("Hints não é uma lista")
+            # Corrige cada dica individualmente
+            fixed_hints = [fix_text(h) for h in hints]
+            c.hints_json = json.dumps(fixed_hints, ensure_ascii=False)
+            db.session.commit()
+            fixed_count += 1
+            print(f"Card {c.id} corrigido com {len(fixed_hints)} dicas")
+        except Exception as e:
+            failed_cards.append(c.id)
+            print(f"Falha no card {c.id}: {e}")
+
+    print(f"\nCorreção concluída. Cards corrigidos: {fixed_count}")
+    if failed_cards:
+        print("Cards que falharam e precisam revisão manual:", failed_cards)
+
+
+@app.cli.command("fix-hints")
+def fix_hints():
+    """Corrige os acentos quebrados nas dicas dos cards."""
+    cards = Card.query.all()
+    total = 0
+
+    for c in cards:
+        try:
+            hints = json.loads(c.hints_json)
+        except Exception as e:
+            print(f"Erro ao ler JSON do card {c.id}: {e}")
+            continue
+
+        changed = False
+        fixed_hints = []
+
+        for h in hints:
+            try:
+                # tenta normalizar UTF-8 direto
+                h.encode("utf-8")
+                fixed_hints.append(h)
+            except UnicodeEncodeError:
+                # reencode de Latin1 → UTF-8
+                h_fixed = h.encode("latin1").decode("utf-8", errors="ignore")
+                fixed_hints.append(h_fixed)
+                changed = True
+
+        if changed:
+            c.hints_json = json.dumps(fixed_hints, ensure_ascii=False)
+            db.session.commit()
+            total += 1
+            print(f"Corrigido card {c.id}")
+
+    print(f"Processo concluído. Total de cards corrigidos: {total}")
 
 
 if __name__ == "__main__":
