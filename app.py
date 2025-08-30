@@ -296,7 +296,20 @@ def ranking():
 def game_setup():
     if not require_login():
         return redirect(url_for("login"))
+    
+    user = User.query.get(session["user_id"])
+
     if request.method == "POST":
+        # Custo da partida
+        cost = 5
+        if user.coins < cost:
+            flash(f"Você precisa de {cost} moedas para iniciar uma partida.", "warning")
+            return redirect(url_for("index"))
+        
+        # Deduz as moedas
+        user.coins -= cost
+        db.session.commit()
+
         selected = request.form.getlist("themes")
         valid_themes = [key for key, label in THEMES]
         selected = [t for t in selected if t in valid_themes]
@@ -313,8 +326,11 @@ def game_setup():
         )
         db.session.add(g)
         db.session.commit()
+        flash(f"Você gastou {cost} moedas para iniciar a partida.", "info")
         return redirect(url_for("game_play", game_id=g.id))
-    return render_template("game_setup.html", themes=THEMES)
+    
+    return render_template("game_setup.html", themes=THEMES, user=user)
+
 
 
 def pick_card_for_theme(theme, difficulty=1):
