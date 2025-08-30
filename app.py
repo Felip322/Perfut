@@ -452,31 +452,7 @@ def game_extra_hint(round_id):
     return redirect(url_for("game_play", game_id=r.game_id))
 
 
-@app.route("/game/guess/<int:round_id>", methods=["POST"])
-def game_guess(round_id):
-    if not require_login(): return redirect(url_for("login"))
-    r = Round.query.get_or_404(round_id)
-    g = r.game
-    if r.finished:
-        return redirect(url_for("game_play", game_id=g.id))
 
-    guess = request.form.get("guess", "").strip()
-    r.user_guess = guess
-    if r.requested_hints == 0:
-        r.requested_hints = 1
-
-    correct = normalize(guess) == normalize(r.card.answer)
-    r.user_points = card_points(r.requested_hints) if correct else 0
-    g.user_score += r.user_points
-    r.finished = True
-    db.session.commit()
-
-    if correct:
-        flash("Parabéns! Você acertou!", "success")
-    else:
-        flash(f"Errou! Resposta: {r.card.answer}", "danger")
-
-    return redirect(url_for("game_play", game_id=g.id))
 
 
 @app.route("/game/result/<int:game_id>")
