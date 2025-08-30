@@ -145,8 +145,10 @@ def is_admin():
 def update_user_level(user):
     # Soma todos os pontos das partidas do usuário
     total_score = sum(game.user_score for game in user.games)
+    
     # Calcula o nível (1 nível a cada 100 pontos)
     user.level = total_score // 100 + 1
+    
     db.session.commit()
 # ----------------------
 # Routes (Auth, Game, Admin)
@@ -378,9 +380,13 @@ def game_guess(round_id):
     # Verifica se acertou
     correct = normalize(guess) == normalize(r.card.answer)
     r.user_points = card_points(r.requested_hints) if correct else 0
-    g.user_score += r.user_points
-    r.finished = True
-    db.session.commit()
+g.user_score += r.user_points
+r.finished = True
+
+db.session.commit()
+
+# Atualiza o nível do usuário
+update_user_level(g.user)
 
     # Atualiza nível do usuário
     old_level = user.level
