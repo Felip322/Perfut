@@ -114,6 +114,7 @@ THEMES = [
     ("jogador_aposentado", "Jogador aposentado"),
     ("estadio", "Estádio"),
     ("tecnico", "Técnicos"),
+    ("ano", "Ano"), 
 ]
 
 
