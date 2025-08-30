@@ -3,9 +3,6 @@ import random
 import json
 import unicodedata
 import re
-
-
-from flask.cli import with_appcontext
 from datetime import datetime, timedelta
 import socket
 import threading
@@ -65,8 +62,6 @@ class User(db.Model):
     coins = db.Column(db.Integer, default=50)
     level = db.Column(db.Integer, default=1)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    is_admin = db.Column(db.Boolean, default=False)  # <<< aqui
-
 
     def set_password(self, pwd):
         self.password_hash = generate_password_hash(pwd)
@@ -105,15 +100,6 @@ class Game(db.Model):
     def themes(self):
         return json.loads(self.themes_json)
 
-class CardAlias(db.Model):
-    __tablename__ = "card_aliases"
-    id = db.Column(db.Integer, primary_key=True)
-    card_id = db.Column(db.Integer, db.ForeignKey("cards.id"), nullable=False)
-    alias = db.Column(db.String(120), nullable=False)
-
-    card = db.relationship("Card", backref="aliases")
-
-
 
 class Round(db.Model):
     __tablename__ = "rounds"
@@ -129,12 +115,8 @@ class Round(db.Model):
     started_at = db.Column(db.DateTime, default=datetime.utcnow)
     ends_at = db.Column(db.DateTime)
 
-    # 🔹 Novo campo para salvar a ordem embaralhada das dicas
-    hints_order = db.Column(db.Text)
-
     game = db.relationship("Game", backref="rounds")
     card = db.relationship("Card")
-
 
 
 # ----------------------
@@ -159,18 +141,18 @@ def require_login():
     return True
 
 def normalize(text: str) -> str:
+    # Remove acentos
     text = ''.join(
         c for c in unicodedata.normalize("NFD", text)
         if unicodedata.category(c) != 'Mn'
-    ).lower().strip()
-    return re.sub(r'[^a-z0-9 ]', '', text)  # só letras, números e espaço
+    )
+    # Minúsculas e remove tudo que não for letra, número ou espaço
+    text = re.sub(r'[^a-z0-9 ]', '', text.lower())
+    # Remove múltiplos espaços
+    return re.sub(r'\s+', ' ', text).strip()
 
 def is_admin():
-    if "user_id" not in session:
-        return False
-    u = User.query.get(session["user_id"])
-    return u.is_admin if u else False
-
+    return "user_id" in session and session["user_id"] == 1
 
 
 # ----------------------
@@ -399,15 +381,9 @@ def game_play(game_id):
 
     card = current.card
 
-    # 🔹 NOVO: Embaralha as dicas apenas uma vez por rodada
-    if not current.hints_order:
-        all_hints = card.hints[:]
-        random.shuffle(all_hints)
-        current.hints_order = json.dumps(all_hints, ensure_ascii=False)
-        db.session.commit()
-
-    # Sempre carrega da ordem salva
-    all_hints = json.loads(current.hints_order)
+    # Embaralhar as dicas a cada rodada
+    all_hints = card.hints[:]  
+    random.shuffle(all_hints)
     hints = all_hints[:current.requested_hints]
 
     show_answer = current.finished and current.user_guess is not None
@@ -428,19 +404,36 @@ def game_play(game_id):
 
 
 
+@app.route("/game/guess/<int:round_id>", methods=["POST"])
+def game_guess(round_id):
+    if not require_login():
+        return redirect(url_for("login"))
 
-@app.route("/game/hint/<int:round_id>", methods=["POST"])
-def game_hint(round_id):
-    if not require_login(): return redirect(url_for("login"))
     r = Round.query.get_or_404(round_id)
-    if r.finished: return redirect(url_for("game_play", game_id=r.game_id))
-    if r.requested_hints < len(r.card.hints):
-        r.requested_hints += 1
-        if r.ends_at is None:
-            r.started_at = datetime.utcnow()
-            r.ends_at = datetime.utcnow() + timedelta(seconds=30)
-        db.session.commit()
-    return redirect(url_for("game_play", game_id=r.game_id))
+    g = r.game
+    if r.finished:
+        return redirect(url_for("game_play", game_id=g.id))
+
+    guess = request.form.get("guess", "").strip()
+    r.user_guess = guess
+    if r.requested_hints == 0:
+        r.requested_hints = 1
+
+    # Normaliza resposta do usuário e do card
+    correct = normalize(guess) == normalize(r.card.answer)
+    
+    r.user_points = card_points(r.requested_hints) if correct else 0
+    g.user_score += r.user_points
+    r.finished = True
+    db.session.commit()
+
+    if correct:
+        flash("Parabéns! Você acertou!", "success")
+    else:
+        flash(f"Errou! Resposta: {r.card.answer}", "danger")
+
+    return redirect(url_for("game_play", game_id=g.id))
+
 
 
 @app.route("/game/extra_hint/<int:round_id>", methods=["POST"])
@@ -520,41 +513,25 @@ def admin_add_card():
     if not is_admin():
         flash("Acesso negado.", "danger")
         return redirect(url_for("index"))
-
     if request.method == "POST":
         theme = request.form["theme"]
         title = request.form["title"]
         answer = request.form["answer"]
         hints = [request.form.get(f"hint{i}", "").strip() for i in range(1, 11)]
         hints = [h for h in hints if h]
-
         c = Card(
-            theme=theme,
-            title=title,
-            answer=answer,
-            hints_json=json.dumps(hints, ensure_ascii=False),
-            difficulty=int(request.form.get("difficulty", 1))
-        )
+    theme=theme,
+    title=title,
+    answer=answer,
+    hints_json=json.dumps(hints, ensure_ascii=False),  # <<< aqui!
+    difficulty=int(request.form.get("difficulty", 1))
+)
+
         db.session.add(c)
         db.session.commit()
-
-        # --- salvar aliases ---
-        aliases = [answer]  # sempre inclui a resposta como alias
-        extra_aliases = request.form.get("aliases", "")
-        if extra_aliases:
-            aliases += [a.strip() for a in extra_aliases.split(",") if a.strip()]
-
-        for alias in aliases:
-            db.session.add(CardAlias(card_id=c.id, alias=alias))
-        db.session.commit()
-        # -----------------------
-
-        flash("Cartinha criada com sucesso, incluindo aliases!", "success")
+        flash("Cartinha criada!", "success")
         return redirect(url_for("admin_add_card"))
-
     return render_template("admin_add_card.html", themes=THEMES)
-
-
 
 
 @app.cli.command("init-db")
@@ -562,84 +539,6 @@ def init_db():
     db.drop_all()
     db.create_all()
     print("Banco criado e pronto!")
-
-
-def fix_text(text):
-    """
-    Tenta limpar texto para UTF-8, normalizando acentos e removendo caracteres inválidos.
-    """
-    if not text:
-        return ""
-    # Normaliza acentos
-    text = unicodedata.normalize("NFKC", text)
-    # Remove caracteres não imprimíveis
-    text = ''.join(c for c in text if c.isprintable())
-    return text
-
-@app.cli.command("fix-hints-robust")
-@with_appcontext
-def fix_hints_robust():
-    """Percorre todos os cards e corrige hints JSON, dica por dica."""
-    cards = Card.query.all()
-    fixed_count = 0
-    failed_cards = []
-
-    for c in cards:
-        if not c.hints_json:
-            continue
-        try:
-            hints = json.loads(c.hints_json)
-            if not isinstance(hints, list):
-                raise ValueError("Hints não é uma lista")
-            # Corrige cada dica individualmente
-            fixed_hints = [fix_text(h) for h in hints]
-            c.hints_json = json.dumps(fixed_hints, ensure_ascii=False)
-            db.session.commit()
-            fixed_count += 1
-            print(f"Card {c.id} corrigido com {len(fixed_hints)} dicas")
-        except Exception as e:
-            failed_cards.append(c.id)
-            print(f"Falha no card {c.id}: {e}")
-
-    print(f"\nCorreção concluída. Cards corrigidos: {fixed_count}")
-    if failed_cards:
-        print("Cards que falharam e precisam revisão manual:", failed_cards)
-
-
-@app.cli.command("fix-hints")
-def fix_hints():
-    """Corrige os acentos quebrados nas dicas dos cards."""
-    cards = Card.query.all()
-    total = 0
-
-    for c in cards:
-        try:
-            hints = json.loads(c.hints_json)
-        except Exception as e:
-            print(f"Erro ao ler JSON do card {c.id}: {e}")
-            continue
-
-        changed = False
-        fixed_hints = []
-
-        for h in hints:
-            try:
-                # tenta normalizar UTF-8 direto
-                h.encode("utf-8")
-                fixed_hints.append(h)
-            except UnicodeEncodeError:
-                # reencode de Latin1 → UTF-8
-                h_fixed = h.encode("latin1").decode("utf-8", errors="ignore")
-                fixed_hints.append(h_fixed)
-                changed = True
-
-        if changed:
-            c.hints_json = json.dumps(fixed_hints, ensure_ascii=False)
-            db.session.commit()
-            total += 1
-            print(f"Corrigido card {c.id}")
-
-    print(f"Processo concluído. Total de cards corrigidos: {total}")
 
 
 if __name__ == "__main__":
