@@ -312,14 +312,18 @@ def pick_card_for_theme(theme, difficulty=1):
 def game_play(game_id):
     if not require_login():
         return redirect(url_for("login"))
+
     g = Game.query.get_or_404(game_id)
     user = User.query.get(session["user_id"])
+
+    # Determina qual rodada atual
     current_number = len([r for r in g.rounds if r.finished]) + 1
     if current_number > g.rounds_count:
         g.status = "finished"
         db.session.commit()
         return redirect(url_for("game_result", game_id=g.id))
 
+    # Busca a rodada atual ou cria uma nova
     current = Round.query.filter_by(game_id=g.id, number=current_number).first()
     if not current:
         theme = g.themes[(current_number - 1) % len(g.themes)]
@@ -337,19 +341,20 @@ def game_play(game_id):
         db.session.add(current)
         db.session.commit()
 
+    # Verifica se o tempo acabou
     if datetime.utcnow() > current.ends_at and not current.finished:
         current.finished = True
         db.session.commit()
         flash(f"Tempo esgotado! Resposta era: {current.card.answer}", "danger")
         return redirect(url_for("game_play", game_id=g.id))
 
+    # Pega todas as dicas do card
     card = current.card
     all_hints = card.hints[:]
     random.shuffle(all_hints)
 
-    # NOVO: pega apenas a última dica pedida
-    hint = all_hints[current.requested_hints - 1] if current.requested_hints > 0 else None
-    hints = [hint] if hint else []
+    # Mostra todas as dicas pedidas
+    hints = all_hints[:current.requested_hints]  # <--- mudança importante
 
     show_answer = current.finished and current.user_guess is not None
     seconds_left = max(0, int((current.ends_at - datetime.utcnow()).total_seconds()))
