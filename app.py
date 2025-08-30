@@ -344,19 +344,19 @@ def game_play(game_id):
         if not card:
             flash(f"Nenhum card disponível para o tema '{theme}'.", "warning")
             return redirect(url_for("index"))
+
+        # Sorteia a ordem das dicas e salva em hints_order_json
+        hints_order = card.hints[:]
+        random.shuffle(hints_order)
+
         current = Round(
             game_id=g.id,
             number=current_number,
             card_id=card.id,
             started_at=datetime.utcnow(),
-            ends_at=datetime.utcnow() + timedelta(seconds=60)
+            ends_at=datetime.utcnow() + timedelta(seconds=60),
+            hints_order_json=json.dumps(hints_order, ensure_ascii=False)
         )
-
-        # Sorteia a ordem das dicas e salva no banco
-        hints_list = card.hints[:]
-        random.shuffle(hints_list)
-        current.hints_order = hints_list
-
         db.session.add(current)
         db.session.commit()
 
@@ -367,8 +367,9 @@ def game_play(game_id):
         flash(f"Tempo esgotado! Resposta era: {current.card.answer}", "danger")
         return redirect(url_for("game_play", game_id=g.id))
 
-    # Pega apenas as dicas pedidas até agora, na ordem sorteada
-    hints = current.hints_order[:current.requested_hints]
+    # Pega as dicas na ordem sorteada
+    hints_order = json.loads(current.hints_order_json or "[]")
+    hints = hints_order[:current.requested_hints]
 
     show_answer = current.finished and current.user_guess is not None
     seconds_left = max(0, int((current.ends_at - datetime.utcnow()).total_seconds()))
