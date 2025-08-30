@@ -126,7 +126,7 @@ THEMES = [
     ("jogador_aposentado", "Jogador aposentado"),
     ("estadio", "Estádio"),
     ("tecnico", "Técnicos"),
-    ("ano", "Ano"),
+    ("Ano", "Ano"),
 ]
 
 def card_points(hints_used: int) -> int:
