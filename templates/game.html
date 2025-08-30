@@ -49,7 +49,9 @@
     {% if not round.finished %}
       <div class="actions">
         <form method="post" action="{{ url_for('game_hint', round_id=round.id) }}">
-          <button class="btn" type="submit" {% if round.requested_hints>=10 %}disabled{% endif %}>Pedir dica</button>
+          <button class="btn" type="submit" {% if round.requested_hints>=10 %}disabled{% endif %}>
+            Pedir dica (máx 10)
+          </button>
         </form>
 
         <form method="post" action="{{ url_for('game_extra_hint', round_id=round.id) }}">
@@ -143,7 +145,9 @@
     guessForm.addEventListener("submit", function(e){
       e.preventDefault();
       const input = this.querySelector("input[name='guess']");
-      const guess = input.value.trim().toLowerCase();
+ const guess = input.value.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+
       const correct = "{{ round.card.answer|lower }}";
 
       if(guess === correct){
