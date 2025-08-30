@@ -100,9 +100,16 @@ class Round(db.Model):
     finished = db.Column(db.Boolean, default=False)
     started_at = db.Column(db.DateTime, default=datetime.utcnow)
     ends_at = db.Column(db.DateTime)
+    shuffled_hints_json = db.Column(db.Text, nullable=True)  # ← NOVO
 
     game = db.relationship("Game", backref="rounds")
     card = db.relationship("Card")
+
+    @property
+    def shuffled_hints(self):
+        if not self.shuffled_hints_json:
+            return []
+        return json.loads(self.shuffled_hints_json)
 
 
 # ----------------------
@@ -338,12 +345,15 @@ def game_play(game_id):
         if not card:
             flash(f"Nenhum card disponível para o tema '{theme}'.", "warning")
             return redirect(url_for("index"))
+
+        shuffled_hints = random.sample(card.hints, len(card.hints))  # embaralha só uma vez
         current = Round(
             game_id=g.id,
             number=current_number,
             card_id=card.id,
             started_at=datetime.utcnow(),
-            ends_at=datetime.utcnow() + timedelta(seconds=60)
+            ends_at=datetime.utcnow() + timedelta(seconds=60),
+            shuffled_hints_json=json.dumps(shuffled_hints, ensure_ascii=False)
         )
         db.session.add(current)
         db.session.commit()
@@ -356,10 +366,8 @@ def game_play(game_id):
 
     card = current.card
 
-    # Gera dicas normais (requested_hints)
-    all_hints = card.hints[:]
-    random.shuffle(all_hints)
-    hints = all_hints[:current.requested_hints]
+    # Mostra apenas as dicas já solicitadas
+    hints = current.shuffled_hints[:current.requested_hints]
 
     # show_answer indica se a rodada terminou
     show_answer = current.finished and current.user_guess is not None
