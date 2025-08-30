@@ -360,17 +360,18 @@ def game_play(game_id):
 
     card = current.card
     all_hints = card.hints[:]
-    random.shuffle(all_hints)
 
-    # Dicas normais pedidas
+    # Dicas normais pedidas (sempre as primeiras)
     normal_hints = all_hints[:current.requested_hints]
 
-    # Dicas extras compradas, evitando repetir as normais
-    extra_hints = all_hints[current.requested_hints:current.requested_hints + current.used_extra_hints]
+    # Dicas extras compradas, sem repetir as normais
+    extra_hints_pool = all_hints[current.requested_hints:]  # remove normal
+    random.shuffle(extra_hints_pool)
+    extra_hints = extra_hints_pool[:current.used_extra_hints]
 
-    # Junta todas as dicas a serem exibidas, sem ultrapassar o total disponível
+    # Junta as dicas que vão aparecer
     hints = normal_hints + extra_hints
-    hints = hints[:10]  # garante que no máximo 10 dicas apareçam
+    hints = hints[:10]  # garante máximo de 10 dicas
 
     # Flags e informações para o template
     show_answer = current.finished and current.user_guess is not None
