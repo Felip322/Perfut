@@ -389,6 +389,30 @@ def game_guess(round_id):
     )
     return redirect(url_for("game_play", game_id=g.id))
 
+
+@app.route("/game/hint/<int:round_id>", methods=["POST"])
+def game_hint(round_id):
+    if not require_login():
+        return redirect(url_for("login"))
+
+    r = Round.query.get_or_404(round_id)
+
+    if r.finished:
+        return redirect(url_for("game_play", game_id=r.game_id))
+
+    # Limita o máximo de 10 dicas normais
+    if r.requested_hints < 10:
+        r.requested_hints += 1
+        db.session.commit()
+        flash("Dica liberada! Veja abaixo.", "info")
+    else:
+        flash("Máximo de dicas atingido.", "warning")
+
+    return redirect(url_for("game_play", game_id=r.game_id))
+
+
+
+
 @app.route("/game/extra_hint/<int:round_id>", methods=["POST"])
 def game_extra_hint(round_id):
     if not require_login():
