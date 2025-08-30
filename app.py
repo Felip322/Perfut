@@ -311,6 +311,7 @@ def game_play(game_id):
         g.status = "finished"
         db.session.commit()
         return redirect(url_for("game_result", game_id=g.id))
+
     current = Round.query.filter_by(game_id=g.id, number=current_number).first()
     if not current:
         theme = g.themes[(current_number - 1) % len(g.themes)]
@@ -327,18 +328,25 @@ def game_play(game_id):
         )
         db.session.add(current)
         db.session.commit()
+
     if datetime.utcnow() > current.ends_at and not current.finished:
         current.finished = True
         db.session.commit()
         flash(f"Tempo esgotado! Resposta era: {current.card.answer}", "danger")
         return redirect(url_for("game_play", game_id=g.id))
+
     card = current.card
     all_hints = card.hints[:]
     random.shuffle(all_hints)
-    hints = all_hints[:current.requested_hints]
+
+    # NOVO: pega apenas a última dica pedida
+    hint = all_hints[current.requested_hints - 1] if current.requested_hints > 0 else None
+    hints = [hint] if hint else []
+
     show_answer = current.finished and current.user_guess is not None
     seconds_left = max(0, int((current.ends_at - datetime.utcnow()).total_seconds()))
     round_points = card_points(current.requested_hints)
+
     return render_template(
         "game.html",
         game=g,
@@ -350,6 +358,7 @@ def game_play(game_id):
         user=user,
         card_points=round_points
     )
+
 
 @app.route("/game/guess/<int:round_id>", methods=["POST"])
 def game_guess(round_id):
