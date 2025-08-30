@@ -378,7 +378,7 @@ def game_guess(round_id):
 
     r = Round.query.get_or_404(round_id)
     g = r.game
-    user = User.query.get(g.user_id)  # pega o usuário da partida
+    user = User.query.get(g.user_id)
 
     if r.finished:
         return redirect(url_for("game_play", game_id=g.id))
@@ -393,18 +393,16 @@ def game_guess(round_id):
     r.user_points = card_points(r.requested_hints) if correct else 0
     g.user_score += r.user_points
     r.finished = True
-
     db.session.commit()
 
-    # Atualiza o nível do usuário
+    # Atualiza nível do usuário
     old_level = user.level
     total_score = sum(game.user_score for game in user.games)
-    user.level = total_score // 100 + 1
+    new_level = total_score // 100 + 1
+    user.level = new_level
     db.session.commit()
 
-    # Mensagem de nível up
-    if user.level > old_level:
-        flash(f"🎉 Parabéns! Você subiu para o nível {user.level}!", "success")
+    level_up = new_level > old_level
 
     # Mensagem de acerto/erro
     flash(
@@ -412,7 +410,20 @@ def game_guess(round_id):
         "success" if correct else "danger"
     )
 
-    return redirect(url_for("game_play", game_id=g.id))
+    return render_template(
+        "game.html",
+        game=g,
+        round=r,
+        card=r.card,
+        hints=r.card.hints[:r.requested_hints],
+        seconds_left=0,
+        show_answer=True,
+        user=user,
+        card_points=r.user_points,
+        level_up=level_up,
+        new_level=new_level
+    )
+
 
 
 @app.route("/game/extra_hint/<int:round_id>", methods=["POST"])
