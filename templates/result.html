@@ -14,12 +14,16 @@
     </div>
   </div>
 
+  {% if level_up %}
+    <div class="level-up">🎉 Parabéns! Você subiu para o nível {{ new_level }}!</div>
+  {% endif %}
+
   {% if game.user_score >= 50 %}
     <div class="trophy">Parabéns! Você entrou no ranking!</div>
   {% elif game.user_score >= 30 %}
     <div class="trophy">Bom resultado! Continue jogando para subir no ranking!</div>
   {% else %}
-    <div class="trophy">Continue treinando - você consegue!</div>
+    <div class="trophy">Continue treinando — você consegue!</div>
   {% endif %}
 
   <a class="btn primary" href="{{ url_for('index') }}">Jogar novamente</a>
@@ -36,13 +40,13 @@
   margin: 50px auto;
   text-align: center;
   color: #fff;
-  animation: fadeIn 0.8s ease; /* card aparece suavemente */
+  animation: fadeIn 0.8s ease;
 }
 
 .result-logo {
   width: 120px;
   margin-bottom: 20px;
-  animation: zoomIn 1s ease; /* logo cresce */
+  animation: zoomIn 1s ease;
 }
 
 .result h2 {
@@ -95,6 +99,14 @@
   animation: fadeIn 1.2s ease;
 }
 
+.level-up {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #00ff88;
+  margin-bottom: 20px;
+  animation: bounce 1s ease;
+}
+
 .btn.primary {
   background: #00ff88;
   color: #0b1f14;
@@ -107,7 +119,7 @@
   transition: 0.25s;
   font-size: 1rem;
   box-shadow: 0 4px 12px rgba(0,255,150,0.25);
-  animation: pulse 2s infinite; /* botão pulsa continuamente */
+  animation: pulse 2s infinite;
 }
 
 .btn.primary:hover {
@@ -137,6 +149,12 @@
 @keyframes pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.08); }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-10px); }
+  60% { transform: translateY(-5px); }
 }
 </style>
 {% endblock %}
