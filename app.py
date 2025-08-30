@@ -357,15 +357,12 @@ def game_play(game_id):
 
     card = current.card
     all_hints = card.hints[:]
-random.shuffle(all_hints)
+    random.shuffle(all_hints)
 
-# Total de dicas a mostrar = requested + usadas extras, limitado ao máximo disponível
-total_hints = min(current.requested_hints + current.used_extra_hints, len(all_hints))
-hints = all_hints[:total_hints]
+    # Considera dicas extras
+    total_hints = min(current.requested_hints + current.used_extra_hints, len(all_hints))
+    hints = all_hints[:total_hints]
 
-
-
-    
     show_answer = current.finished and current.user_guess is not None
     seconds_left = max(0, int((current.ends_at - datetime.utcnow()).total_seconds()))
     round_points = card_points(current.requested_hints)
