@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 from sqlalchemy import func
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
-
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -21,21 +20,20 @@ app.config["SECRET_KEY"] = os.environ.get("PERFUT_SECRET", "dev-secret-change-me
 db_url = os.getenv("DATABASE_URL", "sqlite:///perfut.db")
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
-
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# Config email
+# Email
 app.config["MAIL_SERVER"] = "smtp.gmail.com"
 app.config["MAIL_PORT"] = 587
 app.config["MAIL_USE_TLS"] = True
 app.config["MAIL_USERNAME"] = os.environ.get("MAIL_USER")
 app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASS")
 app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_USER")
-
 mail = Mail(app)
+
 s = URLSafeTimedSerializer(app.config["SECRET_KEY"])
 
 # ----------------------
@@ -106,6 +104,7 @@ class Round(db.Model):
     game = db.relationship("Game", backref="rounds")
     card = db.relationship("Card")
 
+
 # ----------------------
 # Utilities
 # ----------------------
@@ -115,18 +114,20 @@ THEMES = [
     ("jogador_aposentado", "Jogador aposentado"),
     ("estadio", "Estádio"),
     ("tecnico", "Técnicos"),
-    ("ano", "Ano"),  # novo tema adicionado
 ]
+
 
 def card_points(hints_used: int) -> int:
     base = 10 - max(hints_used - 1, 0)
     return max(base, 1)
+
 
 def require_login():
     if "user_id" not in session:
         flash("Faça login para jogar.", "warning")
         return False
     return True
+
 
 def normalize(text: str) -> str:
     text = ''.join(
@@ -136,27 +137,58 @@ def normalize(text: str) -> str:
     text = re.sub(r'[^a-z0-9 ]', '', text.lower())
     return re.sub(r'\s+', ' ', text).strip()
 
+
 def is_admin():
     return "user_id" in session and session["user_id"] == 1
 
-# Atualiza nível do usuário com base nos pontos acumulados
-def update_user_level(user):
-    total_score = sum(game.user_score for game in user.games)
-    new_level = total_score // 100 + 1
-    if new_level > user.level:
-        user.level = new_level
+
+# ----------------------
+# Routes (Auth, Game, Admin)
+# ----------------------
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        name = request.form["name"].strip()
+        email = request.form["email"].strip().lower()
+        password = request.form["password"]
+        if not name or not email or not password:
+            flash("Preencha todos os campos.", "danger")
+            return redirect(url_for("register"))
+        if User.query.filter_by(email=email).first():
+            flash("E-mail já cadastrado.", "danger")
+            return redirect(url_for("register"))
+        u = User(name=name, email=email)
+        u.set_password(password)
+        db.session.add(u)
         db.session.commit()
-        flash(f"🎉 Parabéns! Você subiu para o nível {new_level}!", "success")
+        session["user_id"] = u.id
+        flash("Cadastro realizado! Boa sorte no PERFUT!", "success")
+        return redirect(url_for("index"))
+    return render_template("register.html")
 
-# ----------------------
-# Auth routes
-# ----------------------
-# (registro, login, logout e reset de senha mantidos iguais ao código original)
-# ...
 
-# ----------------------
-# Index & setup
-# ----------------------
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form["email"].strip().lower()
+        password = request.form["password"]
+        u = User.query.filter_by(email=email).first()
+        if not u or not u.check_password(password):
+            flash("Credenciais inválidas.", "danger")
+            return redirect(url_for("login"))
+        session["user_id"] = u.id
+        flash("Bem-vindo de volta!", "success")
+        return redirect(url_for("index"))
+    return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("Você saiu da sua conta.", "info")
+    return redirect(url_for("index"))
+
+
 @app.route("/")
 def index():
     user = None
@@ -164,6 +196,86 @@ def index():
         user = User.query.get(session["user_id"])
     return render_template("index.html", user=user, themes=THEMES)
 
+
+# --- Reset & Forgot Password
+@app.route("/reset_password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    try:
+        email = s.loads(token, salt="password-reset", max_age=3600)
+    except Exception:
+        flash("Link inválido ou expirado.", "danger")
+        return redirect(url_for("forgot_password"))
+    user = User.query.filter_by(email=email).first_or_404()
+    if request.method == "POST":
+        new_pwd = request.form["password"]
+        user.set_password(new_pwd)
+        db.session.commit()
+        flash("Senha redefinida com sucesso! Faça login.", "success")
+        return redirect(url_for("login"))
+    return render_template("reset_password.html")
+
+
+@app.route("/forgot_password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form["email"].strip().lower()
+        user = User.query.filter_by(email=email).first()
+        if user:
+            token = s.dumps(email, salt="password-reset")
+            reset_url = url_for("reset_password", token=token, _external=True)
+            try:
+                msg = Message(
+                    subject="Redefinição de senha - PERFUT",
+                    recipients=[email],
+                    body=f"Olá {user.name},\n\nPara redefinir sua senha clique no link abaixo (expira em 1 hora):\n{reset_url}\n\nSe não foi você, ignore este e-mail."
+                )
+                mail.send(msg)
+                flash("Enviamos um link de redefinição para seu e-mail.", "info")
+            except Exception as e:
+                print("Erro ao enviar email:", e)
+                flash("Erro ao enviar o e-mail de recuperação.", "danger")
+        else:
+            flash("E-mail não encontrado.", "danger")
+        return redirect(url_for("login"))
+    return render_template("forgot_password.html")
+
+
+# --- Ranking
+@app.route("/ranking")
+def ranking():
+    if "user_id" not in session:
+        flash("Faça login para ver o ranking.", "warning")
+        return redirect(url_for("login"))
+
+    score_sum = (
+        db.session.query(
+            Game.user_id,
+            func.coalesce(func.sum(Game.user_score), 0).label("total_score")
+        )
+        .group_by(Game.user_id)
+        .subquery()
+    )
+
+    rows = (
+        db.session.query(
+            User.name,
+            func.coalesce(score_sum.c.total_score, 0).label("total_score")
+        )
+        .outerjoin(score_sum, User.id == score_sum.c.user_id)
+        .order_by(
+            User.level.desc(),
+            score_sum.c.total_score.desc(),
+            User.coins.desc(),
+            User.name.asc()
+        )
+        .all()
+    )
+    rankings = [(name, int(total)) for name, total in rows]
+    current_user = User.query.get(session["user_id"])
+    return render_template("ranking.html", rankings=rankings, user=current_user)
+
+
+# --- Game Setup & Play
 @app.route("/game_setup", methods=["GET", "POST"])
 def game_setup():
     if not require_login():
@@ -181,22 +293,26 @@ def game_setup():
         return redirect(url_for("game_play", game_id=g.id))
     return render_template("game_setup.html", themes=THEMES)
 
+
 def pick_card_for_theme(theme, difficulty=1):
     q = Card.query.filter_by(theme=theme, difficulty=difficulty)
     return q.order_by(db.func.random()).first()
 
+
 @app.route("/game/play/<int:game_id>")
 def game_play(game_id):
-    if not require_login(): 
+    if not require_login():
         return redirect(url_for("login"))
+
     g = Game.query.get_or_404(game_id)
     user = User.query.get(session["user_id"])
+
     current_number = len([r for r in g.rounds if r.finished]) + 1
     if current_number > g.rounds_count:
         g.status = "finished"
         db.session.commit()
-        update_user_level(user)  # Atualiza nível ao final do jogo
         return redirect(url_for("game_result", game_id=g.id))
+
     current = Round.query.filter_by(game_id=g.id, number=current_number).first()
     if not current:
         theme = g.themes[(current_number - 1) % len(g.themes)]
@@ -204,25 +320,37 @@ def game_play(game_id):
         if not card:
             flash(f"Nenhum card disponível para o tema '{theme}'.", "warning")
             return redirect(url_for("index"))
-        current = Round(game_id=g.id, number=current_number, card_id=card.id,
-                        started_at=datetime.utcnow(), ends_at=datetime.utcnow() + timedelta(seconds=60))
+        current = Round(
+            game_id=g.id,
+            number=current_number,
+            card_id=card.id,
+            started_at=datetime.utcnow(),
+            ends_at=datetime.utcnow() + timedelta(seconds=60)
+        )
         db.session.add(current)
         db.session.commit()
+
     if datetime.utcnow() > current.ends_at and not current.finished:
         current.finished = True
         db.session.commit()
         flash(f"Tempo esgotado! Resposta era: {current.card.answer}", "danger")
         return redirect(url_for("game_play", game_id=g.id))
+
     card = current.card
     all_hints = card.hints[:]
     random.shuffle(all_hints)
     hints = all_hints[:current.requested_hints]
+
     show_answer = current.finished and current.user_guess is not None
     seconds_left = max(0, int((current.ends_at - datetime.utcnow()).total_seconds()))
     round_points = card_points(current.requested_hints)
-    return render_template("game.html", game=g, round=current, card=card, hints=hints,
-                           seconds_left=seconds_left, show_answer=show_answer, user=user,
-                           card_points=round_points)
+
+    return render_template(
+        "game.html", game=g, round=current, card=card, hints=hints,
+        seconds_left=seconds_left, show_answer=show_answer, user=user,
+        card_points=round_points
+    )
+
 
 @app.route("/game/guess/<int:round_id>", methods=["POST"])
 def game_guess(round_id):
@@ -241,23 +369,92 @@ def game_guess(round_id):
     g.user_score += r.user_points
     r.finished = True
     db.session.commit()
-    user = User.query.get(g.user_id)
-    update_user_level(user)  # Atualiza nível a cada chute
-    if correct:
-        flash("Parabéns! Você acertou!", "success")
-    else:
-        flash(f"Errou! Resposta: {r.card.answer}", "danger")
+    flash("Parabéns! Você acertou!" if correct else f"Errou! Resposta: {r.card.answer}", "success" if correct else "danger")
     return redirect(url_for("game_play", game_id=g.id))
 
-# ----------------------
-# Demais rotas (extra_hint, resultado, admin_add_card, ranking etc.) mantidas iguais ao código original
-# ----------------------
 
+@app.route("/game/extra_hint/<int:round_id>", methods=["POST"])
+def game_extra_hint(round_id):
+    if not require_login():
+        return redirect(url_for("login"))
+    r = Round.query.get_or_404(round_id)
+    user = User.query.get(session["user_id"])
+    cost = 5
+    if user.coins < cost:
+        flash("Moedas insuficientes para dica extra.", "warning")
+        return redirect(url_for("game_play", game_id=r.game_id))
+    user.coins -= cost
+    r.used_extra_hints += 1
+    db.session.commit()
+    flash("Dica extra comprada! Veja abaixo.", "success")
+    return redirect(url_for("game_play", game_id=r.game_id))
+
+
+@app.route("/game/result/<int:game_id>")
+def game_result(game_id):
+    g = Game.query.get_or_404(game_id)
+    user = User.query.get(g.user_id)
+    return render_template("result.html", game=g, user=user)
+
+
+@app.route("/coins/watch-ad", methods=["POST"])
+def watch_ad():
+    if not require_login():
+        return redirect(url_for("login"))
+    user = User.query.get(session["user_id"])
+    user.coins += 10
+    db.session.commit()
+    flash("Obrigado por assistir! Você ganhou 10 moedas.", "success")
+    return redirect(url_for("index"))
+
+
+@app.route("/termos")
+def termos():
+    return render_template("termos.html")
+
+
+@app.route("/privacidade")
+def privacidade():
+    return render_template("privacidade.html")
+
+
+@app.route("/aviso")
+def aviso():
+    return render_template("aviso.html")
+
+
+@app.route("/admin/add-card", methods=["GET","POST"])
+def admin_add_card():
+    if not is_admin():
+        flash("Acesso negado.", "danger")
+        return redirect(url_for("index"))
+    if request.method == "POST":
+        theme = request.form["theme"]
+        title = request.form["title"]
+        answer = request.form["answer"]
+        hints = [request.form.get(f"hint{i}", "").strip() for i in range(1, 11)]
+        hints = [h for h in hints if h]
+        c = Card(
+            theme=theme,
+            title=title,
+            answer=answer,
+            hints_json=json.dumps(hints, ensure_ascii=False),
+            difficulty=int(request.form.get("difficulty", 1))
+        )
+        db.session.add(c)
+        db.session.commit()
+        flash("Cartinha criada!", "success")
+        return redirect(url_for("admin_add_card"))
+    return render_template("admin_add_card.html", themes=THEMES)
+
+
+# --- CLI
 @app.cli.command("init-db")
 def init_db():
     db.drop_all()
     db.create_all()
     print("Banco criado e pronto!")
+
 
 if __name__ == "__main__":
     with app.app_context():
