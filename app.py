@@ -436,7 +436,24 @@ def game_extra_hint(round_id):
 def game_result(game_id):
     g = Game.query.get_or_404(game_id)
     user = User.query.get(g.user_id)
-    return render_template("result.html", game=g, user=user)
+
+    # Calcula se houve level up
+    total_score = sum(game.user_score for game in user.games)
+    new_level = total_score // 100 + 1
+    old_level = user.level
+    level_up = new_level > old_level
+
+    # Atualiza o nível do usuário no banco
+    user.level = new_level
+    db.session.commit()
+
+    return render_template(
+        "result.html",
+        game=g,
+        user=user,
+        level_up=level_up,
+        new_level=new_level
+    )
 
 
 @app.route("/coins/watch-ad", methods=["POST"])
