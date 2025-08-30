@@ -391,15 +391,12 @@ def game_guess(round_id):
     # Verifica se acertou
     correct = normalize(guess) == normalize(r.card.answer)
     r.user_points = card_points(r.requested_hints) if correct else 0
-g.user_score += r.user_points
-r.finished = True
+    g.user_score += r.user_points
+    r.finished = True
 
-db.session.commit()
+    db.session.commit()
 
-# Atualiza o nível do usuário
-update_user_level(g.user)
-
-    # Atualiza nível do usuário
+    # Atualiza o nível do usuário
     old_level = user.level
     total_score = sum(game.user_score for game in user.games)
     user.level = total_score // 100 + 1
@@ -410,8 +407,10 @@ update_user_level(g.user)
         flash(f"🎉 Parabéns! Você subiu para o nível {user.level}!", "success")
 
     # Mensagem de acerto/erro
-    flash("Parabéns! Você acertou!" if correct else f"Errou! Resposta: {r.card.answer}", 
-          "success" if correct else "danger")
+    flash(
+        "Parabéns! Você acertou!" if correct else f"Errou! Resposta: {r.card.answer}",
+        "success" if correct else "danger"
+    )
 
     return redirect(url_for("game_play", game_id=g.id))
 
