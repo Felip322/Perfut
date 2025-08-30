@@ -255,6 +255,7 @@ def ranking():
         flash("Faça login para ver o ranking.", "warning")
         return redirect(url_for("login"))
 
+    # soma dos pontos por usuário
     score_sum = (
         db.session.query(
             Game.user_id,
@@ -264,10 +265,19 @@ def ranking():
         .subquery()
     )
 
+    # atualiza nível de todos os usuários antes de gerar ranking
+    users = User.query.all()
+    for u in users:
+        total_score = sum(g.user_score for g in u.games)
+        u.level = total_score // 100 + 1
+    db.session.commit()
+
+    # busca dados para ranking
     rows = (
         db.session.query(
             User.name,
-            func.coalesce(score_sum.c.total_score, 0).label("total_score")
+            func.coalesce(score_sum.c.total_score, 0).label("total_score"),
+            User.level
         )
         .outerjoin(score_sum, User.id == score_sum.c.user_id)
         .order_by(
@@ -278,7 +288,8 @@ def ranking():
         )
         .all()
     )
-    rankings = [(name, int(total)) for name, total in rows]
+
+    rankings = [(name, int(total_score), level) for name, total_score, level in rows]
     current_user = User.query.get(session["user_id"])
     return render_template("ranking.html", rankings=rankings, user=current_user)
 
