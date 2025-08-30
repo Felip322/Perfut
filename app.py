@@ -142,7 +142,12 @@ def normalize(text: str) -> str:
 def is_admin():
     return "user_id" in session and session["user_id"] == 1
 
-
+def update_user_level(user):
+    # Soma todos os pontos das partidas do usuário
+    total_score = sum(game.user_score for game in user.games)
+    # Calcula o nível (1 nível a cada 100 pontos)
+    user.level = total_score // 100 + 1
+    db.session.commit()
 # ----------------------
 # Routes (Auth, Game, Admin)
 # ----------------------
@@ -357,20 +362,40 @@ def game_play(game_id):
 def game_guess(round_id):
     if not require_login():
         return redirect(url_for("login"))
+
     r = Round.query.get_or_404(round_id)
     g = r.game
+    user = User.query.get(g.user_id)  # pega o usuário da partida
+
     if r.finished:
         return redirect(url_for("game_play", game_id=g.id))
+
     guess = request.form.get("guess", "").strip()
     r.user_guess = guess
     if r.requested_hints == 0:
         r.requested_hints = 1
+
+    # Verifica se acertou
     correct = normalize(guess) == normalize(r.card.answer)
     r.user_points = card_points(r.requested_hints) if correct else 0
     g.user_score += r.user_points
     r.finished = True
     db.session.commit()
-    flash("Parabéns! Você acertou!" if correct else f"Errou! Resposta: {r.card.answer}", "success" if correct else "danger")
+
+    # Atualiza nível do usuário
+    old_level = user.level
+    total_score = sum(game.user_score for game in user.games)
+    user.level = total_score // 100 + 1
+    db.session.commit()
+
+    # Mensagem de nível up
+    if user.level > old_level:
+        flash(f"🎉 Parabéns! Você subiu para o nível {user.level}!", "success")
+
+    # Mensagem de acerto/erro
+    flash("Parabéns! Você acertou!" if correct else f"Errou! Resposta: {r.card.answer}", 
+          "success" if correct else "danger")
+
     return redirect(url_for("game_play", game_id=g.id))
 
 
