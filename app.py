@@ -373,56 +373,57 @@ def game_play(game_id):
 
 @app.route("/game/guess/<int:round_id>", methods=["POST"])
 def game_guess(round_id):
+    # Verifica se o usuário está logado
     if not require_login():
         return redirect(url_for("login"))
 
+    # Recupera a rodada e o jogo correspondente
     r = Round.query.get_or_404(round_id)
     g = r.game
-    user = User.query.get(g.user_id)
+    user = User.query.get(g.user_id)  # Pega o usuário da partida
 
+    # Se a rodada já estiver finalizada, redireciona para o jogo
     if r.finished:
         return redirect(url_for("game_play", game_id=g.id))
 
+    # Recupera o palpite do usuário
     guess = request.form.get("guess", "").strip()
     r.user_guess = guess
+
+    # Atualiza o contador de dicas, se necessário
     if r.requested_hints == 0:
         r.requested_hints = 1
 
-    # Verifica se acertou
+    # Verifica se o palpite está correto
     correct = normalize(guess) == normalize(r.card.answer)
+    
+    # Calcula os pontos da rodada
     r.user_points = card_points(r.requested_hints) if correct else 0
     g.user_score += r.user_points
     r.finished = True
+
+    # Salva alterações no banco
     db.session.commit()
 
-    # Atualiza nível do usuário
+    # Atualiza o nível do usuário
     old_level = user.level
     total_score = sum(game.user_score for game in user.games)
-    new_level = total_score // 100 + 1
-    user.level = new_level
+    user.level = total_score // 100 + 1
     db.session.commit()
 
-    level_up = new_level > old_level
+    # Mensagem de nível up
+    if user.level > old_level:
+        flash(f"🎉 Parabéns! Você subiu para o nível {user.level}!", "success")
 
-    # Mensagem de acerto/erro
+    # Mensagem de acerto ou erro
     flash(
         "Parabéns! Você acertou!" if correct else f"Errou! Resposta: {r.card.answer}",
         "success" if correct else "danger"
     )
 
-    return render_template(
-        "game.html",
-        game=g,
-        round=r,
-        card=r.card,
-        hints=r.card.hints[:r.requested_hints],
-        seconds_left=0,
-        show_answer=True,
-        user=user,
-        card_points=r.user_points,
-        level_up=level_up,
-        new_level=new_level
-    )
+    # Redireciona para o jogo
+    return redirect(url_for("game_play", game_id=g.id))
+
 
 
 
