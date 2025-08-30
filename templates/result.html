@@ -37,7 +37,7 @@
 {% endif %}
 
 <style>
-/* Card Result */
+/* Card principal */
 .result.card {
   background: linear-gradient(135deg, #142820, #0d1a13);
   border-radius: 20px;
@@ -128,11 +128,12 @@
   box-shadow: 0 6px 18px rgba(0,255,150,0.35);
 }
 
-/* Modal */
+/* ------------------ */
+/* Modal Level Up */
 .modal {
   display: block;
   position: fixed;
-  z-index: 999;
+  z-index: 9999;
   left: 0;
   top: 0;
   width: 100%;
@@ -158,7 +159,7 @@
 
 .modal-content h3 {
   font-size: 1.5rem;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 
 .modal-content p {
@@ -167,27 +168,24 @@
 
 .close {
   position: absolute;
-  top: 10px;
   right: 15px;
-  color: #00ff88;
+  top: 10px;
   font-size: 1.5rem;
   font-weight: bold;
+  color: #fff;
   cursor: pointer;
   transition: 0.2s;
 }
 
 .close:hover {
-  color: #fff;
+  color: #00ff88;
 }
 
+/* ------------------ */
+/* Keyframes animações */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
-}
-
-@keyframes slideDown {
-  from { transform: translateY(-30px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes zoomIn {
@@ -197,6 +195,11 @@
 
 @keyframes slideUp {
   from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-50px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
 
@@ -211,4 +214,5 @@ function closeModal() {
   document.getElementById('levelUpModal').style.display = 'none';
 }
 </script>
+
 {% endblock %}
