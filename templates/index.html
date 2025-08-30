@@ -11,9 +11,6 @@
     <form action="{{ url_for('game_setup') }}" method="post" class="game-card">
       <h2>Nova partida</h2>
 
-      <!-- Moedas do usuário e custo da partida -->
-      <p class="coins-info">🪙 Você tem {{ user.coins }} moedas • Cada partida custa 5 moedas</p>
-
       <label>Rodadas:
         <input type="number" name="rounds" min="1" max="20" value="{{ rounds|default(5) }}" required>
       </label>
@@ -31,10 +28,7 @@
       </fieldset>
 
       <div class="actions">
-        <!-- Desabilita botão se moedas < 5 -->
-        <button class="btn primary" type="submit" {% if user.coins < 5 %}disabled title="Moedas insuficientes"{% endif %}>
-          ▶ Começar
-        </button>
+        <button class="btn primary" type="submit">▶ Começar</button>
         <a href="{{ url_for('ranking') }}" class="btn">🏆 Ranking</a>
         <button class="btn" formaction="{{ url_for('watch_ad') }}" formmethod="post">🪙 +10 Assistir anúncio</button>
       </div>
@@ -78,13 +72,6 @@
   font-size: 18px;
   margin-bottom: 25px;
   color: var(--text);
-}
-
-.coins-info {
-  margin-bottom: 15px;
-  font-weight: 600;
-  color: #ffd700;
-  text-align: center;
 }
 
 .game-card {
@@ -192,14 +179,9 @@ input[type="number"] {
   transition: transform 0.15s, box-shadow 0.2s;
 }
 
-.actions .btn:hover:enabled {
+.actions .btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(0,0,0,0.25);
-}
-
-.actions .btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .actions .btn.primary {
@@ -207,7 +189,7 @@ input[type="number"] {
   box-shadow: 0 4px 12px rgba(255,203,63,0.4);
 }
 
-.actions .btn.primary:hover:enabled {
+.actions .btn.primary:hover {
   box-shadow: 0 6px 18px rgba(255,203,63,0.5);
 }
 
