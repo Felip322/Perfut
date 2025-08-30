@@ -22,9 +22,10 @@
     {% endif %}
 
     <div class="hints">
-      {% for h in round.hints[:round.requested_hints] %}
-        <div class="hint">🔎 {{ loop.index }} - {{ h }}</div>
-      {% endfor %}
+    {% for h in hints %}
+  <div class="hint">🔎 {{ loop.index }} - {{ h }}</div>
+{% endfor %}
+
     </div>
 
     {% if round.used_extra_hints > 0 %}
