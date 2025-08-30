@@ -290,11 +290,19 @@ def game_setup():
         if not selected:
             flash("Selecione ao menos um tema.", "warning")
             return redirect(url_for("game_setup"))
-        g = Game(user_id=session["user_id"], rounds_count=5, themes_json=json.dumps(selected))
+        
+        rounds_count = int(request.form.get("rounds", 5))  # lê o input do form
+
+        g = Game(
+            user_id=session["user_id"],
+            rounds_count=rounds_count,
+            themes_json=json.dumps(selected)
+        )
         db.session.add(g)
         db.session.commit()
         return redirect(url_for("game_play", game_id=g.id))
     return render_template("game_setup.html", themes=THEMES)
+
 
 def pick_card_for_theme(theme, difficulty=1):
     q = Card.query.filter_by(theme=theme, difficulty=difficulty)
