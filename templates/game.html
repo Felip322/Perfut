@@ -48,11 +48,11 @@
 
     {% if not round.finished %}
       <div class="actions">
-        <form method="post" action="{{ url_for('game_hint', round_id=round.id) }}">
-          <button class="btn" type="submit" {% if round.requested_hints>=10 %}disabled{% endif %}>
-            Pedir dica (máx 10)
-          </button>
-        </form>
+       <form method="post" action="{{ url_for('game_extra_hint', round_id=round.id) }}">
+  <button class="btn" type="submit" {% if round.requested_hints>=10 %}disabled{% endif %}>
+    Pedir dica (máx 10)
+  </button>
+</form>
 
         <form method="post" action="{{ url_for('game_extra_hint', round_id=round.id) }}">
           <button class="btn">Dica extra (🪙 5)</button>
