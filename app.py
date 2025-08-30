@@ -101,8 +101,21 @@ class Round(db.Model):
     started_at = db.Column(db.DateTime, default=datetime.utcnow)
     ends_at = db.Column(db.DateTime)
 
+    hints_order_json = db.Column(db.Text)  # <<< novo campo para salvar a ordem sorteada
+
     game = db.relationship("Game", backref="rounds")
     card = db.relationship("Card")
+
+    @property
+    def hints_order(self):
+        if self.hints_order_json:
+            return json.loads(self.hints_order_json)
+        return []
+    
+    @hints_order.setter
+    def hints_order(self, value):
+        self.hints_order_json = json.dumps(value, ensure_ascii=False)
+
 
 # ----------------------
 # Utilities
@@ -338,6 +351,12 @@ def game_play(game_id):
             started_at=datetime.utcnow(),
             ends_at=datetime.utcnow() + timedelta(seconds=60)
         )
+
+        # Sorteia a ordem das dicas e salva no banco
+        hints_list = card.hints[:]
+        random.shuffle(hints_list)
+        current.hints_order = hints_list
+
         db.session.add(current)
         db.session.commit()
 
@@ -348,13 +367,8 @@ def game_play(game_id):
         flash(f"Tempo esgotado! Resposta era: {current.card.answer}", "danger")
         return redirect(url_for("game_play", game_id=g.id))
 
-    # Pega todas as dicas do card
-    card = current.card
-    all_hints = card.hints[:]
-    random.shuffle(all_hints)
-
-    # Mostra todas as dicas pedidas
-    hints = all_hints[:current.requested_hints]  # <--- mudança importante
+    # Pega apenas as dicas pedidas até agora, na ordem sorteada
+    hints = current.hints_order[:current.requested_hints]
 
     show_answer = current.finished and current.user_guess is not None
     seconds_left = max(0, int((current.ends_at - datetime.utcnow()).total_seconds()))
@@ -364,14 +378,13 @@ def game_play(game_id):
         "game.html",
         game=g,
         round=current,
-        card=card,
+        card=current.card,
         hints=hints,
         seconds_left=seconds_left,
         show_answer=show_answer,
         user=user,
         card_points=round_points
     )
-
 
 @app.route("/game/guess/<int:round_id>", methods=["POST"])
 def game_guess(round_id):
