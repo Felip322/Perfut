@@ -320,7 +320,7 @@ def game_duel_setup():
         db.session.add(duel)
         db.session.commit()
 
-        # Cria imediatamente o jogo do criador
+        # Cria imediatamente o jogo do criador, mas sem começar o duelo ainda
         creator_game = Game(
             user_id=user.id,
             rounds_count=rounds_count,
@@ -332,10 +332,11 @@ def game_duel_setup():
 
         flash(f"Duelo criado! Compartilhe o código: {duel_code}", "info")
 
-        # REDIRECIONA para o jogo do criador assim que ele estiver pronto
-        return redirect(url_for("game_play", game_id=creator_game.id))
+        # REDIRECIONA para a página de espera do duelo
+        return redirect(url_for("duel_wait", duel_id=duel.id))
 
     return render_template("duel_setup.html", user=user, themes=THEMES, rounds=3)
+
 
 
 
