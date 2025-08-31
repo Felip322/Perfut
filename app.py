@@ -263,17 +263,21 @@ def duel_wait(duel_id):
     duel = Duel.query.get_or_404(duel_id)
     user = User.query.get(session["user_id"])
 
-    # Requisição AJAX para polling
+    # Se for requisição AJAX
     if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-        creator_game = Game.query.filter_by(user_id=duel.creator_id).order_by(Game.id.desc()).first()
-        opponent_game = Game.query.filter_by(user_id=duel.opponent_id).order_by(Game.id.desc()).first()
-        
-        # Verifica se ambos os jogos terminaram
-        if creator_game and opponent_game and creator_game.status == "finished" and opponent_game.status == "finished":
-            duel.status = "finished"
-            db.session.commit()
-            return {"status": "finished"}
+        if duel.opponent_id:  # adversário entrou
+            # Pega o jogo do usuário logado
+            if user.id == duel.creator_id:
+                game = Game.query.filter_by(user_id=duel.creator_id, mode="duel").order_by(Game.id.desc()).first()
+            else:
+                game = Game.query.filter_by(user_id=duel.opponent_id, mode="duel").order_by(Game.id.desc()).first()
+            return {"status": "active", "game_id": game.id}
+
         return {"status": "waiting"}
+
+    # Página normal
+    return render_template("duel_wait.html", duel=duel, user=user)
+
 
     # Página normal
     # Se o usuário terminou o jogo mas o outro não, mostra template de espera pós partida
