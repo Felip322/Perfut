@@ -104,6 +104,9 @@ class Game(db.Model):
     status = db.Column(db.String(20), default="active")
     user_score = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # NOVO: define se é solo ou duelo
+    mode = db.Column(db.String(20), default="solo")  # 'solo' ou 'duel'
 
     user = db.relationship("User", backref="games")
 
@@ -354,6 +357,26 @@ def duel_join_page():
 
     return render_template("duel_join.html", user=user)
 
+
+@app.route("/duel/result/<int:duel_id>")
+def duel_result(duel_id):
+    duel = Duel.query.get_or_404(duel_id)
+    creator_game = Game.query.filter_by(user_id=duel.creator_id).order_by(Game.id.desc()).first()
+    opponent_game = Game.query.filter_by(user_id=duel.opponent_id).order_by(Game.id.desc()).first()
+
+    winner = None
+    if creator_game.user_score > opponent_game.user_score:
+        winner = duel.creator
+    elif opponent_game.user_score > creator_game.user_score:
+        winner = duel.opponent
+
+    return render_template(
+        "duel_result.html",
+        duel=duel,
+        creator_game=creator_game,
+        opponent_game=opponent_game,
+        winner=winner
+    )
 
 
 
