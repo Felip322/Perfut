@@ -326,7 +326,6 @@ def duel_join_page():
     if request.method == "POST":
         code = request.form.get("code", "").strip().upper()
         duel = Duel.query.filter_by(code=code, status="waiting").first()
-
         if not duel:
             flash("Código inválido ou duelo já começou.", "danger")
             return redirect(url_for("duel_join_page"))
@@ -335,16 +334,21 @@ def duel_join_page():
             flash("Você não pode entrar no próprio duelo.", "warning")
             return redirect(url_for("duel_join_page"))
 
-        # Atualiza duelo com oponente e status ativo
         duel.opponent_id = user.id
         duel.status = "active"
+        db.session.commit()
 
-        # Cria o jogo do oponente
-        opponent_game = Game(user_id=user.id, rounds_count=duel.rounds_count, themes_json=duel.themes_json)
+        # Cria jogos para os dois jogadores
+        creator_game = Game.query.filter_by(user_id=duel.creator_id, rounds_count=duel.rounds_count, themes_json=duel.themes_json).first()
+        if not creator_game:
+            creator_game = Game(user_id=duel.creator_id, rounds_count=duel.rounds_count, themes_json=duel.themes_json)
+            db.session.add(creator_game)
+        opponent_game = Game(user_id=duel.opponent_id, rounds_count=duel.rounds_count, themes_json=duel.themes_json)
         db.session.add(opponent_game)
         db.session.commit()
 
-        flash(f"Você entrou no duelo contra {duel.creator.name}!", "success")
+        flash(f"Duelo iniciado! Boa sorte!", "success")
+        # Redireciona o usuário que entrou diretamente para sua partida
         return redirect(url_for("game_play", game_id=opponent_game.id))
 
     return render_template("duel_join.html", user=user)
