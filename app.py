@@ -382,6 +382,8 @@ def duel_join_page():
 @app.route("/duel/result/<int:duel_id>")
 def duel_result(duel_id):
     duel = Duel.query.get_or_404(duel_id)
+    
+    # Pega os jogos mais recentes de cada jogador
     creator_game = Game.query.filter_by(user_id=duel.creator_id).order_by(Game.id.desc()).first()
     opponent_game = Game.query.filter_by(user_id=duel.opponent_id).order_by(Game.id.desc()).first()
 
@@ -398,6 +400,7 @@ def duel_result(duel_id):
         opponent_game=opponent_game,
         winner=winner
     )
+
 
 
 
@@ -576,16 +579,28 @@ def game_play(game_id):
         g.status = "finished"
         db.session.commit()
         
-        # Redireciona conforme o modo
         if g.mode == "duel":
+            # Pega o duelo correspondente
             duel = Duel.query.filter(
                 ((Duel.creator_id == g.user_id) | (Duel.opponent_id == g.user_id)),
-                Duel.status == "active"
+                Duel.status.in_(["active", "finished"])
             ).order_by(Duel.id.desc()).first()
+            
             if duel:
-                duel.status = "finished"
-                db.session.commit()
-                return redirect(url_for("duel_result", duel_id=duel.id))
+                # Pega os dois jogos
+                creator_game = Game.query.filter_by(user_id=duel.creator_id).order_by(Game.id.desc()).first()
+                opponent_game = Game.query.filter_by(user_id=duel.opponent_id).order_by(Game.id.desc()).first()
+                
+                # Só finaliza o duelo se os dois terminaram
+                if creator_game.status == "finished" and opponent_game.status == "finished":
+                    duel.status = "finished"
+                    db.session.commit()
+                    return redirect(url_for("duel_result", duel_id=duel.id))
+                else:
+                    # Se o outro ainda não terminou, espera
+                    flash("Você terminou, mas aguarde seu oponente terminar o duelo.", "info")
+                    return redirect(url_for("duel_wait", duel_id=duel.id))
+        
         return redirect(url_for("game_result", game_id=g.id))
 
     # Busca a rodada atual ou cria uma nova
@@ -638,6 +653,7 @@ def game_play(game_id):
         user=user,
         card_points=round_points
     )
+
 
 
 @app.route("/game/guess/<int:round_id>", methods=["POST"])
