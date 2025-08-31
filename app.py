@@ -10,6 +10,7 @@ from itsdangerous import URLSafeTimedSerializer
 from flask import Flask, render_template, request, redirect, url_for, session, flash 
 from flask_sqlalchemy import SQLAlchemy 
 from werkzeug.security import generate_password_hash, check_password_hash
+import uuid
 
 # ----------------------
 # App config
@@ -68,6 +69,30 @@ class Card(db.Model):
     @property
     def hints(self):
         return json.loads(self.hints_json)
+
+
+
+
+class Duel(db.Model):
+    __tablename__ = "duels"
+    id = db.Column(db.Integer, primary_key=True)
+    creator_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    opponent_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    themes_json = db.Column(db.Text, nullable=False)
+    rounds_count = db.Column(db.Integer, default=3)
+    status = db.Column(db.String(20), default="waiting")  # waiting, active, finished
+    code = db.Column(db.String(8), unique=True, nullable=False)
+
+    creator = db.relationship("User", foreign_keys=[creator_id])
+    opponent = db.relationship("User", foreign_keys=[opponent_id])
+
+
+
+
+
+
+
+
 
 
 class Game(db.Model):
@@ -201,6 +226,125 @@ def game_mode_select():
 
     user = User.query.get(session["user_id"])
     return render_template("game_mode.html", user=user, hide_ranking=True)
+
+@app.route("/duel/join/<code>")
+def duel_join(code):
+    if not require_login():
+        return redirect(url_for("login"))
+
+    duel = Duel.query.filter_by(code=code).first_or_404()
+
+    if duel.opponent_id:
+        flash("Este duelo já está completo.", "warning")
+        return redirect(url_for("game_mode_select"))
+
+    duel.opponent_id = session["user_id"]
+    duel.status = "active"
+
+    # Cria jogos para os dois
+    creator_game = Game(user_id=duel.creator_id, rounds_count=duel.rounds_count, themes_json=duel.themes_json)
+    opponent_game = Game(user_id=duel.opponent_id, rounds_count=duel.rounds_count, themes_json=duel.themes_json)
+    db.session.add_all([creator_game, opponent_game])
+    db.session.commit()
+
+    flash("Você entrou no duelo!", "success")
+    return redirect(url_for("game_play", game_id=opponent_game.id))
+
+
+@app.route("/duel/wait/<int:duel_id>")
+def duel_wait(duel_id):
+    if not require_login():
+        return redirect(url_for("login"))
+
+    duel = Duel.query.get_or_404(duel_id)
+    user = User.query.get(session["user_id"])
+
+    if duel.status == "active":
+        if duel.creator_id == user.id:
+            game = Game.query.filter_by(user_id=user.id).order_by(Game.id.desc()).first()
+            return redirect(url_for("game_play", game_id=game.id))
+        else:
+            game = Game.query.filter_by(user_id=user.id).order_by(Game.id.desc()).first()
+            return redirect(url_for("game_play", game_id=game.id))
+
+    return render_template("duel_wait.html", duel=duel, user=user)
+
+
+
+
+
+
+
+
+
+@app.route("/game/duel_setup", methods=["GET", "POST"])
+def game_duel_setup():
+    if not require_login():
+        return redirect(url_for("login"))
+
+    user = User.query.get(session["user_id"])
+
+    if request.method == "POST":
+        selected = request.form.getlist("themes")
+        valid_themes = [key for key, _ in THEMES]
+        selected = [t for t in selected if t in valid_themes]
+        if not selected:
+            flash("Selecione ao menos um tema.", "warning")
+            return redirect(url_for("game_duel_setup"))
+
+        rounds_count = int(request.form.get("rounds", 3))
+
+        # Cria duelo com código aleatório
+        duel_code = str(uuid.uuid4())[:8]
+        duel = Duel(
+            creator_id=user.id,
+            themes_json=json.dumps(selected),
+            rounds_count=rounds_count,
+            code=duel_code,
+            status="waiting"
+        )
+        db.session.add(duel)
+        db.session.commit()
+        flash(f"Duelo criado! Código: {duel_code}", "info")
+        return redirect(url_for("duel_wait", duel_id=duel.id))
+
+    return render_template("duel_setup.html", user=user, themes=THEMES, rounds=3)
+
+
+# Rota duel_join corrigida
+@app.route("/game/duel_join", methods=["GET", "POST"], endpoint="duel_join_page")
+def duel_join_page():
+    if not require_login():
+        return redirect(url_for("login"))
+
+    user = User.query.get(session["user_id"])
+
+    if request.method == "POST":
+        code = request.form.get("code", "").strip().upper()
+        duel = Duel.query.filter_by(code=code, status="waiting").first()
+        if not duel:
+            flash("Código inválido ou duelo já começou.", "danger")
+            return redirect(url_for("duel_join_page"))
+
+        if duel.creator_id == user.id:
+            flash("Você não pode entrar no próprio duelo.", "warning")
+            return redirect(url_for("duel_join_page"))
+
+        duel.opponent_id = user.id
+        duel.status = "active"
+        db.session.commit()
+        flash(f"Você entrou no duelo contra {duel.creator.name}!", "success")
+        return redirect(url_for("duel_wait", duel_id=duel.id))
+
+    return render_template("duel_join.html", user=user)
+
+
+
+
+
+
+
+
 
 
 
@@ -520,6 +664,7 @@ def game_result(game_id):
         level_up=level_up,
         new_level=new_level
     )
+    
 
 @app.route("/coins/watch-ad", methods=["POST"])
 def watch_ad():
