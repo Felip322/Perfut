@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-content">
+    <img src="{{ url_for('static', filename='logo.png') }}" class="hero-logo">
+    <h2>Aguardando adversário...</h2>
+    <p>Compartilhe este código com seu amigo para começar o duelo:</p>
+    <div class="duel-code">{{ duel.code }}</div>
+    <a href="{{ url_for('game_mode_select') }}" class="btn">⬅ Voltar</a>
+  </div>
+</section>
+
+<style>
+.hero {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 40px 20px;
+  min-height: 80vh;
+  background: linear-gradient(135deg, #0b1f14 0%, #123722 100%);
+}
+.hero-content { max-width: 500px; }
+.hero-logo { width: 140px; margin-bottom: 20px; }
+.duel-code {
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffcb3f;
+  background: #214e33;
+  padding: 12px 20px;
+  border-radius: 12px;
+  margin: 20px 0;
+  display: inline-block;
+  letter-spacing: 2px;
+}
+.btn { padding: 12px 20px; border-radius: 999px; background: #3cb371; color: #fff; text-decoration: none; display: inline-block; }
+.btn:hover { background: #2e8b57; }
+</style>
+{% endblock %}
