@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container">
+<section class="hero">
+  <div class="hero-content">
+    <!-- Logo igual ao index -->
     <img src="{{ url_for('static', filename='logo.png') }}" alt="PERFUT" class="hero-logo">
 
     <h1>Escolha o Modo de Jogo</h1>
@@ -24,55 +26,53 @@
             <p>Novos eventos e rankings especiais estão chegando!</p>
         </a>
     </div>
-</div>
+  </div>
+</section>
 
 <style>
-body { 
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-    background: #0b1f14; 
-    margin: 0; 
-    padding: 0; 
-    color: #fff; 
+.hero {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 50px 20px;
+  min-height: 80vh;
+  text-align: center;
+  background: linear-gradient(135deg, #0b1f14 0%, #123722 100%);
 }
 
-.container { 
-    max-width: 1000px; 
-    margin: 50px auto; 
-    padding: 20px; 
-    text-align: center; 
+.hero-content {
+  max-width: 600px;
 }
 
-.hero-logo { 
-    width: 100px; 
-    height: 100px; 
-    margin-bottom: 25px; 
-    animation: bounce 2s infinite; 
+.hero-logo {
+  width: 160px;
+  margin-bottom: 20px;
+  animation: bounce 1s infinite alternate;
 }
 
-@keyframes bounce { 
-    0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 
-    40% { transform: translateY(-15px); } 
-    60% { transform: translateY(-7px); } 
+@keyframes bounce {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-10px); }
 }
 
-h1 { 
-    color: #ffcb3f; 
-    font-size: 3rem; 
-    margin-bottom: 50px; 
-    font-weight: 700; 
+h1 {
+  color: #ffcb3f;
+  font-size: 2.8rem;
+  margin-bottom: 40px;
+  font-weight: 700;
 }
 
 .card-grid { 
     display: grid; 
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-    gap: 30px; 
+    gap: 25px; 
 }
 
 .card { 
     background: linear-gradient(145deg, #0b2216, #123722); 
     border-radius: 20px; 
-    box-shadow: 0 8px 20px rgba(0,0,0,0.5); 
-    padding: 40px 25px; 
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4); 
+    padding: 30px 20px; 
     transition: transform 0.3s, box-shadow 0.3s, background 0.3s; 
     cursor: pointer; 
     text-decoration: none; 
@@ -80,14 +80,14 @@ h1 {
 }
 
 .card:hover { 
-    transform: translateY(-8px); 
-    box-shadow: 0 18px 35px rgba(0,0,0,0.6); 
+    transform: translateY(-6px); 
+    box-shadow: 0 14px 30px rgba(0,0,0,0.5); 
     background: linear-gradient(145deg, #1d4b2b, #3cb371); 
 }
 
 .card h2 { 
-    font-size: 1.6rem; 
-    margin-bottom: 15px; 
+    font-size: 1.5rem; 
+    margin-bottom: 12px; 
     color: #ffcb3f; 
     font-weight: 600; 
 }
@@ -99,10 +99,10 @@ h1 {
 }
 
 .section-title { 
-    margin-top: 60px; 
-    margin-bottom: 25px; 
+    margin-top: 50px; 
+    margin-bottom: 20px; 
     color: #ffcb3f; 
-    font-size: 2.2rem; 
+    font-size: 2rem; 
     font-weight: 600; 
 }
 
@@ -118,11 +118,10 @@ h1 {
     background: #2b3a2b; 
 }
 
-@media(max-width:500px){ 
-    h1 { font-size: 2rem; } 
-    .card h2 { font-size: 1.3rem; } 
-    .card p { font-size: 0.9rem; } 
-    .hero-logo { width: 70px; height: 70px; } 
+@media(max-width:480px){
+  .card-grid { grid-template-columns: 1fr; }
+  h1 { font-size: 2rem; }
+  .hero-logo { width: 120px; }
 }
 </style>
 {% endblock %}
