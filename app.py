@@ -251,6 +251,7 @@ def duel_join(code):
     return redirect(url_for("game_play", game_id=opponent_game.id))
 
 
+# Página de espera do duelo
 @app.route("/duel/wait/<int:duel_id>")
 def duel_wait(duel_id):
     if not require_login():
@@ -259,12 +260,11 @@ def duel_wait(duel_id):
     duel = Duel.query.get_or_404(duel_id)
     user = User.query.get(session["user_id"])
 
+    # Se o duelo já está ativo, redireciona para o jogo correspondente
     if duel.status == "active":
-        if duel.creator_id == user.id:
-            game = Game.query.filter_by(user_id=user.id).order_by(Game.id.desc()).first()
-            return redirect(url_for("game_play", game_id=game.id))
-        else:
-            game = Game.query.filter_by(user_id=user.id).order_by(Game.id.desc()).first()
+        # Descobre qual é o jogo do usuário logado
+        game = Game.query.filter_by(user_id=user.id).order_by(Game.id.desc()).first()
+        if game:
             return redirect(url_for("game_play", game_id=game.id))
 
     return render_template("duel_wait.html", duel=duel, user=user)
@@ -294,7 +294,6 @@ def game_duel_setup():
 
         rounds_count = int(request.form.get("rounds", 3))
 
-        # Cria duelo com código aleatório em maiúsculas
         duel_code = str(uuid.uuid4())[:8].upper()
         duel = Duel(
             creator_id=user.id,
@@ -305,6 +304,12 @@ def game_duel_setup():
         )
         db.session.add(duel)
         db.session.commit()
+
+        # Cria imediatamente o jogo do criador
+        creator_game = Game(user_id=user.id, rounds_count=rounds_count, themes_json=duel.themes_json)
+        db.session.add(creator_game)
+        db.session.commit()
+
         flash(f"Duelo criado! Código: {duel_code}", "info")
         return redirect(url_for("duel_wait", duel_id=duel.id))
 
@@ -326,30 +331,24 @@ def duel_join_page():
             flash("Código inválido ou duelo já começou.", "danger")
             return redirect(url_for("duel_join_page"))
 
-        # Permite que o criador entre no próprio duelo se desejar
-        if duel.opponent_id is None:
-            duel.opponent_id = user.id if duel.creator_id != user.id else None
-            duel.status = "active"
-
-            # Cria jogos para os dois participantes
-            creator_game = Game(user_id=duel.creator_id, rounds_count=duel.rounds_count, themes_json=duel.themes_json)
-            db.session.add(creator_game)
-            if duel.opponent_id:
-                opponent_game = Game(user_id=duel.opponent_id, rounds_count=duel.rounds_count, themes_json=duel.themes_json)
-                db.session.add(opponent_game)
-            db.session.commit()
-
-            flash(f"Você entrou no duelo!", "success")
-            if duel.opponent_id == user.id:
-                return redirect(url_for("game_play", game_id=opponent_game.id))
-            else:
-                return redirect(url_for("game_play", game_id=creator_game.id))
-
-        else:
-            flash("Este duelo já está completo.", "warning")
+        if duel.creator_id == user.id:
+            flash("Você não pode entrar no próprio duelo.", "warning")
             return redirect(url_for("duel_join_page"))
 
+        # Atualiza duelo com oponente e status ativo
+        duel.opponent_id = user.id
+        duel.status = "active"
+
+        # Cria o jogo do oponente
+        opponent_game = Game(user_id=user.id, rounds_count=duel.rounds_count, themes_json=duel.themes_json)
+        db.session.add(opponent_game)
+        db.session.commit()
+
+        flash(f"Você entrou no duelo contra {duel.creator.name}!", "success")
+        return redirect(url_for("game_play", game_id=opponent_game.id))
+
     return render_template("duel_join.html", user=user)
+
 
 
 
