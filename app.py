@@ -189,8 +189,20 @@ def login():
             return redirect(url_for("login"))
         session["user_id"] = u.id
         flash("Bem-vindo de volta!", "success")
-        return redirect(url_for("index"))
+        # Redireciona para escolha de modo após login
+        return redirect(url_for("game_mode_select"))
     return render_template("login.html")
+
+
+@app.route("/game/mode")
+def game_mode_select():
+    if not require_login():
+        return redirect(url_for("login"))
+    
+    user = User.query.get(session["user_id"])
+    return render_template("game_mode.html", user=user)
+
+
 
 @app.route("/logout")
 def logout():
@@ -290,6 +302,13 @@ def ranking():
     rankings = [(name, int(total_score), level) for name, total_score, level in rows]
     current_user = User.query.get(session["user_id"])
     return render_template("ranking.html", rankings=rankings, user=current_user)
+
+
+
+
+
+
+
 
 # --- Game Setup & Play
 @app.route("/game_setup", methods=["GET", "POST"])
