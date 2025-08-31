@@ -270,6 +270,39 @@ def duel_wait(duel_id):
     return render_template("duel_wait.html", duel=duel, user=user)
 
 
+@app.route("/duel/result/<int:duel_id>")
+def duel_result(duel_id):
+    if not require_login():
+        return redirect(url_for("login"))
+
+    duel = Duel.query.get_or_404(duel_id)
+
+    # Pega os jogos de cada jogador
+    creator_game = Game.query.filter_by(user_id=duel.creator_id).order_by(Game.id.desc()).first()
+    opponent_game = Game.query.filter_by(user_id=duel.opponent_id).order_by(Game.id.desc()).first()
+
+    creator_score = creator_game.user_score if creator_game else 0
+    opponent_score = opponent_game.user_score if opponent_game else 0
+
+    # Determina vencedor
+    if creator_score > opponent_score:
+        winner = duel.creator
+    elif opponent_score > creator_score:
+        winner = duel.opponent
+    else:
+        winner = None  # Empate
+
+    return render_template(
+        "duel_result.html",
+        duel=duel,
+        creator_score=creator_score,
+        opponent_score=opponent_score,
+        winner=winner
+    )
+
+
+
+
 
 
 
