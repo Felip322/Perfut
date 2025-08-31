@@ -294,8 +294,8 @@ def game_duel_setup():
 
         rounds_count = int(request.form.get("rounds", 3))
 
-        # Cria duelo com código aleatório
-        duel_code = str(uuid.uuid4())[:8]
+        # Cria duelo com código aleatório em maiúsculas
+        duel_code = str(uuid.uuid4())[:8].upper()
         duel = Duel(
             creator_id=user.id,
             themes_json=json.dumps(selected),
@@ -311,7 +311,6 @@ def game_duel_setup():
     return render_template("duel_setup.html", user=user, themes=THEMES, rounds=3)
 
 
-# Rota duel_join corrigida
 @app.route("/game/duel_join", methods=["GET", "POST"], endpoint="duel_join_page")
 def duel_join_page():
     if not require_login():
@@ -322,19 +321,33 @@ def duel_join_page():
     if request.method == "POST":
         code = request.form.get("code", "").strip().upper()
         duel = Duel.query.filter_by(code=code, status="waiting").first()
+
         if not duel:
             flash("Código inválido ou duelo já começou.", "danger")
             return redirect(url_for("duel_join_page"))
 
-        if duel.creator_id == user.id:
-            flash("Você não pode entrar no próprio duelo.", "warning")
-            return redirect(url_for("duel_join_page"))
+        # Permite que o criador entre no próprio duelo se desejar
+        if duel.opponent_id is None:
+            duel.opponent_id = user.id if duel.creator_id != user.id else None
+            duel.status = "active"
 
-        duel.opponent_id = user.id
-        duel.status = "active"
-        db.session.commit()
-        flash(f"Você entrou no duelo contra {duel.creator.name}!", "success")
-        return redirect(url_for("duel_wait", duel_id=duel.id))
+            # Cria jogos para os dois participantes
+            creator_game = Game(user_id=duel.creator_id, rounds_count=duel.rounds_count, themes_json=duel.themes_json)
+            db.session.add(creator_game)
+            if duel.opponent_id:
+                opponent_game = Game(user_id=duel.opponent_id, rounds_count=duel.rounds_count, themes_json=duel.themes_json)
+                db.session.add(opponent_game)
+            db.session.commit()
+
+            flash(f"Você entrou no duelo!", "success")
+            if duel.opponent_id == user.id:
+                return redirect(url_for("game_play", game_id=opponent_game.id))
+            else:
+                return redirect(url_for("game_play", game_id=creator_game.id))
+
+        else:
+            flash("Este duelo já está completo.", "warning")
+            return redirect(url_for("duel_join_page"))
 
     return render_template("duel_join.html", user=user)
 
