@@ -408,22 +408,22 @@ def duel_result(duel_id):
     creator_game = Game.query.filter_by(user_id=duel.creator_id).order_by(Game.id.desc()).first()
     opponent_game = Game.query.filter_by(user_id=duel.opponent_id).order_by(Game.id.desc()).first()
 
+    creator_score = creator_game.user_score if creator_game else 0
+    opponent_score = opponent_game.user_score if opponent_game else 0
+
     winner = None
-    if creator_game.user_score > opponent_game.user_score:
+    if creator_score > opponent_score:
         winner = duel.creator
-    elif opponent_game.user_score > creator_game.user_score:
+    elif opponent_score > creator_score:
         winner = duel.opponent
 
     return render_template(
         "duel_result.html",
         duel=duel,
-        creator_game=creator_game,
-        opponent_game=opponent_game,
+        creator_score=creator_score,
+        opponent_score=opponent_score,
         winner=winner
     )
-
-
-
 
 
 
