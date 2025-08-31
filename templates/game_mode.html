@@ -3,18 +3,20 @@
 {% block content %}
 <section class="hero">
   <div class="hero-content">
-    <!-- Logo igual ao index -->
+    <!-- Logo -->
     <img src="{{ url_for('static', filename='logo.png') }}" alt="PERFUT" class="hero-logo">
 
     <h1>Escolha o Modo de Jogo</h1>
 
     <div class="card-grid">
        <a href="{{ url_for('index') }}" class="card">
-            <h2>🏆 Torneio</h2>
+            <div class="card-icon">🏆</div>
+            <h2>Torneio</h2>
             <p>Participe do modo Ranking com pontuação geral dos jogadores.</p>
         </a>
        <a href="#" class="card disabled">
-            <h2>⚔ Duelo</h2>
+            <div class="card-icon">⚔</div>
+            <h2>Duelo</h2>
             <p>Desafie um amigo no modo 1 vs 1 (em breve).</p>
         </a>
     </div>
@@ -22,7 +24,8 @@
     <h2 class="section-title">Eventos</h2>
     <div class="card-grid">
         <a href="#" class="card disabled">
-            <h2>🌟 Em Breve</h2>
+            <div class="card-icon">🌟</div>
+            <h2>Em Breve</h2>
             <p>Novos eventos e rankings especiais estão chegando!</p>
         </a>
     </div>
@@ -30,38 +33,70 @@
 </section>
 
 <style>
+/* HERO SECTION */
 .hero {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 50px 20px;
-  min-height: 80vh;
+  padding: 60px 20px;
+  min-height: 90vh;
   text-align: center;
-  background: linear-gradient(135deg, #0b1f14 0%, #123722 100%);
+  background: linear-gradient(135deg, #0b1f14, #123722);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ANIMATED BACKGROUND ELEMENTS */
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,203,63,0.15) 0%, transparent 70%);
+  animation: rotate 60s linear infinite;
+  z-index: 0;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .hero-content {
-  max-width: 600px;
+  max-width: 700px;
+  position: relative;
+  z-index: 1;
 }
 
+/* LOGO ANIMATION */
 .hero-logo {
   width: 160px;
-  margin-bottom: 20px;
-  animation: bounce 1s infinite alternate;
+  margin-bottom: 25px;
+  animation: bounce 1.2s infinite alternate, pulse 3s infinite ease-in-out;
 }
 
 @keyframes bounce {
   0% { transform: translateY(0); }
-  100% { transform: translateY(-10px); }
+  100% { transform: translateY(-15px); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 
 h1 {
   color: #ffcb3f;
-  font-size: 2.8rem;
-  margin-bottom: 40px;
+  font-size: 3rem;
+  margin-bottom: 50px;
   font-weight: 700;
+  text-shadow: 1px 1px 5px rgba(0,0,0,0.4);
+  animation: fadeIn 1.5s ease forwards;
 }
 
+/* CARDS */
 .card-grid { 
     display: grid; 
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
@@ -70,46 +105,82 @@ h1 {
 
 .card { 
     background: linear-gradient(145deg, #0b2216, #123722); 
-    border-radius: 20px; 
-    box-shadow: 0 8px 25px rgba(0,0,0,0.4); 
-    padding: 30px 20px; 
-    transition: transform 0.3s, box-shadow 0.3s, background 0.3s; 
+    border-radius: 25px; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+    padding: 35px 25px; 
+    transition: all 0.4s ease;
     cursor: pointer; 
     text-decoration: none; 
     color: #fff; 
+    transform: translateY(0);
+    position: relative;
+    overflow: hidden;
+}
+
+.card::after {
+  content: '';
+  position: absolute;
+  width: 120%;
+  height: 0;
+  left: -10%;
+  top: 100%;
+  background: rgba(255,255,255,0.1);
+  transform: skewY(-10deg);
+  transition: all 0.5s ease;
+}
+
+.card:hover::after {
+  top: -20%;
+  height: 200%;
 }
 
 .card:hover { 
-    transform: translateY(-6px); 
-    box-shadow: 0 14px 30px rgba(0,0,0,0.5); 
+    transform: translateY(-8px) scale(1.03); 
+    box-shadow: 0 18px 40px rgba(0,0,0,0.6); 
     background: linear-gradient(145deg, #1d4b2b, #3cb371); 
 }
 
 .card h2 { 
-    font-size: 1.5rem; 
-    margin-bottom: 12px; 
+    font-size: 1.6rem; 
+    margin: 15px 0; 
     color: #ffcb3f; 
-    font-weight: 600; 
+    font-weight: 700; 
 }
 
 .card p { 
     font-size: 1rem; 
     color: #d4f0d4; 
-    line-height: 1.5; 
+    line-height: 1.6; 
 }
 
+/* CARD ICON */
+.card-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 15px;
+  animation: iconBounce 1s infinite alternate;
+}
+
+@keyframes iconBounce {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-8px); }
+}
+
+/* SECTION TITLES */
 .section-title { 
-    margin-top: 50px; 
-    margin-bottom: 20px; 
+    margin-top: 60px; 
+    margin-bottom: 25px; 
     color: #ffcb3f; 
-    font-size: 2rem; 
-    font-weight: 600; 
+    font-size: 2.2rem; 
+    font-weight: 700; 
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.4);
 }
 
+/* DISABLED CARD */
 .card.disabled { 
     cursor: default; 
     background: #2b3a2b; 
-    opacity: 0.7; 
+    opacity: 0.6; 
 }
 
 .card.disabled:hover { 
@@ -118,10 +189,16 @@ h1 {
     background: #2b3a2b; 
 }
 
+/* MEDIA QUERIES */
 @media(max-width:480px){
   .card-grid { grid-template-columns: 1fr; }
-  h1 { font-size: 2rem; }
-  .hero-logo { width: 120px; }
+  h1 { font-size: 2.2rem; }
+  .hero-logo { width: 130px; }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 </style>
 {% endblock %}
