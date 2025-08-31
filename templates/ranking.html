@@ -11,7 +11,7 @@
         <tr>
           <th>#</th>
           <th>Jogador</th>
-          <th>Nível</th> <!-- nova coluna -->
+          <th>Nível</th>
           <th>Pontuação</th>
         </tr>
       </thead>
@@ -30,20 +30,19 @@
           </td>
           <td>
             <div class="player-info 
-              {% if loop.index == 1 %} gold {% elif loop.index == 2 %} silver {% elif loop.index == 3 %} bronze {% endif %}
-            ">
+              {% if loop.index == 1 %} gold {% elif loop.index == 2 %} silver {% elif loop.index == 3 %} bronze {% endif %}">
               <div class="avatar">{{ r[0][0] | upper }}</div>
               <span>{{ r[0] }}</span>
             </div>
           </td>
-          <td class="level">{{ r[2] }}</td> <!-- nível do jogador -->
+          <td class="level">{{ r[2] }}</td>
           <td class="score">{{ r[1] }}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
     {% else %}
-      <p>Nenhum jogador cadastrado ainda.</p>
+      <p class="no-players">Nenhum jogador cadastrado ainda.</p>
     {% endif %}
   </div>
 </section>
@@ -55,6 +54,12 @@
   padding: 50px 20px; 
   background: linear-gradient(135deg, #0a1912, #0f2d1e); 
   min-height: 80vh; 
+  animation: fadeIn 1s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px);}
+  to { opacity: 1; transform: translateY(0);}
 }
 
 .ranking-container { 
@@ -65,6 +70,12 @@
   border-radius: 20px; 
   box-shadow: 0 10px 40px rgba(0,0,0,0.55); 
   text-align: center; 
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ranking-container:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 50px rgba(0,0,0,0.7);
 }
 
 .ranking-container h1 { 
@@ -90,6 +101,7 @@
   border-bottom: 1px solid #1f3b2c; 
   color: #e6e6e6; 
   font-size: 1rem;
+  transition: all 0.2s ease;
 }
 
 .ranking-table th { 
@@ -100,11 +112,12 @@
 }
 
 .ranking-table tr { 
-  transition: background 0.3s ease; 
+  transition: background 0.3s ease, transform 0.2s ease; 
 }
 
 .ranking-table tr:hover { 
   background: rgba(0,255,130,0.08); 
+  transform: scale(1.01);
 }
 
 .player-info { 
@@ -126,6 +139,12 @@
   font-weight: bold; 
   font-size: 0.95rem;
   box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.avatar:hover {
+  transform: scale(1.1);
+  box-shadow: 0 5px 12px rgba(0,0,0,0.5);
 }
 
 /* Top 3 avatars com borda especial */
@@ -138,16 +157,14 @@
 .ranking-table tr.second { background: rgba(192, 192, 192, 0.07); }
 .ranking-table tr.third { background: rgba(205, 127, 50, 0.07); }
 
-.pos { font-weight: bold; }
+.pos { font-weight: bold; text-align: center; }
 
-/* Nível do jogador */
 .level {
   font-weight: 600;
-  color: #ffd700; /* dourado */
+  color: #ffd700;
   text-align: center;
 }
 
-/* Jogador logado */
 .ranking-table tr.highlight { 
   background: rgba(0,255,150,0.25) !important; 
   font-weight: bold; 
@@ -159,6 +176,14 @@
   color: #00ff88;
 }
 
+.no-players {
+  font-size: 1.1rem;
+  color: #c0ffc0;
+  margin-top: 20px;
+  font-style: italic;
+}
+
+/* Responsividade */
 @media(max-width:480px){
   .ranking-container { padding: 20px; }
   .ranking-table th, .ranking-table td { padding: 10px; font-size: 14px; }
