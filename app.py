@@ -346,7 +346,7 @@ def duel_join_page():
         duel.status = "active"
         db.session.commit()
 
-        # Cria jogos para os dois jogadores com mode="duel"
+        # Cria o jogo do criador se ainda não existir
         creator_game = Game.query.filter_by(
             user_id=duel.creator_id,
             rounds_count=duel.rounds_count,
@@ -357,20 +357,22 @@ def duel_join_page():
                 user_id=duel.creator_id,
                 rounds_count=duel.rounds_count,
                 themes_json=duel.themes_json,
-                mode="duel"  # <<< aqui
+                mode="duel"  # <<< mode ajustado para duelo
             )
             db.session.add(creator_game)
 
+        # Cria o jogo do oponente
         opponent_game = Game(
             user_id=duel.opponent_id,
             rounds_count=duel.rounds_count,
             themes_json=duel.themes_json,
-            mode="duel"  # <<< aqui
+            mode="duel"  # <<< mode ajustado para duelo
         )
         db.session.add(opponent_game)
         db.session.commit()
 
         flash(f"Duelo iniciado! Boa sorte!", "success")
+        # Redireciona o usuário que entrou diretamente para sua partida
         return redirect(url_for("game_play", game_id=opponent_game.id))
 
     return render_template("duel_join.html", user=user)
