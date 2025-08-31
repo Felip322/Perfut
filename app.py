@@ -198,9 +198,10 @@ def login():
 def game_mode_select():
     if not require_login():
         return redirect(url_for("login"))
-    
+
     user = User.query.get(session["user_id"])
-    return render_template("game_mode.html", user=user)
+    return render_template("game_mode.html", user=user, hide_ranking=True)
+
 
 
 
