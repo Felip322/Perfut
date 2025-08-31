@@ -18,13 +18,14 @@
       --card: #0b2216;
       --text: #e0e0e0;
     }
+body {
+  margin: 0;
+  font-family: 'Arial', sans-serif;
+  background: url('{{ url_for('static', filename='fundo.png') }}') no-repeat center center fixed;
+  background-size: cover;
+  color: var(--text);
+}
 
-    body {
-      margin: 0;
-      font-family: 'Arial', sans-serif;
-      background: #081a0d;
-      color: var(--text);
-    }
 
     /* Topbar */
     .topbar {
