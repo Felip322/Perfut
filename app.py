@@ -320,20 +320,23 @@ def game_duel_setup():
         db.session.add(duel)
         db.session.commit()
 
-        # Cria imediatamente o jogo do criador com mode="duel"
+        # Cria imediatamente o jogo do criador
         creator_game = Game(
             user_id=user.id,
             rounds_count=rounds_count,
             themes_json=duel.themes_json,
-            mode="duel"  # <<< aqui
+            mode="duel"
         )
         db.session.add(creator_game)
         db.session.commit()
 
-        flash(f"Duelo criado! Código: {duel_code}", "info")
-        return redirect(url_for("duel_wait", duel_id=duel.id))
+        flash(f"Duelo criado! Compartilhe o código: {duel_code}", "info")
+
+        # REDIRECIONA para o jogo do criador assim que ele estiver pronto
+        return redirect(url_for("game_play", game_id=creator_game.id))
 
     return render_template("duel_setup.html", user=user, themes=THEMES, rounds=3)
+
 
 
 @app.route("/game/duel_join", methods=["GET", "POST"], endpoint="duel_join_page")
