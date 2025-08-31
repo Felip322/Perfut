@@ -280,7 +280,6 @@ def duel_wait(duel_id):
 
 
 
-
 @app.route("/game/duel_setup", methods=["GET", "POST"])
 def game_duel_setup():
     if not require_login():
@@ -309,8 +308,13 @@ def game_duel_setup():
         db.session.add(duel)
         db.session.commit()
 
-        # Cria imediatamente o jogo do criador
-        creator_game = Game(user_id=user.id, rounds_count=rounds_count, themes_json=duel.themes_json)
+        # Cria imediatamente o jogo do criador com mode="duel"
+        creator_game = Game(
+            user_id=user.id,
+            rounds_count=rounds_count,
+            themes_json=duel.themes_json,
+            mode="duel"  # <<< aqui
+        )
         db.session.add(creator_game)
         db.session.commit()
 
@@ -342,20 +346,35 @@ def duel_join_page():
         duel.status = "active"
         db.session.commit()
 
-        # Cria jogos para os dois jogadores
-        creator_game = Game.query.filter_by(user_id=duel.creator_id, rounds_count=duel.rounds_count, themes_json=duel.themes_json).first()
+        # Cria jogos para os dois jogadores com mode="duel"
+        creator_game = Game.query.filter_by(
+            user_id=duel.creator_id,
+            rounds_count=duel.rounds_count,
+            themes_json=duel.themes_json
+        ).first()
         if not creator_game:
-            creator_game = Game(user_id=duel.creator_id, rounds_count=duel.rounds_count, themes_json=duel.themes_json)
+            creator_game = Game(
+                user_id=duel.creator_id,
+                rounds_count=duel.rounds_count,
+                themes_json=duel.themes_json,
+                mode="duel"  # <<< aqui
+            )
             db.session.add(creator_game)
-        opponent_game = Game(user_id=duel.opponent_id, rounds_count=duel.rounds_count, themes_json=duel.themes_json)
+
+        opponent_game = Game(
+            user_id=duel.opponent_id,
+            rounds_count=duel.rounds_count,
+            themes_json=duel.themes_json,
+            mode="duel"  # <<< aqui
+        )
         db.session.add(opponent_game)
         db.session.commit()
 
         flash(f"Duelo iniciado! Boa sorte!", "success")
-        # Redireciona o usuário que entrou diretamente para sua partida
         return redirect(url_for("game_play", game_id=opponent_game.id))
 
     return render_template("duel_join.html", user=user)
+
 
 
 @app.route("/duel/result/<int:duel_id>")
@@ -554,6 +573,17 @@ def game_play(game_id):
     if current_number > g.rounds_count:
         g.status = "finished"
         db.session.commit()
+        
+        # Redireciona conforme o modo
+        if g.mode == "duel":
+            duel = Duel.query.filter(
+                ((Duel.creator_id == g.user_id) | (Duel.opponent_id == g.user_id)),
+                Duel.status == "active"
+            ).order_by(Duel.id.desc()).first()
+            if duel:
+                duel.status = "finished"
+                db.session.commit()
+                return redirect(url_for("duel_result", duel_id=duel.id))
         return redirect(url_for("game_result", game_id=g.id))
 
     # Busca a rodada atual ou cria uma nova
@@ -565,7 +595,7 @@ def game_play(game_id):
             flash(f"Nenhum card disponível para o tema '{theme}'.", "warning")
             return redirect(url_for("index"))
 
-        # Sorteia a ordem das dicas e salva em hints_order_json
+        # Sorteia a ordem das dicas
         hints_order = card.hints[:]
         random.shuffle(hints_order)
 
@@ -606,6 +636,7 @@ def game_play(game_id):
         user=user,
         card_points=round_points
     )
+
 
 @app.route("/game/guess/<int:round_id>", methods=["POST"])
 def game_guess(round_id):
