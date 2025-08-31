@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-content">
+    <img src="{{ url_for('static', filename='logo.png') }}" class="hero-logo">
+    <h2>Resultado do Duelo</h2>
+
+    <div class="scores">
+      <div class="player">
+        <h3>{{ duel.creator.name }}</h3>
+        <p>Pontos: {{ creator_score }}</p>
+      </div>
+      <div class="player">
+        <h3>{{ duel.opponent.name }}</h3>
+        <p>Pontos: {{ opponent_score }}</p>
+      </div>
+    </div>
+
+    {% if winner %}
+      <h3 class="winner">🏆 {{ winner.name }} venceu!</h3>
+    {% else %}
+      <h3 class="winner">Empate!</h3>
+    {% endif %}
+
+    <a href="{{ url_for('game_mode_select') }}" class="btn">Voltar ao menu</a>
+  </div>
+</section>
+
+<style>
+.hero { display: flex; justify-content: center; align-items: center; text-align: center; padding: 40px 20px; min-height: 80vh; background: linear-gradient(135deg, #0b1f14 0%, #123722 100%); }
+.hero-content { max-width: 500px; }
+.hero-logo { width: 140px; margin-bottom: 20px; }
+.scores { display: flex; justify-content: space-around; margin: 30px 0; }
+.player { background: #214e33; padding: 20px; border-radius: 12px; color: #ffcb3f; width: 40%; }
+.winner { color: #ffcb3f; margin: 20px 0; font-size: 24px; }
+.btn { padding: 12px 20px; border-radius: 999px; background: #3cb371; color: #fff; text-decoration: none; display: inline-block; }
+.btn:hover { background: #2e8b57; }
+</style>
+{% endblock %}
