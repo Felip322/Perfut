@@ -11,6 +11,20 @@
   </div>
 </section>
 
+<script>
+  // Verifica a cada 3 segundos se o duelo já começou
+  setInterval(function() {
+    fetch("{{ url_for('duel_wait', duel_id=duel.id) }}", { method: 'GET' })
+      .then(response => response.text())
+      .then(html => {
+        // Se o status do duelo mudou para active, redireciona
+        if (html.includes('status: "active"') || html.includes('game/play')) {
+          window.location.href = "{{ url_for('duel_wait', duel_id=duel.id) }}";
+        }
+      });
+  }, 3000);
+</script>
+
 <style>
 .hero {
   display: flex;
