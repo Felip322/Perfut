@@ -561,10 +561,32 @@ def game_play(game_id):
 
     # Determina qual rodada atual
     current_number = len([r for r in g.rounds if r.finished]) + 1
+
+    # Se todas as rodadas terminaram
     if current_number > g.rounds_count:
         g.status = "finished"
         db.session.commit()
-        return redirect(url_for("game_result", game_id=g.id))
+
+        # Verifica se este jogo faz parte de um duelo
+        duel = Duel.query.filter(
+            (Duel.creator_id == g.user_id) | (Duel.opponent_id == g.user_id)
+        ).first()
+
+        if duel:
+            # Pega os jogos de ambos os jogadores do duelo
+            creator_game = Game.query.filter_by(user_id=duel.creator_id, rounds_count=duel.rounds_count).order_by(Game.id.desc()).first()
+            opponent_game = Game.query.filter_by(user_id=duel.opponent_id, rounds_count=duel.rounds_count).order_by(Game.id.desc()).first()
+
+            # Se ambos os jogos acabaram, marca duelo como finished
+            if creator_game and opponent_game and creator_game.status == "finished" and opponent_game.status == "finished":
+                duel.status = "finished"
+                db.session.commit()
+
+            # Redireciona para duelo
+            return redirect(url_for("duel_result", duel_id=duel.id))
+        else:
+            # Redireciona para resultado solo
+            return redirect(url_for("game_result", game_id=g.id))
 
     # Busca a rodada atual ou cria uma nova
     current = Round.query.filter_by(game_id=g.id, number=current_number).first()
@@ -575,7 +597,6 @@ def game_play(game_id):
             flash(f"Nenhum card disponível para o tema '{theme}'.", "warning")
             return redirect(url_for("index"))
 
-        # Sorteia a ordem das dicas e salva em hints_order_json
         hints_order = card.hints[:]
         random.shuffle(hints_order)
 
