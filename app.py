@@ -269,35 +269,17 @@ def duel_wait(duel_id):
 
     return render_template("duel_wait.html", duel=duel, user=user)
 
-
-
-
-
-
-
-
-
 @app.route("/game/duel_setup", methods=["GET", "POST"])
-def game_duel_setup():
-    if not require_login():
-        return redirect(url_for("login"))
-
-    user = User.query.get(session["user_id"])
-
+@login_required
+def duel_setup():
     if request.method == "POST":
         selected = request.form.getlist("themes")
-        valid_themes = [key for key, _ in THEMES]
-        selected = [t for t in selected if t in valid_themes]
-        if not selected:
-            flash("Selecione ao menos um tema.", "warning")
-            return redirect(url_for("game_duel_setup"))
-
         rounds_count = int(request.form.get("rounds", 3))
 
         # Cria duelo com código aleatório
-       duel_code = str(uuid.uuid4())[:8].upper()
+        duel_code = str(uuid.uuid4())[:8].upper()
         duel = Duel(
-            creator_id=user.id,
+            creator_id=current_user.id,
             themes_json=json.dumps(selected),
             rounds_count=rounds_count,
             code=duel_code,
@@ -305,10 +287,13 @@ def game_duel_setup():
         )
         db.session.add(duel)
         db.session.commit()
+
         flash(f"Duelo criado! Código: {duel_code}", "info")
         return redirect(url_for("duel_wait", duel_id=duel.id))
 
-    return render_template("duel_setup.html", user=user, themes=THEMES, rounds=3)
+    themes = ["Tema1", "Tema2", "Tema3"]  # exemplo
+    return render_template("duel_setup.html", themes=themes)
+
 
 
 # Rota duel_join corrigida
@@ -337,17 +322,6 @@ def duel_join_page():
         return redirect(url_for("duel_wait", duel_id=duel.id))
 
     return render_template("duel_join.html", user=user)
-
-
-
-
-
-
-
-
-
-
-
 
 @app.route("/logout")
 def logout():
