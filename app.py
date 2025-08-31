@@ -270,39 +270,6 @@ def duel_wait(duel_id):
     return render_template("duel_wait.html", duel=duel, user=user)
 
 
-@app.route("/duel/result/<int:duel_id>")
-def duel_result(duel_id):
-    if not require_login():
-        return redirect(url_for("login"))
-
-    duel = Duel.query.get_or_404(duel_id)
-
-    # Pega os jogos de cada jogador
-    creator_game = Game.query.filter_by(user_id=duel.creator_id).order_by(Game.id.desc()).first()
-    opponent_game = Game.query.filter_by(user_id=duel.opponent_id).order_by(Game.id.desc()).first()
-
-    creator_score = creator_game.user_score if creator_game else 0
-    opponent_score = opponent_game.user_score if opponent_game else 0
-
-    # Determina vencedor
-    if creator_score > opponent_score:
-        winner = duel.creator
-    elif opponent_score > creator_score:
-        winner = duel.opponent
-    else:
-        winner = None  # Empate
-
-    return render_template(
-        "duel_result.html",
-        duel=duel,
-        creator_score=creator_score,
-        opponent_score=opponent_score,
-        winner=winner
-    )
-
-
-
-
 
 
 
@@ -561,32 +528,10 @@ def game_play(game_id):
 
     # Determina qual rodada atual
     current_number = len([r for r in g.rounds if r.finished]) + 1
-
-    # Se todas as rodadas terminaram
     if current_number > g.rounds_count:
         g.status = "finished"
         db.session.commit()
-
-        # Verifica se este jogo faz parte de um duelo
-        duel = Duel.query.filter(
-            (Duel.creator_id == g.user_id) | (Duel.opponent_id == g.user_id)
-        ).first()
-
-        if duel:
-            # Pega os jogos de ambos os jogadores do duelo
-            creator_game = Game.query.filter_by(user_id=duel.creator_id, rounds_count=duel.rounds_count).order_by(Game.id.desc()).first()
-            opponent_game = Game.query.filter_by(user_id=duel.opponent_id, rounds_count=duel.rounds_count).order_by(Game.id.desc()).first()
-
-            # Se ambos os jogos acabaram, marca duelo como finished
-            if creator_game and opponent_game and creator_game.status == "finished" and opponent_game.status == "finished":
-                duel.status = "finished"
-                db.session.commit()
-
-            # Redireciona para duelo
-            return redirect(url_for("duel_result", duel_id=duel.id))
-        else:
-            # Redireciona para resultado solo
-            return redirect(url_for("game_result", game_id=g.id))
+        return redirect(url_for("game_result", game_id=g.id))
 
     # Busca a rodada atual ou cria uma nova
     current = Round.query.filter_by(game_id=g.id, number=current_number).first()
@@ -597,6 +542,7 @@ def game_play(game_id):
             flash(f"Nenhum card disponível para o tema '{theme}'.", "warning")
             return redirect(url_for("index"))
 
+        # Sorteia a ordem das dicas e salva em hints_order_json
         hints_order = card.hints[:]
         random.shuffle(hints_order)
 
