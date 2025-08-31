@@ -295,14 +295,14 @@ def game_duel_setup():
         rounds_count = int(request.form.get("rounds", 3))
 
         # Cria duelo com código aleatório
-        duel_code = str(uuid.uuid4())[:8]
-        duel = Duel(
-            creator_id=user.id,
-            themes_json=json.dumps(selected),
-            rounds_count=rounds_count,
-            code=duel_code,
-            status="waiting"
-        )
+        duel_code = str(uuid.uuid4())[:8].upper()
+duel = Duel(
+    creator_id=user.id,
+    themes_json=json.dumps(selected),
+    rounds_count=rounds_count,
+    code=duel_code,
+    status="waiting"
+)
         db.session.add(duel)
         db.session.commit()
         flash(f"Duelo criado! Código: {duel_code}", "info")
