@@ -12,17 +12,21 @@
 </section>
 
 <script>
-  // Verifica a cada 3 segundos se o duelo já começou
-  setInterval(function() {
-    fetch("{{ url_for('duel_wait', duel_id=duel.id) }}", { method: 'GET' })
-      .then(response => response.text())
-      .then(html => {
-        // Se o status do duelo mudou para active, redireciona
-        if (html.includes('status: "active"') || html.includes('game/play')) {
-          window.location.href = "{{ url_for('duel_wait', duel_id=duel.id) }}";
-        }
+  // Verifica a cada 2 segundos se o duelo começou
+  setInterval(async () => {
+    try {
+      const response = await fetch("{{ url_for('duel_wait', duel_id=duel.id) }}", {
+        method: "GET",
+        headers: { "X-Requested-With": "XMLHttpRequest" }
       });
-  }, 3000);
+      const data = await response.json();
+      if (data.status === "active") {
+        window.location.href = "/game/play/" + data.game_id;
+      }
+    } catch (err) {
+      console.error("Erro ao verificar duelo:", err);
+    }
+  }, 2000);
 </script>
 
 <style>
