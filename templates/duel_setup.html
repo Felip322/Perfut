@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-content">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="PERFUT" class="hero-logo">
+    <p>Escolha os temas ou entre em um duelo existente!</p>
+
+    <!-- Card do duelo -->
+    <div class="game-card">
+      <h2>Criar Duelo</h2>
+      <form action="{{ url_for('game_duel_setup') }}" method="post">
+        <label>Rodadas:
+          <input type="number" name="rounds" min="1" max="20" value="{{ rounds|default(3) }}" required>
+        </label>
+
+        <fieldset class="themes-fieldset">
+          <legend>Escolha os temas</legend>
+          <div class="themes-grid">
+            {% for key, label in themes %}
+            <label class="theme-card">
+              <input type="checkbox" name="themes" value="{{ key }}" checked>
+              <span class="theme-label">{{ label }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+
+        <div class="actions">
+          <button class="btn primary" type="submit">▶ Iniciar Duelo</button>
+        </div>
+      </form>
+
+      <hr style="margin:20px 0; border-color:#214e33;">
+
+      <!-- Entrar em duelo existente -->
+      <h2>Entrar em Duelo</h2>
+      <form action="{{ url_for('duel_join_page') }}" method="get">
+        <div class="actions">
+          <button class="btn secondary" type="submit">➡ Entrar em um Duelo</button>
+        </div>
+      </form>
+    </div>
+
+    <div style="margin-top:15px; text-align:center;">
+      <a href="{{ url_for('game_mode_select') }}" class="btn">⬅ Voltar</a>
+    </div>
+  </div>
+</section>
+
+<style>
+.hero {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  min-height: 80vh;
+  text-align: center;
+  background: linear-gradient(135deg, #0b1f14 0%, #123722 100%);
+}
+
+.hero-content { max-width: 520px; }
+
+.hero-logo {
+  width: 140px;
+  margin-bottom: 20px;
+  animation: bounce 1s infinite alternate;
+}
+
+@keyframes bounce { 0% { transform: translateY(0); } 100% { transform: translateY(-10px); } }
+
+.hero p { font-size: 16px; margin-bottom: 25px; color: var(--text); }
+
+.game-card {
+  background: var(--card);
+  padding: 25px;
+  border-radius: 20px;
+  border: 1px solid #1d4b2b;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  margin: 0 auto;
+  text-align: left;
+}
+
+label { display: flex; flex-direction: column; margin-bottom: 15px; font-weight: 500; }
+
+input[type="number"] {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #214e33;
+  background: #0b2216;
+  color: var(--text);
+  margin-top: 5px;
+}
+
+.themes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.theme-card {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 55px;
+  border-radius: 15px;
+  cursor: pointer;
+  font-weight: 600;
+  text-align: center;
+  overflow: hidden;
+  transition: transform 0.3s, background 0.3s;
+}
+
+.theme-card input { display: none; }
+
+.theme-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 15px;
+  background-color: #3cb371;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  position: relative;
+  transition: all 0.25s ease;
+}
+
+.theme-card:hover .theme-label { background-color: #2e8b57; transform: scale(1.05); }
+
+.theme-card input:checked + .theme-label {
+  background-color: #2e8b57;
+  font-weight: 700;
+}
+
+.theme-card input:checked + .theme-label::after {
+  content: "✔";
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  font-size: 16px;
+  color: #fff;
+}
+
+.actions { display: flex; justify-content: center; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+
+.actions .btn {
+  font-size: 15px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  transition: transform 0.15s, box-shadow 0.2s;
+  text-decoration: none;
+}
+
+.actions .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.25); }
+
+.actions .btn.primary { font-weight: 700; box-shadow: 0 4px 12px rgba(255,203,63,0.4); }
+.actions .btn.primary:hover { box-shadow: 0 6px 18px rgba(255,203,63,0.5); }
+
+.btn.secondary {
+  background-color: #ffa500;
+  color: #000;
+  font-weight: 600;
+  padding: 12px 25px;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.btn.secondary:hover { background-color: #ff8c00; transform: translateY(-2px); }
+
+@media(max-width:480px){
+  .themes-grid { grid-template-columns: 1fr; }
+  .hero p { font-size: 14px; }
+  .actions { flex-direction: column; }
+  .actions .btn { width: 100%; padding: 12px; font-size: 14px; }
+  .game-card { padding: 20px; }
+}
+</style>
+{% endblock %}
