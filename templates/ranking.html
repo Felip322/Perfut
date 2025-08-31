@@ -1,193 +1,148 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="ranking">
-  <div class="ranking-container">
-    <h1>🏆 Ranking de Jogadores</h1>
+<section class="hero">
+  <div class="hero-content">
+    <!-- Logo igual ao index -->
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="PERFUT" class="hero-logo">
 
-    {% if rankings %}
-    <table class="ranking-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Jogador</th>
-          <th>Nível</th>
-          <th>Pontuação</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in rankings %}
-        <tr class="
-          {% if loop.index == 1 %} first {% elif loop.index == 2 %} second 
-          {% elif loop.index == 3 %} third {% endif %}
-          {% if user and user.name == r[0] %} highlight {% endif %}
-        ">
-          <td class="pos">
-            {% if loop.index == 1 %} 🥇 
-            {% elif loop.index == 2 %} 🥈 
-            {% elif loop.index == 3 %} 🥉 
-            {% else %} {{ loop.index }} {% endif %}
-          </td>
-          <td>
-            <div class="player-info 
-              {% if loop.index == 1 %} gold {% elif loop.index == 2 %} silver {% elif loop.index == 3 %} bronze {% endif %}">
-              <div class="avatar">{{ r[0][0] | upper }}</div>
-              <span>{{ r[0] }}</span>
-            </div>
-          </td>
-          <td class="level">{{ r[2] }}</td>
-          <td class="score">{{ r[1] }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-      <p class="no-players">Nenhum jogador cadastrado ainda.</p>
-    {% endif %}
+    <h1>Modo de Jogo</h1>
+
+    <div class="card-grid">
+       <a href="{{ url_for('index') }}" class="card">
+            <h2>🏆 Torneio</h2>
+            <p>Participe do modo Ranking com pontuação geral dos jogadores.</p>
+        </a>
+       <a href="#" class="card disabled">
+            <h2>⚔ Duelo</h2>
+            <p>Enfrente rivais em partidas emocionantes 1 vs 1 (em breve).</p>
+        </a>
+    </div>
+
+    <h2 class="section-title">Eventos</h2>
+    <div class="card-grid">
+        <a href="#" class="card disabled">
+            <h2>🌟 Em Breve</h2>
+            <p>Novos eventos e rankings especiais estão chegando!</p>
+        </a>
+    </div>
   </div>
 </section>
 
 <style>
-.ranking { 
-  display: flex; 
-  justify-content: center; 
-  padding: 50px 20px; 
-  background: linear-gradient(135deg, #0a1912, #0f2d1e); 
-  min-height: 80vh; 
-  animation: fadeIn 1s ease-in;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px);}
-  to { opacity: 1; transform: translateY(0);}
-}
-
-.ranking-container { 
-  max-width: 800px; 
-  width: 100%; 
-  background: #142820; 
-  padding: 35px; 
-  border-radius: 20px; 
-  box-shadow: 0 10px 40px rgba(0,0,0,0.55); 
-  text-align: center; 
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.ranking-container:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 50px rgba(0,0,0,0.7);
-}
-
-.ranking-container h1 { 
-  color: #00ff88; 
-  margin-bottom: 25px; 
-  font-size: 2.3rem; 
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  text-shadow: 0 2px 10px rgba(0,255,150,0.4);
-}
-
-.ranking-table { 
-  width: 100%; 
-  border-collapse: collapse; 
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.ranking-table th, 
-.ranking-table td { 
-  padding: 16px; 
-  border-bottom: 1px solid #1f3b2c; 
-  color: #e6e6e6; 
-  font-size: 1rem;
-  transition: all 0.2s ease;
-}
-
-.ranking-table th { 
-  background: #1f3b2c; 
-  font-weight: 700;
-  text-align: left;
-  color: #00ff9d;
-}
-
-.ranking-table tr { 
-  transition: background 0.3s ease, transform 0.2s ease; 
-}
-
-.ranking-table tr:hover { 
-  background: rgba(0,255,130,0.08); 
-  transform: scale(1.01);
-}
-
-.player-info { 
-  display: flex; 
-  align-items: center; 
-  gap: 12px; 
-  font-weight: 600;
-}
-
-.avatar { 
-  width: 38px; 
-  height: 38px; 
-  border-radius: 50%; 
-  background: linear-gradient(135deg, #2e8b57, #3cb371); 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  color: #fff; 
-  font-weight: bold; 
-  font-size: 0.95rem;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.4);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.avatar:hover {
-  transform: scale(1.1);
-  box-shadow: 0 5px 12px rgba(0,0,0,0.5);
-}
-
-/* Top 3 avatars com borda especial */
-.player-info.gold .avatar { border: 3px solid gold; }
-.player-info.silver .avatar { border: 3px solid silver; }
-.player-info.bronze .avatar { border: 3px solid #cd7f32; }
-
-/* Destaques top 3 */
-.ranking-table tr.first { background: rgba(255, 215, 0, 0.07); }
-.ranking-table tr.second { background: rgba(192, 192, 192, 0.07); }
-.ranking-table tr.third { background: rgba(205, 127, 50, 0.07); }
-
-.pos { font-weight: bold; text-align: center; }
-
-.level {
-  font-weight: 600;
-  color: #ffd700;
+.hero {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 50px 20px;
+  min-height: 80vh;
   text-align: center;
+  background: linear-gradient(135deg, #0b1f14 0%, #123722 100%);
+  transition: all 0.3s ease-in-out;
 }
 
-.ranking-table tr.highlight { 
-  background: rgba(0,255,150,0.25) !important; 
-  font-weight: bold; 
-  color: #0a1912; 
+.hero-content {
+  max-width: 600px;
+  width: 100%;
+  animation: fadeInUp 1s ease forwards;
 }
 
-.score { 
-  font-weight: 700; 
-  color: #00ff88;
+.hero-logo {
+  width: 160px;
+  margin-bottom: 20px;
+  animation: bounce 1.2s infinite alternate;
 }
 
-.no-players {
-  font-size: 1.1rem;
-  color: #c0ffc0;
-  margin-top: 20px;
-  font-style: italic;
+@keyframes bounce {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0); }
 }
 
-/* Responsividade */
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+h1 {
+  color: #ffcb3f;
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+  font-weight: 700;
+  text-shadow: 1px 1px 4px rgba(0,0,0,0.5);
+}
+
+.card-grid { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
+  gap: 20px; 
+}
+
+.card { 
+  background: linear-gradient(145deg, #0b2216, #123722); 
+  border-radius: 20px; 
+  box-shadow: 0 8px 25px rgba(0,0,0,0.4); 
+  padding: 25px 20px; 
+  transition: transform 0.3s, box-shadow 0.3s, background 0.3s; 
+  cursor: pointer; 
+  text-decoration: none; 
+  color: #fff; 
+}
+
+.card:hover { 
+  transform: translateY(-6px) scale(1.02); 
+  box-shadow: 0 14px 30px rgba(0,0,0,0.5); 
+  background: linear-gradient(145deg, #1d4b2b, #3cb371); 
+}
+
+.card h2 { 
+  font-size: 1.4rem; 
+  margin-bottom: 10px; 
+  color: #ffcb3f; 
+  font-weight: 600; 
+}
+
+.card p { 
+  font-size: 0.95rem; 
+  color: #d4f0d4; 
+  line-height: 1.5; 
+}
+
+.section-title { 
+  margin-top: 40px; 
+  margin-bottom: 15px; 
+  color: #ffcb3f; 
+  font-size: 1.8rem; 
+  font-weight: 600; 
+}
+
+.card.disabled { 
+  cursor: default; 
+  background: #2b3a2b; 
+  opacity: 0.75; 
+}
+
+.card.disabled:hover { 
+  transform: none; 
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5); 
+  background: #2b3a2b; 
+}
+
+/* RESPONSIVO */
+@media(max-width:768px){
+  .hero { padding: 40px 15px; }
+  h1 { font-size: 2rem; }
+  .hero-logo { width: 140px; }
+  .card { padding: 20px 15px; }
+}
+
 @media(max-width:480px){
-  .ranking-container { padding: 20px; }
-  .ranking-table th, .ranking-table td { padding: 10px; font-size: 14px; }
-  .avatar { width: 32px; height: 32px; font-size: 0.8rem; }
+  .card-grid { grid-template-columns: 1fr; gap: 15px; }
+  h1 { font-size: 1.8rem; }
+  .hero-logo { width: 120px; margin-bottom: 15px; }
+  .card h2 { font-size: 1.2rem; }
+  .card p { font-size: 0.9rem; }
+  .section-title { font-size: 1.5rem; }
 }
 </style>
 {% endblock %}
