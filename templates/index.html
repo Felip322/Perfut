@@ -47,7 +47,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 50px 20px;
+  padding: 40px 20px;
   min-height: 80vh;
   text-align: center;
   background: linear-gradient(135deg, #0b1f14 0%, #123722 100%);
@@ -58,7 +58,7 @@
 }
 
 .hero-logo {
-  width: 160px;
+  width: 140px;
   margin-bottom: 20px;
   animation: bounce 1s infinite alternate;
 }
@@ -69,14 +69,14 @@
 }
 
 .hero p {
-  font-size: 18px;
+  font-size: 16px;
   margin-bottom: 25px;
   color: var(--text);
 }
 
 .game-card {
   background: var(--card);
-  padding: 30px;
+  padding: 25px;
   border-radius: 20px;
   border: 1px solid #1d4b2b;
   box-shadow: 0 8px 25px rgba(0,0,0,0.3);
@@ -104,11 +104,10 @@ input[type="number"] {
   margin-top: 5px;
 }
 
-/* Temas estilo botão moderno */
 .themes-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
   margin-top: 15px;
 }
 
@@ -117,13 +116,13 @@ input[type="number"] {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 60px;
+  height: 55px;
   border-radius: 15px;
   cursor: pointer;
   font-weight: 600;
   text-align: center;
   overflow: hidden;
-  transition: all 0.25s ease;
+  transition: transform 0.3s, background 0.3s;
 }
 
 .theme-card input {
@@ -139,7 +138,7 @@ input[type="number"] {
   border-radius: 15px;
   background-color: #3cb371;
   color: #fff;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   position: relative;
   transition: all 0.25s ease;
@@ -147,6 +146,7 @@ input[type="number"] {
 
 .theme-card:hover .theme-label {
   background-color: #2e8b57;
+  transform: scale(1.05);
 }
 
 .theme-card input:checked + .theme-label {
@@ -159,22 +159,21 @@ input[type="number"] {
   position: absolute;
   top: 5px;
   right: 8px;
-  font-size: 18px;
+  font-size: 16px;
   color: #fff;
 }
 
-/* Botões da página - melhorias visuais */
 .actions {
   display: flex;
   justify-content: center;
-  gap: 15px;
-  margin-top: 25px;
+  gap: 12px;
+  margin-top: 20px;
   flex-wrap: wrap;
 }
 
 .actions .btn {
-  font-size: 16px;
-  padding: 14px 26px;
+  font-size: 15px;
+  padding: 12px 20px;
   border-radius: 999px;
   transition: transform 0.15s, box-shadow 0.2s;
 }
@@ -195,8 +194,10 @@ input[type="number"] {
 
 @media(max-width:480px){
   .themes-grid { grid-template-columns: 1fr; }
-  .hero p { font-size: 16px; }
+  .hero p { font-size: 14px; }
   .actions { flex-direction: column; }
+  .actions .btn { width: 100%; padding: 12px; font-size: 14px; }
+  .game-card { padding: 20px; }
 }
 </style>
 {% endblock %}
