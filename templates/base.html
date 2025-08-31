@@ -230,7 +230,9 @@
     <button class="menu-toggle" onclick="toggleMenu()">☰</button>
     <nav class="top-nav">
       {% if user %}
-        <a href="{{ url_for('ranking') }}" class="btn">Ranking 🏆</a>
+        {% if not hide_ranking %}
+          <a href="{{ url_for('ranking') }}" class="btn">Ranking 🏆</a>
+        {% endif %}
         <a href="{{ url_for('game_mode_select') }}" class="btn primary">Início 🏠</a>
         {% if user.is_admin %}
           <a href="{{ url_for('admin_add_card') }}" class="btn">+ Card 📝</a>
