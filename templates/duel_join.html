@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-content">
+    <h1>Entrar em um Duelo</h1>
+
+    <form method="post" action="{{ url_for('duel_join_page') }}" class="game-card">
+      <label>Código do duelo:
+        <input type="text" name="code" required placeholder="Digite o código recebido">
+      </label>
+
+      <div class="actions">
+        <button class="btn primary" type="submit">▶ Entrar</button>
+        <a href="{{ url_for('game_mode_select') }}" class="btn">⬅ Voltar</a>
+      </div>
+    </form>
+  </div>
+</section>
+
+<style>
+.hero {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  min-height: 80vh;
+  text-align: center;
+  background: linear-gradient(135deg, #0b1f14 0%, #123722 100%);
+}
+
+.hero-content {
+  max-width: 520px;
+}
+
+.hero h1 {
+  font-size: 24px;
+  color: var(--text);
+  margin-bottom: 25px;
+}
+
+.game-card {
+  background: var(--card);
+  padding: 25px;
+  border-radius: 20px;
+  border: 1px solid #1d4b2b;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  margin: 0 auto;
+  text-align: left;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+input[type="text"] {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #214e33;
+  background: #0b2216;
+  color: var(--text);
+  margin-top: 5px;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.actions .btn {
+  font-size: 15px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  transition: transform 0.15s, box-shadow 0.2s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.actions .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+}
+
+.actions .btn.primary {
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(255,203,63,0.4);
+}
+
+.actions .btn.primary:hover {
+  box-shadow: 0 6px 18px rgba(255,203,63,0.5);
+}
+
+@media(max-width:480px){
+  .hero h1 { font-size: 20px; }
+  .actions { flex-direction: column; }
+  .actions .btn { width: 100%; padding: 12px; font-size: 14px; }
+  .game-card { padding: 20px; }
+}
+</style>
+{% endblock %}
