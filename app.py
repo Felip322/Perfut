@@ -260,14 +260,15 @@ def duel_wait(duel_id):
     duel = Duel.query.get_or_404(duel_id)
     user = User.query.get(session["user_id"])
 
-    # Se o duelo já está ativo, redireciona para o jogo correspondente
-    if duel.status == "active":
-        # Descobre qual é o jogo do usuário logado
-        game = Game.query.filter_by(user_id=user.id).order_by(Game.id.desc()).first()
-        if game:
-            return redirect(url_for("game_play", game_id=game.id))
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        if duel.status == "active":
+            # Pega o game do usuário correspondente
+            game = Game.query.filter_by(user_id=user.id).order_by(Game.id.desc()).first()
+            return {"status": "active", "game_id": game.id}
+        return {"status": "waiting"}
 
     return render_template("duel_wait.html", duel=duel, user=user)
+
 
 
 
