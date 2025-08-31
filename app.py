@@ -339,6 +339,7 @@ def game_duel_setup():
 
 
 
+
 @app.route("/game/duel_join", methods=["GET", "POST"], endpoint="duel_join_page")
 def duel_join_page():
     if not require_login():
