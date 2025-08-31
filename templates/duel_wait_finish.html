@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-content">
+    <img src="{{ url_for('static', filename='logo.png') }}" class="hero-logo">
+    <h2>Aguardando adversário...</h2>
+    <p>Você terminou sua partida, mas seu adversário ainda está jogando.</p>
+
+    <div class="duel-code">
+      <p>Compartilhe este código com seu amigo para iniciar o duelo:</p>
+      <h2>{{ duel.code }}</h2>
+    </div>
+
+    <p>Esta página atualizará automaticamente quando o adversário terminar.</p>
+  </div>
+</section>
+
+<style>
+.hero { display: flex; justify-content: center; align-items: center; text-align: center; padding: 40px 20px; min-height: 80vh; background: linear-gradient(135deg, #0b1f14 0%, #123722 100%); }
+.hero-content { max-width: 500px; }
+.hero-logo { width: 140px; margin-bottom: 20px; }
+.duel-code { background: #214e33; padding: 20px; border-radius: 12px; color: #ffcb3f; margin: 20px 0; }
+h2 { margin: 15px 0; }
+</style>
+
+<script>
+// Atualiza a página a cada 5 segundos para verificar se o duelo terminou
+setInterval(function() {
+    fetch("{{ url_for('duel_wait', duel_id=duel.id) }}", {headers: {"X-Requested-With": "XMLHttpRequest"}})
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "finished") {
+                window.location.href = "{{ url_for('duel_result', duel_id=duel.id) }}";
+            }
+        });
+}, 5000);
+</script>
+{% endblock %}
