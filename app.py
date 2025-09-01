@@ -149,11 +149,11 @@ class Round(db.Model):
 # Utilities
 # ----------------------
 THEMES = [
-    ("time", "Time"),
+    ("clube", "Clube"),
     ("jogador_atividade", "Jogador em atividade"),
     ("jogador_aposentado", "Jogador aposentado"),
     ("estadio", "Estádio"),
-    ("tecnico", "Técnicos"),
+    ("tecnico", "Técnico"),
     ("Ano", "Ano"),
 ]
 
