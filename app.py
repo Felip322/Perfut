@@ -145,6 +145,19 @@ class Round(db.Model):
         self.hints_order_json = json.dumps(value, ensure_ascii=False)
 
 
+class DuelScore(db.Model):
+    __tablename__ = "duels_scores"
+    id = db.Column(db.Integer, primary_key=True)
+    duel_id = db.Column(db.Integer, db.ForeignKey("duels.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    score = db.Column(db.Integer, default=0)
+
+    duel = db.relationship("Duel", backref="scores")
+    user = db.relationship("User")
+
+
+
+
 # ----------------------
 # Utilities
 # ----------------------
@@ -432,6 +445,15 @@ def duel_result(duel_id):
     creator_score = creator_game.user_score if creator_game else 0
     opponent_score = opponent_game.user_score if opponent_game else 0
 
+    # Salvar na tabela DuelScore
+    # Remove registros anteriores caso a rota seja acessada novamente
+    DuelScore.query.filter_by(duel_id=duel.id).delete()
+    db.session.add_all([
+        DuelScore(duel_id=duel.id, user_id=duel.creator_id, score=creator_score),
+        DuelScore(duel_id=duel.id, user_id=duel.opponent_id, score=opponent_score)
+    ])
+    db.session.commit()
+
     winner = None
     if creator_score > opponent_score:
         winner = duel.creator
@@ -445,7 +467,6 @@ def duel_result(duel_id):
         opponent_score=opponent_score,
         winner=winner
     )
-
 
 
 
