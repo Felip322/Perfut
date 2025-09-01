@@ -645,13 +645,17 @@ def game_play(game_id):
         
         return redirect(url_for("game_result", game_id=g.id))
 
-    # Busca a rodada atual ou cria uma nova
+   # Busca a rodada atual ou cria uma nova
     current = Round.query.filter_by(game_id=g.id, number=current_number).first()
     if not current:
         theme = g.themes[(current_number - 1) % len(g.themes)]
-        card = pick_card_for_theme(theme)
+
+        # Função para pegar carta sem repetição
+        used_card_ids = [r.card_id for r in g.rounds]
+        card = Card.query.filter_by(theme=theme, difficulty=1).filter(~Card.id.in_(used_card_ids)).order_by(db.func.random()).first()
+
         if not card:
-            flash(f"Nenhum card disponível para o tema '{theme}'.", "warning")
+            flash(f"Nenhum card disponível não repetido para o tema '{theme}'.", "warning")
             return redirect(url_for("index"))
 
         # Sorteia a ordem das dicas
@@ -676,7 +680,6 @@ def game_play(game_id):
         flash(f"Tempo esgotado! Resposta era: {current.card.answer}", "danger")
         return redirect(url_for("game_play", game_id=g.id))
 
-    # Pega as dicas na ordem sorteada
     hints_order = json.loads(current.hints_order_json or "[]")
     hints = hints_order[:current.requested_hints]
 
