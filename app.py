@@ -615,50 +615,66 @@ def game_play(game_id):
     g = Game.query.get_or_404(game_id)
     user = User.query.get(session["user_id"])
 
-    # Determina qual rodada atual
+    # Determina a rodada atual
     current_number = len([r for r in g.rounds if r.finished]) + 1
     if current_number > g.rounds_count:
         g.status = "finished"
         db.session.commit()
         
         if g.mode == "duel":
-            # Pega o duelo correspondente
             duel = Duel.query.filter(
                 ((Duel.creator_id == g.user_id) | (Duel.opponent_id == g.user_id)),
                 Duel.status.in_(["active", "finished"])
             ).order_by(Duel.id.desc()).first()
             
             if duel:
-                # Pega os dois jogos
                 creator_game = Game.query.filter_by(user_id=duel.creator_id).order_by(Game.id.desc()).first()
                 opponent_game = Game.query.filter_by(user_id=duel.opponent_id).order_by(Game.id.desc()).first()
                 
-                # Só finaliza o duelo se os dois terminaram
                 if creator_game.status == "finished" and opponent_game.status == "finished":
                     duel.status = "finished"
                     db.session.commit()
                     return redirect(url_for("duel_result", duel_id=duel.id))
                 else:
-                    # Se o outro ainda não terminou, espera
                     flash("Você terminou, mas aguarde seu oponente terminar o duelo.", "info")
                     return redirect(url_for("duel_wait", duel_id=duel.id))
         
         return redirect(url_for("game_result", game_id=g.id))
 
-   # Busca a rodada atual ou cria uma nova
+    # Busca a rodada atual ou cria uma nova
     current = Round.query.filter_by(game_id=g.id, number=current_number).first()
     if not current:
-        theme = g.themes[(current_number - 1) % len(g.themes)]
+        if g.mode == "duel":
+            # Pega o duelo correspondente
+            duel = Duel.query.filter(
+                (Duel.creator_id == g.user_id) | (Duel.opponent_id == g.user_id)
+            ).first()
 
-        # Função para pegar carta sem repetição
-        used_card_ids = [r.card_id for r in g.rounds]
-        card = Card.query.filter_by(theme=theme, difficulty=1).filter(~Card.id.in_(used_card_ids)).order_by(db.func.random()).first()
+            # Cria a lista de cartas do duelo apenas uma vez
+            if not hasattr(duel, "cards_order_json") or not duel.cards_order_json:
+                cards = []
+                themes = g.themes
+                for i in range(duel.rounds_count):
+                    theme = themes[i % len(themes)]
+                    card = Card.query.filter_by(theme=theme, difficulty=1).order_by(db.func.random()).first()
+                    cards.append(card.id)
+                duel.cards_order_json = json.dumps(cards)
+                db.session.commit()
+            
+            cards_order = json.loads(duel.cards_order_json)
+            card_id = cards_order[current_number - 1]
+            card = Card.query.get(card_id)
+        else:
+            # Solo ou torneio: carta sem repetição
+            theme = g.themes[(current_number - 1) % len(g.themes)]
+            used_card_ids = [r.card_id for r in g.rounds]
+            card = Card.query.filter_by(theme=theme, difficulty=1).filter(~Card.id.in_(used_card_ids)).order_by(db.func.random()).first()
 
         if not card:
-            flash(f"Nenhum card disponível não repetido para o tema '{theme}'.", "warning")
+            flash("Nenhum card disponível.", "warning")
             return redirect(url_for("index"))
 
-        # Sorteia a ordem das dicas
+        # Embaralha as dicas
         hints_order = card.hints[:]
         random.shuffle(hints_order)
 
@@ -673,7 +689,7 @@ def game_play(game_id):
         db.session.add(current)
         db.session.commit()
 
-    # Verifica se o tempo acabou
+    # Verifica tempo da rodada
     if datetime.utcnow() > current.ends_at and not current.finished:
         current.finished = True
         db.session.commit()
@@ -698,6 +714,7 @@ def game_play(game_id):
         user=user,
         card_points=round_points
     )
+
 
 
 
