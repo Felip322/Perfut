@@ -603,6 +603,7 @@ def game_setup():
 
 
 
+
 def pick_card_for_theme(theme, difficulty=1):
     q = Card.query.filter_by(theme=theme, difficulty=difficulty)
     return q.order_by(db.func.random()).first()
@@ -714,7 +715,6 @@ def game_play(game_id):
         user=user,
         card_points=round_points
     )
-
 
 
 
