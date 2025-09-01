@@ -203,7 +203,7 @@ def register():
         db.session.commit()
         session["user_id"] = u.id
         flash("Cadastro realizado! Boa sorte no PERFUT!", "success")
-        return redirect(url_for("index"))
+        return redirect(url_for("game_mode_select"))
     return render_template("register.html")
 
 @app.route("/login", methods=["GET", "POST"])
