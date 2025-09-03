@@ -58,11 +58,6 @@ function submitAnswer(optionId) {
     })
     .then(response => response.json())
     .then(data => {
-        if(data.time_over) {
-            window.location.href = data.next_question_url;
-            return;
-        }
-
         const feedbackDiv = document.getElementById('feedback');
 
         if(data.correct) {
@@ -86,10 +81,11 @@ function submitAnswer(optionId) {
   max-width: 600px;
   margin: 50px auto;
   text-align: center;
-  background: linear-gradient(145deg, #ffecd2, #fcb69f);
-  padding: 30px;
+  background: var(--card);
+  color: var(--text);
+  padding: 40px 30px;
   border-radius: 25px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
 }
 
 .quiz-header {
@@ -99,19 +95,19 @@ function submitAnswer(optionId) {
 .quiz-title {
   font-size: 36px;
   font-weight: 700;
-  color: #ff6b6b;
+  color: var(--accent);
 }
 
 .quiz-progress, .quiz-timer {
   font-size: 16px;
-  color: #555;
+  color: var(--text);
   margin: 5px 0;
 }
 
 .quiz-question h2 {
   font-size: 24px;
   margin: 20px 0;
-  color: #222;
+  color: var(--text);
 }
 
 .quiz-options {
@@ -126,15 +122,16 @@ function submitAnswer(optionId) {
   font-weight: bold;
   border-radius: 50px;
   border: none;
-  background: #4facfe;
-  color: white;
+  background: var(--accent);
+  color: var(--card);
   cursor: pointer;
   transition: transform 0.2s, background 0.2s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .option-btn:hover {
   transform: scale(1.05);
-  background: #00f2fe;
+  background: #ffc107; /* leve variação do amarelo padrão */
 }
 
 .feedback {
