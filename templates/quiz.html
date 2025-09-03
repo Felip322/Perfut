@@ -9,9 +9,14 @@
 
   <!-- Opções -->
   <div class="quiz-options">
-    {% for option in question.options %}
-      <button class="option-btn" onclick="submitAnswer('{{ option.id }}')">
-        {{ option.text }}
+    {% for option_text, option_id in [
+        (question.option1, 1),
+        (question.option2, 2),
+        (question.option3, 3),
+        (question.option4, 4)
+    ] %}
+      <button class="option-btn" onclick="submitAnswer('{{ option_id }}')">
+        {{ option_text }}
       </button>
     {% endfor %}
   </div>
@@ -44,7 +49,7 @@ function submitAnswer(optionId) {
             if (data.next_question_url) {
                 window.location.href = data.next_question_url;
             } else {
-                // Se não houver próxima pergunta, volta para a página inicial ou resultado
+                // Se não houver próxima pergunta, vai para a página de resultado
                 window.location.href = '{{ url_for("quiz_result") }}';
             }
         }, 1500);
