@@ -20,8 +20,7 @@
           <tr class="
             {% if loop.index == 1 %} first {% elif loop.index == 2 %} second 
             {% elif loop.index == 3 %} third {% endif %}
-            {% if user and user.id == r.player.id %} highlight {% endif %}
-          ">
+            {% if user and user.id == r.player.id %} highlight {% endif %}">
             <td class="pos">
               {% if loop.index == 1 %} 🥇 
               {% elif loop.index == 2 %} 🥈 
@@ -46,12 +45,13 @@
     {% endif %}
 
     <div style="margin-top: 30px;">
-      <a href="{{ url_for('weekly_event') }}" class="back-btn">🔙 Voltar ao Evento</a>
+      <a href="{{ url_for('weekly_event') }}" class="option-btn">🔙 Voltar ao Evento</a>
     </div>
   </div>
 </section>
 
 <style>
+/* Ranking geral */
 .ranking { 
   display: flex; 
   justify-content: center; 
@@ -165,19 +165,21 @@
   font-style: italic;
 }
 
-.back-btn {
-  display: inline-block; 
-  background: #D15106; 
-  color: #fff; 
-  text-decoration: none; 
-  padding: 15px 25px; 
-  border-radius: 10px; 
-  font-weight: bold; 
-  transition: background 0.2s;
+/* Botão igual aos outros templates */
+.option-btn {
+  display: inline-block;
+  padding: 15px 25px;
+  background-color: #3b82f6;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
-.back-btn:hover {
-  background: #bf3e04;
+.option-btn:hover {
+  background-color: #2563eb;
+  transform: scale(1.05);
 }
 
 /* Responsividade */
