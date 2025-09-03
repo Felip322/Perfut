@@ -269,11 +269,16 @@ def game_mode_select():
     user = User.query.get(session["user_id"])
     today = datetime.utcnow().date()
 
-    # Pega evento ativo
-    weekly_event = WeeklyEvent.query.filter_by(is_active=True).first()
+    # Pega evento ativo e dentro do período
+    weekly_event = WeeklyEvent.query.filter(
+        WeeklyEvent.is_active == True,
+        WeeklyEvent.start_date <= today,
+        WeeklyEvent.end_date >= today
+    ).first()
 
     already_played = False
     if weekly_event:
+        # Verifica se o usuário já jogou hoje
         already_played = WeeklyScore.query.filter_by(
             event_id=weekly_event.id,
             player_id=user.id,
@@ -287,7 +292,6 @@ def game_mode_select():
         weekly_event=weekly_event,
         already_played=already_played
     )
-
 
 @app.route("/duel/join/<code>")
 def duel_join(code):
