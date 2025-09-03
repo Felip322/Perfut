@@ -634,23 +634,35 @@ def quiz_start():
 
 @app.route("/quiz/<int:question_id>")
 def quiz_play(question_id):
-    question = Quiz.query.get_or_404(question_id)
+    if not require_login():
+        return redirect(url_for("login"))
 
-    # Monta a lista de opções para o template
-    options = [
-        {"id": 1, "text": question.option1},
-        {"id": 2, "text": question.option2},
-        {"id": 3, "text": question.option3},
-        {"id": 4, "text": question.option4},
-    ]
+    question = Quiz.query.get(question_id)
+    if not question:
+        flash("Pergunta não encontrada.", "warning")
+        return redirect(url_for("quiz_start_page"))
 
-    return render_template("quiz_play.html", question=question, options=options)
+    return render_template(
+        "quiz_play.html",
+        question=question
+    )
+
 
 @app.route("/quiz/start_page")
 def quiz_start_page():
-    # Seleciona a primeira pergunta para passar para o template
-    first_question = Quiz.query.first()
-    return render_template("quiz_start.html", first_question_id=first_question.id)
+    if not require_login():
+        return redirect(url_for("login"))
+
+    # Pega a primeira pergunta disponível
+    first_question = Quiz.query.order_by(Quiz.id).first()
+    if not first_question:
+        flash("O quiz ainda não tem perguntas cadastradas.", "warning")
+        return redirect(url_for("index"))
+
+    return render_template(
+        "quiz_start.html",
+        first_question_id=first_question.id
+    )
 
 
 
