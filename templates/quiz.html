@@ -6,6 +6,7 @@
   <div class="quiz-header">
     <h1 class="quiz-title">Quiz!</h1>
     <p class="quiz-progress">Pergunta {{ current }}/{{ total }}</p>
+    <p class="quiz-timer">⏳ Tempo restante: <span id="time">02:00</span></p>
   </div>
 
   <!-- Pergunta -->
@@ -32,6 +33,23 @@
 </div>
 
 <script>
+let timeLeft = 120; // 2 minutos em segundos
+const timerElement = document.getElementById("time");
+
+function updateTimer() {
+    let minutes = Math.floor(timeLeft / 60);
+    let seconds = timeLeft % 60;
+    timerElement.textContent =
+        (minutes < 10 ? "0" : "") + minutes + ":" +
+        (seconds < 10 ? "0" : "") + seconds;
+
+    if (timeLeft <= 0) {
+        window.location.href = "{{ url_for('quiz_result') }}";
+    }
+    timeLeft--;
+}
+setInterval(updateTimer, 1000);
+
 function submitAnswer(optionId) {
     fetch('{{ url_for("quiz_answer", question_id=question.id) }}', {
         method: 'POST',
@@ -40,6 +58,11 @@ function submitAnswer(optionId) {
     })
     .then(response => response.json())
     .then(data => {
+        if(data.time_over) {
+            window.location.href = data.next_question_url;
+            return;
+        }
+
         const feedbackDiv = document.getElementById('feedback');
 
         if(data.correct) {
@@ -79,9 +102,10 @@ function submitAnswer(optionId) {
   color: #ff6b6b;
 }
 
-.quiz-progress {
+.quiz-progress, .quiz-timer {
   font-size: 16px;
   color: #555;
+  margin: 5px 0;
 }
 
 .quiz-question h2 {
