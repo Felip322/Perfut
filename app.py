@@ -1,17 +1,18 @@
-import os 
-import random 
-import json 
-import unicodedata 
-import re 
-from datetime import datetime, timedelta 
-from sqlalchemy import func 
-from flask_mail import Mail, Message 
-from itsdangerous import URLSafeTimedSerializer 
-from flask import Flask, render_template, request, redirect, url_for, session, flash 
-from flask_sqlalchemy import SQLAlchemy 
-from werkzeug.security import generate_password_hash, check_password_hash
+import os
+import random
+import json
+import unicodedata
+import re
 import uuid
-from models import Quiz
+from datetime import datetime, timedelta
+
+from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask_sqlalchemy import SQLAlchemy
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer
+from werkzeug.security import generate_password_hash, check_password_hash
+
+from models import Quiz, User, QuizScore  
 
 # ----------------------
 # App config
