@@ -675,7 +675,7 @@ def quiz_answer(question_id):
 
 @app.route("/quiz/result", methods=["GET", "POST"])
 def quiz_result():
-    if request.method == "POST": quiz_result
+    if request.method == "POST":
         username = request.form.get("username")
         score = int(request.form.get("score"))
 
