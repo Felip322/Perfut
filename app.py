@@ -108,15 +108,16 @@ class Game(db.Model):
     status = db.Column(db.String(20), default="active")
     user_score = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # NOVO: define se é solo ou duelo
-    mode = db.Column(db.String(20), default="solo")  # 'solo' ou 'duel'
+    mode = db.Column(db.String(20), default="solo")  # 'solo', 'duel', 'weekly'
+    event_id = db.Column(db.Integer, db.ForeignKey("weekly_event.id"))  # <<< adicionado
 
     user = db.relationship("User", backref="games")
+    event = db.relationship("WeeklyEvent", backref="games", lazy=True)
 
     @property
     def themes(self):
         return json.loads(self.themes_json)
+
 
 
 class Round(db.Model):
