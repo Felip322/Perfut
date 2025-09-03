@@ -1,59 +1,110 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Ranking do Quiz</h2>
-<table>
-  <thead>
-    <tr>
-      <th>Posição</th>
-      <th>Usuário</th>
-      <th>Pontuação</th>
-      <th>Data</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for idx, score in enumerate(scores, start=1) %}
-    <tr>
-      <td>{{ idx }}</td>
-      <td>{{ score.username }}</td>
-      <td>{{ score.score }}</td>
-      <td>{{ score.played_at.strftime('%d/%m/%Y %H:%M') }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-<a href="{{ url_for('quiz_start') }}" class="option-btn">Jogar novamente</a>
-{% endblock %}
+<div class="quiz-ranking-wrapper">
+  <h1>🏆 Ranking do Quiz</h1>
+
+  {% if scores %}
+  <table class="quiz-ranking-table">
+    <thead>
+      <tr>
+        <th>Posição</th>
+        <th>Usuário</th>
+        <th>Pontuação</th>
+        <th>Data</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for idx, score in enumerate(scores, start=1) %}
+      <tr>
+        <td>{{ idx }}</td>
+        <td>{{ score.username }}</td>
+        <td>{{ score.score }}</td>
+        <td>{{ score.played_at.strftime('%d/%m/%Y %H:%M') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>Nenhuma pontuação registrada ainda.</p>
+  {% endif %}
+
+  <div class="quiz-ranking-buttons">
+    <a href="{{ url_for('quiz_start_page') }}" class="btn primary">Jogar novamente</a>
+    <a href="{{ url_for('game_mode_select') }}" class="btn">Início 🏠</a>
+  </div>
+</div>
 
 <style>
-table {
-  width: 80%;
-  margin: 20px auto;
+.quiz-ranking-wrapper {
+  max-width: 800px;
+  margin: 40px auto;
+  text-align: center;
+  padding: 20px;
+  background: linear-gradient(145deg, #fdf6e3, #ffe0b3);
+  border-radius: 20px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  color: #222;
+}
+
+.quiz-ranking-wrapper h1 {
+  font-size: 32px;
+  margin-bottom: 25px;
+  color: #ff6b6b;
+}
+
+.quiz-ranking-table {
+  width: 100%;
   border-collapse: collapse;
+  margin-bottom: 25px;
 }
-th, td {
+
+.quiz-ranking-table th,
+.quiz-ranking-table td {
   border: 1px solid #ccc;
-  padding: 10px;
+  padding: 10px 15px;
+  font-size: 16px;
+}
+
+.quiz-ranking-table th {
+  background-color: #3cb371;
+  color: #fff;
+  font-weight: 700;
+}
+
+.quiz-ranking-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  min-width: 140px;
   text-align: center;
-}
-th {
-  background-color: #3cb371;
-  color: #fff;
-}
-.option-btn {
-  display: block;
-  width: 200px;
-  margin: 20px auto;
-  text-decoration: none;
-  background-color: #3cb371;
-  color: #fff;
-  font-weight: 600;
-  border-radius: 12px;
+  background: linear-gradient(135deg, #1f5f3a, #2e8b57);
+  border: none;
+  border-radius: 999px;
   padding: 12px 20px;
-  text-align: center;
-  transition: all 0.2s ease;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
-.option-btn:hover {
-  background-color: #2e8b57;
-  transform: scale(1.03);
+
+.btn.primary {
+  background: linear-gradient(135deg, #ffcb3f, #ffb300);
+  color: #0b1f14;
+}
+
+.btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+}
+
+.btn.primary:hover {
+  background: linear-gradient(135deg, #ffd74f, #ffc107);
 }
 </style>
+{% endblock %}
