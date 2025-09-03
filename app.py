@@ -617,24 +617,25 @@ def weekly_ranking():
 
     return render_template("weekly_ranking.html", scores=scores, event=event)
 
+from datetime import datetime, timedelta
 
 @app.route("/quiz/start")
 def quiz_start():
     if not require_login():
         return redirect(url_for("login"))
 
-    # Reseta sessão
     session['quiz_score'] = 0
     session['quiz_asked'] = []
+    session['quiz_start_time'] = datetime.utcnow().isoformat()  # salva início
 
-    # Pega a primeira pergunta disponível (ou aleatória, se preferir)
-    first_question = Quiz.query.order_by(Quiz.id).first()
+    # Pega a primeira pergunta
+    first_question = Quiz.query.order_by(db.func.random()).first()
     if not first_question:
         flash("Nenhuma pergunta disponível.", "warning")
         return redirect(url_for("game_mode_select"))
 
-    # Renderiza a tela inicial do quiz
-    return render_template("quiz_start.html", first_question_id=first_question.id)
+    session['current_quiz'] = first_question.id
+    return redirect(url_for("quiz_play", question_id=first_question.id))
 
 
 
@@ -673,17 +674,24 @@ def quiz_start_page():
 
 
 
-
 @app.route('/quiz/answer/<int:question_id>', methods=['POST'])
 def quiz_answer(question_id):
     if not require_login():
         return redirect(url_for("login"))
 
+    # --- checar tempo ---
+    start_time_str = session.get('quiz_start_time')
+    if start_time_str:
+        start_time = datetime.fromisoformat(start_time_str)
+        if datetime.utcnow() > start_time + timedelta(minutes=2):
+            return { "time_over": True, "next_question_url": url_for("quiz_result") }
+
+    # processa resposta normalmente...
     data = request.get_json()
     selected_option = int(data.get("selected_option"))
 
     quiz = Quiz.query.get_or_404(question_id)
-    correct = (selected_option == quiz.correct_option)  # aqui era quiz.quiz_correct_option
+    correct = (selected_option == quiz.correct_option)
 
     if correct:
         session['quiz_score'] = session.get('quiz_score', 0) + 1
@@ -701,10 +709,9 @@ def quiz_answer(question_id):
 
     return {
         "correct": correct,
-        "correct_answer": getattr(quiz, f"option{quiz.correct_option}"),  # ajustado
+        "correct_answer": getattr(quiz, f"option{quiz.correct_option}"),
         "next_question_url": next_question_url
     }
-
 
 
 
