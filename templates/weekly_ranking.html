@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-content">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="PERFUT" class="hero-logo">
+    <h1>Ranking Semanal</h1>
+
+    <div class="card-grid">
+      {% if rankings %}
+        {% for i, player in enumerate(rankings, 1) %}
+        <a href="#" class="card">
+          <h2>🏅 {{ i }}º Lugar</h2>
+          <p>Jogador: {{ player.username }} <br> Pontos: {{ player.score }}</p>
+        </a>
+        {% endfor %}
+      {% else %}
+        <a href="#" class="card disabled">
+          <h2>Sem Pontuações</h2>
+          <p>Nenhuma pontuação registrada ainda.</p>
+        </a>
+      {% endif %}
+    </div>
+
+    <div class="card-grid" style="margin-top: 20px;">
+      <a href="{{ url_for('weekly_event') }}" class="card">
+        <h2>🔙 Voltar ao Evento</h2>
+        <p>Retorne ao painel do evento semanal.</p>
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}
