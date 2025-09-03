@@ -703,11 +703,6 @@ def quiz_result():
 
 
 
-@app.route('/quiz/ranking')
-def quiz_ranking():
-    # Pegar top 10 pontuações
-    top_scores = QuizScore.query.order_by(QuizScore.score.desc(), QuizScore.played_at).limit(10).all()
-    return render_template('quiz_ranking.html', scores=top_scores)
 
 
 
