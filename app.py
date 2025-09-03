@@ -307,6 +307,7 @@ def game_mode_select():
         already_played=already_played
     )
 
+
 @app.route("/duel/join/<code>")
 def duel_join(code):
     if not require_login():
