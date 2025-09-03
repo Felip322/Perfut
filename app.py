@@ -156,6 +156,32 @@ class DuelScore(db.Model):
     user = db.relationship("User")
 
 
+class WeeklyEvent(db.Model):
+    __tablename__ = "weekly_event"
+    id = db.Column(db.Integer, primary_key=True)
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+
+    scores = db.relationship("WeeklyScore", backref="event")
+
+class WeeklyScore(db.Model):
+    __tablename__ = "weekly_scores"
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.Integer, db.ForeignKey("weekly_event.id"), nullable=False)
+    player_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    score = db.Column(db.Integer, default=0)
+    play_date = db.Column(db.Date, nullable=False)
+
+    player = db.relationship("User")
+
+
+
+
+
+
+
+
 
 
 # ----------------------
@@ -299,6 +325,56 @@ def duel_wait(duel_id):
         return render_template("duel_wait_finish.html", duel=duel)
 
     return render_template("duel_wait.html", duel=duel, user=user)
+
+@app.route("/weekly_event")
+def weekly_event():
+    if not require_login():
+        return redirect(url_for("login"))
+    
+    user = User.query.get(session["user_id"])
+    today = datetime.utcnow().date()
+    
+    # Pega evento ativo
+    event = WeeklyEvent.query.filter_by(is_active=True).first()
+    
+    # Verifica se já jogou hoje
+    already_played = False
+    if event:
+        already_played = WeeklyScore.query.filter_by(event_id=event.id, player_id=user.id, play_date=today).first() is not None
+    
+    return render_template("weekly_event.html", user=user, already_played=already_played, event=event)
+
+@app.route("/weekly_event/start")
+def weekly_event_start():
+    if not require_login():
+        return redirect(url_for("login"))
+    
+    user = User.query.get(session["user_id"])
+    today = datetime.utcnow().date()
+    
+    event = WeeklyEvent.query.filter_by(is_active=True).first()
+    if not event:
+        flash("Nenhum evento ativo no momento.", "warning")
+        return redirect(url_for("index"))
+    
+    # Verifica se já jogou
+    if WeeklyScore.query.filter_by(event_id=event.id, player_id=user.id, play_date=today).first():
+        flash("Você já jogou hoje!", "info")
+        return redirect(url_for("weekly_event"))
+    
+    # Cria jogo normal com 10 perguntas
+    g = Game(
+        user_id=user.id,
+        rounds_count=10,
+        themes_json=json.dumps([key for key, _ in THEMES]),
+        mode="weekly"
+    )
+    db.session.add(g)
+    db.session.commit()
+    
+    flash("Desafio diário iniciado!", "success")
+    return redirect(url_for("game_play", game_id=g.id))
+
 
 
 
@@ -819,19 +895,50 @@ def game_extra_hint(round_id):
 
 @app.route("/game/result/<int:game_id>")
 def game_result(game_id):
-    g = Game.query.get_or_404(game_id)
-    user = User.query.get(g.user_id)
-    # Calcula se houve level up
+    # Pega o jogo e o usuário
+    g_game = Game.query.get_or_404(game_id)
+    user = User.query.get(g_game.user_id)
+
+    # --- Cálculo de level up ---
     total_score = sum(game.user_score for game in user.games)
     new_level = total_score // 100 + 1
     old_level = user.level
     level_up = new_level > old_level
-    # Atualiza o nível do usuário no banco
     user.level = new_level
     db.session.commit()
+
+    # --- Atualização da pontuação semanal ---
+    if g_game.mode == "weekly":
+        today = datetime.utcnow().date()
+        # Pega o evento semanal ativo
+        event = WeeklyEvent.query.filter_by(is_active=True).first()
+        if event:
+            # Verifica se já existe pontuação do jogador hoje
+            ws = WeeklyScore.query.filter_by(
+                event_id=event.id,
+                player_id=user.id,
+                play_date=today
+            ).first()
+            
+            if ws:
+                # Atualiza pontuação existente
+                ws.score = g_game.user_score
+            else:
+                # Cria novo registro
+                ws = WeeklyScore(
+                    event_id=event.id,
+                    player_id=user.id,
+                    score=g_game.user_score,
+                    play_date=today
+                )
+                db.session.add(ws)
+            
+            db.session.commit()
+
+    # --- Renderiza template de resultado ---
     return render_template(
         "result.html",
-        game=g,
+        game=g_game,
         user=user,
         level_up=level_up,
         new_level=new_level
