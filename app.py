@@ -383,7 +383,7 @@ def weekly_event():
     return render_template("weekly_event.html", user=user, already_played=already_played, event=event)
 
 @app.route("/weekly_event/start")
-def weekly_event_start():
+def weekly_event_start_today():
     if not require_login():
         return redirect(url_for("login"))
 
@@ -417,8 +417,15 @@ def weekly_event_start():
     return redirect(url_for("game_play", game_id=g.id))
 
 
+
+
+
+
+
+
+
 @app.route("/weekly_event/start/<int:event_id>")
-def weekly_event_start(event_id):
+def weekly_event_start_by_id(event_id):
     if not require_login():
         return redirect(url_for("login"))
 
