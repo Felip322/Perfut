@@ -183,14 +183,16 @@ class WeeklyScore(db.Model):
 
 
 class Quiz(db.Model):
-    __tablename__ = "quiz"
+    __tablename__ = 'quiz'
     id = db.Column(db.Integer, primary_key=True)
-    question = db.Column(db.String(300), nullable=False)
-    option1 = db.Column(db.String(100), nullable=False)
-    option2 = db.Column(db.String(100), nullable=False)
-    option3 = db.Column(db.String(100), nullable=False)
-    option4 = db.Column(db.String(100), nullable=False)
-    correct_option = db.Column(db.Integer, nullable=False)  # 1,2,3 ou 4
+    text = db.Column(db.Text, nullable=False)  # <- aqui
+    option1 = db.Column(db.Text, nullable=False)
+    option2 = db.Column(db.Text, nullable=False)
+    option3 = db.Column(db.Text, nullable=False)
+    option4 = db.Column(db.Text, nullable=False)
+    correct_option = db.Column(db.Integer, nullable=False)
+    theme = db.Column(db.Text)
+
 
 
 
