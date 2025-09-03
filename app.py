@@ -82,13 +82,9 @@ class Duel(db.Model):
     rounds_count = db.Column(db.Integer, default=3)
     status = db.Column(db.String(20), default="waiting")  # waiting, active, finished
     code = db.Column(db.String(8), unique=True, nullable=False)
-    
-    # NOVO: ordem das cartas do duelo
-    cards_order_json = db.Column(db.Text)  
 
     creator = db.relationship("User", foreign_keys=[creator_id])
     opponent = db.relationship("User", foreign_keys=[opponent_id])
-
 
 
 
@@ -108,16 +104,15 @@ class Game(db.Model):
     status = db.Column(db.String(20), default="active")
     user_score = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    mode = db.Column(db.String(20), default="solo")  # 'solo', 'duel', 'weekly'
-    event_id = db.Column(db.Integer, db.ForeignKey("weekly_event.id"))  # <<< adicionado
+    
+    # NOVO: define se é solo ou duelo
+    mode = db.Column(db.String(20), default="solo")  # 'solo' ou 'duel'
 
     user = db.relationship("User", backref="games")
-    event = db.relationship("WeeklyEvent", backref="games", lazy=True)
 
     @property
     def themes(self):
         return json.loads(self.themes_json)
-
 
 
 class Round(db.Model):
@@ -134,12 +129,10 @@ class Round(db.Model):
     started_at = db.Column(db.DateTime, default=datetime.utcnow)
     ends_at = db.Column(db.DateTime)
 
-    hints_order_json = db.Column(db.Text)  # <<< já existe
-    hint_used = db.Column(db.Boolean, default=False)  # <<< novo campo para marcar se a dica foi usada
+    hints_order_json = db.Column(db.Text)  # <<< novo campo para salvar a ordem sorteada
 
     game = db.relationship("Game", backref="rounds")
     card = db.relationship("Card")
-
 
     @property
     def hints_order(self):
@@ -166,8 +159,6 @@ class DuelScore(db.Model):
 class WeeklyEvent(db.Model):
     __tablename__ = "weekly_event"
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)  # Nome do evento
-    description = db.Column(db.Text)  # Descrição opcional
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
     is_active = db.Column(db.Boolean, default=True)
@@ -176,6 +167,7 @@ class WeeklyEvent(db.Model):
 
     @property
     def is_today_active(self):
+        """Verifica se o evento está ativo no dia atual."""
         today = datetime.utcnow().date()
         return self.is_active and self.start_date <= today <= self.end_date
 
@@ -278,36 +270,35 @@ def login():
 
 @app.route("/game/mode")
 def game_mode_select():
-    if "user_id" not in session:
-        flash("Faça login para jogar.", "warning")
+    if not require_login():
         return redirect(url_for("login"))
 
     user = User.query.get(session["user_id"])
     today = datetime.utcnow().date()
 
-    # --- Busca todos eventos ativos hoje ---
-    events_today = WeeklyEvent.query.filter(
+    # Pega evento ativo e dentro do período
+    weekly_event = WeeklyEvent.query.filter(
         WeeklyEvent.is_active == True,
         WeeklyEvent.start_date <= today,
         WeeklyEvent.end_date >= today
-    ).order_by(WeeklyEvent.start_date.asc()).all()
+    ).first()
 
-    # --- Verifica quais eventos o usuário já jogou hoje ---
-    played_events = {
-        ws.event_id for ws in WeeklyScore.query.filter(
-            WeeklyScore.player_id == user.id,
-            WeeklyScore.play_date == today
-        ).all()
-    }
+    already_played = False
+    if weekly_event:
+        # Verifica se o usuário já jogou hoje
+        already_played = WeeklyScore.query.filter_by(
+            event_id=weekly_event.id,
+            player_id=user.id,
+            play_date=today
+        ).first() is not None
 
-    # --- Envia os dados para o template ---
     return render_template(
         "game_mode.html",
         user=user,
-        events_today=events_today,
-        played_events=played_events
+        hide_ranking=True,
+        weekly_event=weekly_event,
+        already_played=already_played
     )
-
 
 @app.route("/duel/join/<code>")
 def duel_join(code):
@@ -385,7 +376,7 @@ def weekly_event():
     return render_template("weekly_event.html", user=user, already_played=already_played, event=event)
 
 @app.route("/weekly_event/start")
-def weekly_event_start_today():
+def weekly_event_start():
     if not require_login():
         return redirect(url_for("login"))
 
@@ -418,56 +409,6 @@ def weekly_event_start_today():
     flash("Desafio diário iniciado!", "success")
     return redirect(url_for("game_play", game_id=g.id))
 
-
-
-
-
-
-
-
-
-@app.route("/weekly_event/start/<int:event_id>")
-def weekly_event_start_by_id(event_id):
-    if not require_login():
-        return redirect(url_for("login"))
-
-    user = User.query.get(session["user_id"])
-    today = datetime.utcnow().date()
-
-    # Busca o evento
-    event = WeeklyEvent.query.get_or_404(event_id)
-
-    # Verifica se o evento está ativo hoje
-    if not (event.is_active and event.start_date <= today <= event.end_date):
-        flash("Este evento não está ativo hoje.", "warning")
-        return redirect(url_for("game_mode_select"))
-
-    # Verifica se o usuário já jogou hoje neste evento
-    already_played = WeeklyScore.query.filter_by(
-        event_id=event.id,
-        player_id=user.id,
-        play_date=today
-    ).first()
-    if already_played:
-        flash("Você já jogou este evento hoje!", "info")
-        return redirect(url_for("game_mode_select"))
-
-    # Define os temas do evento (um ou vários)
-    themes = json.loads(event.themes_json) if getattr(event, "themes_json", None) else [getattr(event, "theme", "default")]
-
-    # Cria o jogo do usuário para o evento
-    g = Game(
-        user_id=user.id,
-        rounds_count=10,  # ou outro número de rounds específico do evento
-        themes_json=json.dumps(themes),
-        mode="weekly",
-        event_id=event.id
-    )
-    db.session.add(g)
-    db.session.commit()
-
-    flash(f"Desafio do evento '{getattr(event, 'name', 'Evento')}' iniciado!", "success")
-    return redirect(url_for("game_play", game_id=g.id))
 
 
 
@@ -644,31 +585,18 @@ def weekly_ranking():
     if not require_login():
         return redirect(url_for("login"))
 
-    event_id = request.args.get("event_id", type=int)
-    today = datetime.utcnow().date()
-
-    if event_id:
-        event = WeeklyEvent.query.get_or_404(event_id)
-    else:
-        # padrão: evento ativo do dia (se houver)
-        event = WeeklyEvent.query.filter(
-            WeeklyEvent.is_active == True,
-            WeeklyEvent.start_date <= today,
-            WeeklyEvent.end_date >= today
-        ).order_by(WeeklyEvent.id.desc()).first()
-
+    event = WeeklyEvent.query.filter_by(is_active=True).first()
     scores = []
     if event:
         scores = (
             db.session.query(User.name, WeeklyScore.score, WeeklyScore.play_date)
             .join(User, User.id == WeeklyScore.player_id)
             .filter(WeeklyScore.event_id == event.id)
-            .order_by(WeeklyScore.score.desc(), WeeklyScore.play_date.asc())
+            .order_by(WeeklyScore.score.desc())
             .all()
         )
 
     return render_template("weekly_ranking.html", scores=scores, event=event)
-
 
 
 
@@ -986,22 +914,20 @@ def game_hint(round_id):
     if not require_login():
         return redirect(url_for("login"))
 
-    # Pega a rodada pelo ID
     r = Round.query.get_or_404(round_id)
 
-    # Se a rodada já terminou, volta para a página do jogo
     if r.finished:
         return redirect(url_for("game_play", game_id=r.game_id))
 
-    # Marca que o jogador usou a dica
-    if not r.hint_used:
-        r.hint_used = True
+    # Limita o máximo de 10 dicas normais
+    if r.requested_hints < 10:
+        r.requested_hints += 1
         db.session.commit()
-        flash("Dica usada! Você receberá menos pontos nesta rodada.", "info")
-    
-    # Redireciona de volta para a rodada atual do jogo
-    return redirect(url_for("game_play", game_id=r.game_id))
+        flash("Dica liberada! Veja abaixo.", "info")
+    else:
+        flash("Máximo de dicas atingido.", "warning")
 
+    return redirect(url_for("game_play", game_id=r.game_id))
 
 
 
@@ -1024,44 +950,54 @@ def game_extra_hint(round_id):
 
 @app.route("/game/result/<int:game_id>")
 def game_result(game_id):
+    # Pega o jogo e o usuário
     g_game = Game.query.get_or_404(game_id)
     user = User.query.get(g_game.user_id)
 
-    # level up (ok)
+    # --- Cálculo de level up ---
     total_score = sum(game.user_score for game in user.games)
     new_level = total_score // 100 + 1
-    level_up = new_level > user.level
+    old_level = user.level
+    level_up = new_level > old_level
     user.level = new_level
     db.session.commit()
 
-    # --- Pontuação semanal correta por evento ---
-    if g_game.mode == "weekly" and g_game.event_id:
+    # --- Atualização da pontuação semanal ---
+    if g_game.mode == "weekly":
         today = datetime.utcnow().date()
-        ws = WeeklyScore.query.filter_by(
-            event_id=g_game.event_id,
-            player_id=user.id,
-            play_date=today
-        ).first()
-
-        if ws:
-            ws.score = g_game.user_score
-        else:
-            ws = WeeklyScore(
-                event_id=g_game.event_id,
+        # Pega o evento semanal ativo
+        event = WeeklyEvent.query.filter_by(is_active=True).first()
+        if event:
+            # Verifica se já existe pontuação do jogador hoje
+            ws = WeeklyScore.query.filter_by(
+                event_id=event.id,
                 player_id=user.id,
-                score=g_game.user_score,
                 play_date=today
-            )
-            db.session.add(ws)
-        db.session.commit()
+            ).first()
+            
+            if ws:
+                # Atualiza pontuação existente
+                ws.score = g_game.user_score
+            else:
+                # Cria novo registro
+                ws = WeeklyScore(
+                    event_id=event.id,
+                    player_id=user.id,
+                    score=g_game.user_score,
+                    play_date=today
+                )
+                db.session.add(ws)
+            
+            db.session.commit()
 
-    return render_template("result.html", game=g_game, user=user, level_up=level_up, new_level=new_level)
-
-
-
-
-
-
+    # --- Renderiza template de resultado ---
+    return render_template(
+        "result.html",
+        game=g_game,
+        user=user,
+        level_up=level_up,
+        new_level=new_level
+    )
     
 
 @app.route("/coins/watch-ad", methods=["POST"])
