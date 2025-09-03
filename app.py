@@ -630,10 +630,19 @@ def quiz_start():
 
 
 
-@app.route('/quiz/play/<int:question_id>')
+@app.route("/quiz/<int:question_id>")
 def quiz_play(question_id):
     question = Quiz.query.get_or_404(question_id)
-    return render_template('quiz.html', question=question)
+
+    # Monta a lista de opções para o template
+    options = [
+        {"id": 1, "text": question.option1},
+        {"id": 2, "text": question.option2},
+        {"id": 3, "text": question.option3},
+        {"id": 4, "text": question.option4},
+    ]
+
+    return render_template("quiz_play.html", question=question, options=options)
 
 @app.route("/quiz/start_page")
 def quiz_start_page():
