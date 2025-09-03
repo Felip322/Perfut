@@ -425,28 +425,41 @@ def weekly_event_start(event_id):
     user = User.query.get(session["user_id"])
     today = datetime.utcnow().date()
 
+    # Busca o evento
     event = WeeklyEvent.query.get_or_404(event_id)
-    if not event.is_today_active:
+
+    # Verifica se o evento está ativo hoje
+    if not (event.is_active and event.start_date <= today <= event.end_date):
         flash("Este evento não está ativo hoje.", "warning")
         return redirect(url_for("game_mode_select"))
 
-    # Verifica se já jogou hoje neste evento
-    if WeeklyScore.query.filter_by(event_id=event.id, player_id=user.id, play_date=today).first():
+    # Verifica se o usuário já jogou hoje neste evento
+    already_played = WeeklyScore.query.filter_by(
+        event_id=event.id,
+        player_id=user.id,
+        play_date=today
+    ).first()
+    if already_played:
         flash("Você já jogou este evento hoje!", "info")
         return redirect(url_for("game_mode_select"))
 
+    # Define os temas do evento (um ou vários)
+    themes = json.loads(event.themes_json) if getattr(event, "themes_json", None) else [getattr(event, "theme", "default")]
+
+    # Cria o jogo do usuário para o evento
     g = Game(
         user_id=user.id,
-        rounds_count=10,
-        themes_json=json.dumps([key for key, _ in THEMES]),
+        rounds_count=10,  # ou outro número de rounds específico do evento
+        themes_json=json.dumps(themes),
         mode="weekly",
-        event_id=event.id,  # <<< importante!
+        event_id=event.id
     )
     db.session.add(g)
     db.session.commit()
 
-    flash(f"Desafio diário iniciado: {event.name}!", "success")
+    flash(f"Desafio do evento '{getattr(event, 'name', 'Evento')}' iniciado!", "success")
     return redirect(url_for("game_play", game_id=g.id))
+
 
 
 
