@@ -5,7 +5,7 @@
   <div class="ranking-container">
     <h1>🏆 Ranking Semanal</h1>
 
-    {% if rankings %}
+    {% if scores %}
     <div class="table-wrapper">
       <table class="ranking-table">
         <thead>
@@ -16,11 +16,11 @@
           </tr>
         </thead>
         <tbody>
-          {% for r in rankings %}
+          {% for r in scores %}
           <tr class="
             {% if loop.index == 1 %} first {% elif loop.index == 2 %} second 
             {% elif loop.index == 3 %} third {% endif %}
-            {% if user and user.username == r.username %} highlight {% endif %}
+            {% if user and user.id == r.player.id %} highlight {% endif %}
           ">
             <td class="pos">
               {% if loop.index == 1 %} 🥇 
@@ -31,8 +31,8 @@
             <td>
               <div class="player-info 
                 {% if loop.index == 1 %} gold {% elif loop.index == 2 %} silver {% elif loop.index == 3 %} bronze {% endif %}">
-                <div class="avatar">{{ r.username[0] | upper }}</div>
-                <span>{{ r.username }}</span>
+                <div class="avatar">{{ r.player.name[0] | upper }}</div>
+                <span>{{ r.player.name }}</span>
               </div>
             </td>
             <td class="score">{{ r.score }}</td>
