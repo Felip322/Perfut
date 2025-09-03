@@ -681,6 +681,26 @@ def quiz_result():
 
 
 
+@app.route('/quiz/result', methods=['POST'])
+def quiz_result():
+    username = request.form.get('username')  # ou user logado
+    score = int(request.form.get('score'))
+
+    # Salvar no banco
+    new_score = QuizScore(username=username, score=score, played_at=datetime.now())
+    db.session.add(new_score)
+    db.session.commit()
+
+    total = Quiz.query.count()
+    return render_template('quiz_result.html', score=score, total=total)
+
+
+@app.route('/quiz/ranking')
+def quiz_ranking():
+    # Pegar top 10 pontuações
+    top_scores = QuizScore.query.order_by(QuizScore.score.desc(), QuizScore.played_at).limit(10).all()
+    return render_template('quiz_ranking.html', scores=top_scores)
+
 
 
 
