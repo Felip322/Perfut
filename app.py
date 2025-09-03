@@ -133,10 +133,12 @@ class Round(db.Model):
     started_at = db.Column(db.DateTime, default=datetime.utcnow)
     ends_at = db.Column(db.DateTime)
 
-    hints_order_json = db.Column(db.Text)  # <<< novo campo para salvar a ordem sorteada
+    hints_order_json = db.Column(db.Text)  # <<< já existe
+    hint_used = db.Column(db.Boolean, default=False)  # <<< novo campo para marcar se a dica foi usada
 
     game = db.relationship("Game", backref="rounds")
     card = db.relationship("Card")
+
 
     @property
     def hints_order(self):
