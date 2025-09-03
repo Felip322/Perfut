@@ -267,7 +267,27 @@ def game_mode_select():
         return redirect(url_for("login"))
 
     user = User.query.get(session["user_id"])
-    return render_template("game_mode.html", user=user, hide_ranking=True)
+    today = datetime.utcnow().date()
+
+    # Pega evento ativo
+    weekly_event = WeeklyEvent.query.filter_by(is_active=True).first()
+
+    already_played = False
+    if weekly_event:
+        already_played = WeeklyScore.query.filter_by(
+            event_id=weekly_event.id,
+            player_id=user.id,
+            play_date=today
+        ).first() is not None
+
+    return render_template(
+        "game_mode.html",
+        user=user,
+        hide_ranking=True,
+        weekly_event=weekly_event,
+        already_played=already_played
+    )
+
 
 @app.route("/duel/join/<code>")
 def duel_join(code):
@@ -560,6 +580,26 @@ def duel_result(duel_id):
         opponent_score=opponent_score,
         winner=winner
     )
+
+
+@app.route("/weekly_ranking")
+def weekly_ranking():
+    if not require_login():
+        return redirect(url_for("login"))
+
+    event = WeeklyEvent.query.filter_by(is_active=True).first()
+    scores = []
+    if event:
+        scores = (
+            db.session.query(User.name, WeeklyScore.score, WeeklyScore.play_date)
+            .join(User, User.id == WeeklyScore.player_id)
+            .filter(WeeklyScore.event_id == event.id)
+            .order_by(WeeklyScore.score.desc())
+            .all()
+        )
+
+    return render_template("weekly_ranking.html", scores=scores, event=event)
+
 
 
 
