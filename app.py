@@ -626,16 +626,16 @@ def quiz_start():
 
     session['quiz_score'] = 0
     session['quiz_asked'] = []
-    session['quiz_start_time'] = datetime.utcnow().isoformat()  # salva início
+    session['quiz_start_time'] = datetime.utcnow().isoformat()
 
     # Pega a primeira pergunta
-    first_question = Quiz.query.order_by(db.func.random()).first()
+    first_question = Quiz.query.order_by(Quiz.id).first()
     if not first_question:
         flash("Nenhuma pergunta disponível.", "warning")
         return redirect(url_for("game_mode_select"))
 
-    session['current_quiz'] = first_question.id
-    return redirect(url_for("quiz_play", question_id=first_question.id))
+    return render_template("quiz_start.html", first_question_id=first_question.id)
+
 
 
 
