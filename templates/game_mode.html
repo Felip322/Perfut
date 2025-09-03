@@ -29,7 +29,8 @@
             <p>Você já jogou hoje! Veja sua posição no ranking semanal.</p>
           </a>
         {% else %}
-          <a href="{{ url_for('weekly_event_start') }}" class="card">
+          <a href="{{ url_for('weekly_event_start_today') }}" class="card">
+
             <h2>🎯 Evento Semanal</h2>
             <p>Responda a rodada de hoje e acumule pontos para o ranking da semana!</p>
           </a>
