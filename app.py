@@ -635,6 +635,14 @@ def quiz_play(question_id):
     question = Quiz.query.get_or_404(question_id)
     return render_template('quiz.html', question=question)
 
+@app.route("/quiz/start_page")
+def quiz_start_page():
+    # Seleciona a primeira pergunta para passar para o template
+    first_question = Quiz.query.first()
+    return render_template("quiz_start.html", first_question_id=first_question.id)
+
+
+
 
 @app.route('/quiz/answer/<int:question_id>', methods=['POST'])
 def quiz_answer(question_id):
