@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="quiz-start-container">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="quiz-logo">
+
+    <h1>Bem-vindo ao Quiz!</h1>
+
+    <p>
+        Teste seus conhecimentos! Você terá várias perguntas e receberá feedback imediato após cada resposta.
+        <br><br>
+        Cada pergunta correta vale 1 ponto. Tente acertar todas!
+    </p>
+
+    <button class="start-btn" onclick="startQuiz()">Iniciar Quiz</button>
+</div>
+
+<script>
+function startQuiz() {
+    // Redireciona para a primeira pergunta do quiz
+    window.location.href = "{{ url_for('quiz_play', question_id=first_question_id) }}";
+}
+</script>
+
+<style>
+.quiz-start-container {
+    text-align: center;
+    margin-top: 50px;
+    padding: 0 20px;
+}
+
+.quiz-logo {
+    max-width: 200px;
+    margin-bottom: 30px;
+}
+
+h1 {
+    font-size: 32px;
+    margin-bottom: 20px;
+    color: #D15106;
+}
+
+p {
+    font-size: 18px;
+    margin-bottom: 40px;
+}
+
+.start-btn {
+    padding: 15px 40px;
+    font-size: 20px;
+    font-weight: 600;
+    color: white;
+    background-color: #3b82f6;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.start-btn:hover {
+    transform: scale(1.05);
+    background-color: #2563eb;
+}
+</style>
+{% endblock %}
