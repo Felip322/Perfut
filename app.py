@@ -671,19 +671,11 @@ def quiz_answer(question_id):
 
 
 
-@app.route("/quiz/result")
-def quiz_result():
-    if not require_login():
-        return redirect(url_for("login"))
-    score = session.get("quiz_score", 0)
-    total = len(session.get("quiz_asked", []))
-    return render_template("quiz_result.html", score=score, total=total)
-
 
 
 @app.route("/quiz/result", methods=["GET", "POST"])
 def quiz_result():
-    if request.method == "POST":
+    if request.method == "POST": quiz_result
         username = request.form.get("username")
         score = int(request.form.get("score"))
 
@@ -702,6 +694,11 @@ def quiz_result():
         return render_template("quiz_result.html", score=score, total=total)
 
 
+@app.route('/quiz/ranking')
+def quiz_ranking():
+    # Pegar top 10 pontuações
+    top_scores = QuizScore.query.order_by(QuizScore.score.desc(), QuizScore.played_at).limit(10).all()
+    return render_template('quiz_ranking.html', scores=top_scores)
 
 
 
