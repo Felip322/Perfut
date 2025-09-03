@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="text-align:center; margin-top:50px;">
+  <h2>Quiz finalizado!</h2>
+  <p>Sua pontuação: {{ score }} / {{ total }}</p>
+  <a href="{{ url_for('quiz_start') }}" class="option-btn" style="margin-top:20px;">Jogar novamente</a>
+</div>
+{% endblock %}
