@@ -24,17 +24,18 @@
     <div class="card-grid">
       {% if events_today %}
         {% for event in events_today %}
-          {% if event.id in played_events %}
-            <a href="{{ url_for('weekly_ranking', event_id=event.id) }}" class="card" style="opacity: 0.7;">
-              <h2>📊 {{ event.name }}</h2>
-              <p>Você já jogou hoje! Veja sua posição no ranking do evento.</p>
-            </a>
-          {% else %}
-            <a href="{{ url_for('weekly_event_start_by_id', event_id=event.id) }}" class="card">
-              <h2>🎯 {{ event.name }}</h2>
-              <p>Responda as perguntas do dia e acumule pontos para o ranking!</p>
-            </a>
-          {% endif %}
+          {% set played = event.id in played_events %}
+          <a href="{% if played %}{{ url_for('weekly_ranking', event_id=event.id) }}{% else %}{{ url_for('weekly_event_start_by_id', event_id=event.id) }}{% endif %}" 
+             class="card {% if played %}disabled{% endif %}">
+            <h2>🎯 {{ event.name }}</h2>
+            <p>
+              {% if played %}
+                Você já jogou hoje! Veja sua posição no ranking do evento.
+              {% else %}
+                Responda as perguntas do dia e acumule pontos para o ranking!
+              {% endif %}
+            </p>
+          </a>
         {% endfor %}
       {% else %}
         <a href="#" class="card disabled">
