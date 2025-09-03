@@ -13,42 +13,203 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
   <style>
-    :root { --accent: #ffcb3f; --card: #0b2216; --text: #e0e0e0; }
-    body { margin: 0; font-family: 'Arial', sans-serif; background: url('{{ url_for('static', filename='fundo.png') }}') no-repeat center center fixed; background-size: cover; color: var(--text); }
+    :root {
+      --accent: #ffcb3f;
+      --card: #0b2216;
+      --text: #e0e0e0;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background: url('{{ url_for('static', filename='fundo.png') }}') no-repeat center center fixed;
+      background-size: cover;
+      color: var(--text);
+    }
 
     /* Topbar */
-    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #0b2216; border-bottom: 1px solid #214e33; flex-wrap: wrap; gap: 10px; }
-    .topbar .brand { display: flex; align-items: center; gap: 10px; }
-    .topbar .brand .logo { width: 45px; height: 48px; }
-    .topbar .brand span { font-weight: bold; font-size: 18px; color: #fff; }
-    .coins { font-weight: bold; font-size: 16px; padding: 6px 12px; background: #173f2a; border-radius: 12px; white-space: nowrap; margin-left: 15px; }
-    .menu-toggle { display: none; background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; }
-    .top-nav { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
-    .btn { min-width: 110px; text-align: center; background: linear-gradient(135deg, #1f5f3a, #2e8b57); border: none; border-radius: 999px; padding: 10px 20px; color: #fff; font-weight: 700; cursor: pointer; text-decoration: none; transition: all 0.25s ease; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); letter-spacing: 0.5px; font-size: 14px; height: 38px; line-height: 18px; display: inline-flex; align-items: center; justify-content: center; }
-    .btn:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5); }
-    .btn:active { transform: translateY(1px) scale(0.98); }
-    .btn.primary { background: linear-gradient(135deg, #ffcb3f, #ffb300); color: #0b1f14; border: none; box-shadow: 0 4px 12px rgba(255, 195, 0, 0.4); }
-    .btn.primary:hover { background: linear-gradient(135deg, #ffd74f, #ffc107); box-shadow: 0 6px 16px rgba(255, 195, 0, 0.6); }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      background: #0b2216;
+      border-bottom: 1px solid #214e33;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .topbar .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .topbar .brand .logo {
+      width: 45px;
+      height: 48px;
+    }
+
+    .topbar .brand span {
+      font-weight: bold;
+      font-size: 18px;
+      color: #fff;
+    }
+
+    .coins {
+      font-weight: bold;
+      font-size: 16px;
+      padding: 6px 12px;
+      background: #173f2a;
+      border-radius: 12px;
+      white-space: nowrap;
+      margin-left: 15px;
+    }
+
+    .menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 28px;
+      cursor: pointer;
+    }
+
+    .top-nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      min-width: 110px;
+      text-align: center;
+      background: linear-gradient(135deg, #1f5f3a, #2e8b57);
+      border: none;
+      border-radius: 999px;
+      padding: 10px 20px;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      letter-spacing: 0.5px;
+      font-size: 14px;
+      height: 38px;
+      line-height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, #ffcb3f, #ffb300);
+      color: #0b1f14;
+      border: none;
+      box-shadow: 0 4px 12px rgba(255, 195, 0, 0.4);
+    }
+
+    .btn.primary:hover {
+      background: linear-gradient(135deg, #ffd74f, #ffc107);
+      box-shadow: 0 6px 16px rgba(255, 195, 0, 0.6);
+    }
 
     /* Container */
-    .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
 
     /* Flash messages */
-    .flash { list-style: none; padding: 0; margin: 0 0 15px 0; }
-    .flash li { padding: 10px 15px; border-radius: 10px; margin-bottom: 10px; font-weight: 500; font-size: 14px; }
+    .flash {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 15px 0;
+    }
+
+    .flash li {
+      padding: 10px 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
     .flash li.success { background: #2a592a; color: #cde8c7; }
     .flash li.warning { background: #665c2a; color: #fff3b0; }
     .flash li.danger { background: #662a2a; color: #ffbaba; }
     .flash li.info { background: #2a2a66; color: #c7c7ff; }
 
     /* Footer */
-    .footer { text-align: center; padding: 15px 0; background: #0b2216; color: var(--text); border-top: 1px solid #214e33; margin-top: 40px; font-size: 14px; }
-    .footer a { color: var(--accent); text-decoration: none; margin: 0 5px; }
-    .footer a:hover { text-decoration: underline; }
+    .footer {
+      text-align: center;
+      padding: 15px 0;
+      background: #0b2216;
+      color: var(--text);
+      border-top: 1px solid #214e33;
+      margin-top: 40px;
+      font-size: 14px;
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+      margin: 0 5px;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
 
     /* Responsividade */
-    @media (max-width: 768px) { .menu-toggle { display: block; } .top-nav { display: none; flex-direction: column; gap: 8px; width: 100%; background: #0b2216; padding: 10px 0; border-top: 1px solid #214e33; } .top-nav.show { display: flex; } .btn { width: 100%; max-width: 220px; margin: 0 auto; } }
-    @media (max-width: 480px) { .topbar .brand span { font-size: 16px; } .btn { font-size: 13px; padding: 8px 14px; } .coins { font-size: 14px; } }
+    @media (max-width: 768px) {
+      .menu-toggle {
+        display: block;
+      }
+      .top-nav {
+        display: none;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+        background: #0b2216;
+        padding: 10px 0;
+        border-top: 1px solid #214e33;
+      }
+      .top-nav.show {
+        display: flex;
+      }
+      .btn {
+        width: 100%;
+        max-width: 220px;
+        margin: 0 auto;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .topbar .brand span {
+        font-size: 16px;
+      }
+      .btn {
+        font-size: 13px;
+        padding: 8px 14px;
+      }
+      .coins {
+        font-size: 14px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -62,6 +223,7 @@
       {% endif %}
     </div>
     <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+
     <nav class="top-nav">
       {% if user %}
         {% if event_weekly %}
@@ -80,11 +242,13 @@
           {% endif %}
         {% endif %}
         <a href="{{ url_for('logout') }}" class="btn">Sair</a>
-      {% elif not rankings_page %}
-        <a href="{{ url_for('login') }}" class="btn">Entrar</a>
-        <a href="{{ url_for('register') }}" class="btn primary">Criar conta</a>
       {% else %}
-        <a href="{{ url_for('game_mode_select') }}" class="btn primary">Início 🏠</a>
+        {% if not rankings_page %}
+          <a href="{{ url_for('login') }}" class="btn">Entrar</a>
+          <a href="{{ url_for('register') }}" class="btn primary">Criar conta</a>
+        {% else %}
+          <a href="{{ url_for('game_mode_select') }}" class="btn primary">Início 🏠</a>
+        {% endif %}
       {% endif %}
     </nav>
   </header>
