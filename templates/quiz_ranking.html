@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Ranking do Quiz</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Posição</th>
+      <th>Usuário</th>
+      <th>Pontuação</th>
+      <th>Data</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for idx, score in enumerate(scores, start=1) %}
+    <tr>
+      <td>{{ idx }}</td>
+      <td>{{ score.username }}</td>
+      <td>{{ score.score }}</td>
+      <td>{{ score.played_at.strftime('%d/%m/%Y %H:%M') }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<a href="{{ url_for('quiz_start') }}" class="option-btn">Jogar novamente</a>
+{% endblock %}
+
+<style>
+table {
+  width: 80%;
+  margin: 20px auto;
+  border-collapse: collapse;
+}
+th, td {
+  border: 1px solid #ccc;
+  padding: 10px;
+  text-align: center;
+}
+th {
+  background-color: #3cb371;
+  color: #fff;
+}
+.option-btn {
+  display: block;
+  width: 200px;
+  margin: 20px auto;
+  text-decoration: none;
+  background-color: #3cb371;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 12px 20px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+.option-btn:hover {
+  background-color: #2e8b57;
+  transform: scale(1.03);
+}
+</style>
