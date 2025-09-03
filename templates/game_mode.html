@@ -9,23 +9,37 @@
     <h1>Modo de Jogo</h1>
 
     <div class="card-grid">
-       <a href="{{ url_for('index') }}" class="card">
-            <h2>🏆 Torneio</h2>
-            <p>Participe do modo Ranking com pontuação geral dos jogadores.</p>
-        </a>
-      <a href="{{ url_for('game_duel_setup') }}" class="card">
-    <h2>⚔ Duelo</h2>
-    <p>Enfrente rivais em partidas emocionantes 1 vs 1.</p>
-</a>
+      <a href="{{ url_for('index') }}" class="card">
+        <h2>🏆 Torneio</h2>
+        <p>Participe do modo Ranking com pontuação geral dos jogadores.</p>
+      </a>
 
+      <a href="{{ url_for('game_duel_setup') }}" class="card">
+        <h2>⚔ Duelo</h2>
+        <p>Enfrente rivais em partidas emocionantes 1 vs 1.</p>
+      </a>
     </div>
 
     <h2 class="section-title">Eventos</h2>
     <div class="card-grid">
+      {% if weekly_event %}
+        {% if already_played %}
+          <a href="{{ url_for('weekly_ranking') }}" class="card" style="opacity: 0.7;">
+            <h2>📊 Ranking Semanal</h2>
+            <p>Você já jogou hoje! Veja sua posição no ranking semanal.</p>
+          </a>
+        {% else %}
+          <a href="{{ url_for('weekly_event_start') }}" class="card">
+            <h2>🎯 Evento Semanal</h2>
+            <p>Responda a rodada de hoje e acumule pontos para o ranking da semana!</p>
+          </a>
+        {% endif %}
+      {% else %}
         <a href="#" class="card disabled">
-            <h2>🌟 Em Breve</h2>
-            <p>Novos eventos e rankings especiais estão chegando!</p>
+          <h2>⏳ Sem Evento</h2>
+          <p>Não há nenhum evento ativo no momento.</p>
         </a>
+      {% endif %}
     </div>
   </div>
 </section>
