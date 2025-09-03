@@ -1,16 +1,22 @@
 {% extends "base.html" %}
+
 {% block content %}
 <div class="quiz-container">
+  <!-- Pergunta -->
   <div class="quiz-question">
     <h2>{{ question.text }}</h2>
   </div>
 
+  <!-- Opções -->
   <div class="quiz-options">
     {% for option in question.options %}
-      <button class="option-btn" onclick="submitAnswer('{{ option.id }}')">{{ option.text }}</button>
+      <button class="option-btn" onclick="submitAnswer('{{ option.id }}')">
+        {{ option.text }}
+      </button>
     {% endfor %}
   </div>
 
+  <!-- Feedback -->
   <div id="feedback" class="feedback"></div>
 </div>
 
@@ -18,14 +24,13 @@
 function submitAnswer(optionId) {
     fetch('{{ url_for("quiz_answer", question_id=question.id) }}', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ selected_option: optionId })
     })
     .then(response => response.json())
     .then(data => {
         const feedbackDiv = document.getElementById('feedback');
+
         if(data.correct) {
             feedbackDiv.textContent = '✅ Correto!';
             feedbackDiv.style.color = 'green';
@@ -34,9 +39,14 @@ function submitAnswer(optionId) {
             feedbackDiv.style.color = 'red';
         }
 
-        // Espera 1.5s e vai para a próxima pergunta
+        // Aguarda 1.5s antes de ir para a próxima pergunta
         setTimeout(() => {
-            window.location.href = data.next_question_url;
+            if (data.next_question_url) {
+                window.location.href = data.next_question_url;
+            } else {
+                // Se não houver próxima pergunta, volta para a página inicial ou resultado
+                window.location.href = '{{ url_for("quiz_result") }}';
+            }
         }, 1500);
     })
     .catch(error => console.error('Erro:', error));
