@@ -1,72 +1,93 @@
 {% extends "base.html" %}
+
 {% block content %}
-<section class="hero">
-  <div class="hero-content">
-    <!-- Logo maior -->
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="PERFUT" class="hero-logo">
-
-    <p>Mostre seu conhecimento em futebol e suba no ranking!</p>
-
-    <div class="game-card quiz-card">
-      <div class="question">
-        <h2>{{ quiz.question }}</h2>
-      </div>
-      <div class="options">
-        {% for idx, option in enumerate([quiz.option1, quiz.option2, quiz.option3, quiz.option4], 1) %}
-        <a href="{{ url_for('quiz_answer', selected=idx) }}" class="btn option-btn">{{ option }}</a>
-        {% endfor %}
-      </div>
-    </div>
+<div class="quiz-container">
+  <!-- Pergunta -->
+  <div class="quiz-question">
+    <h2>{{ question.text }}</h2>
   </div>
-</section>
+
+  <!-- Opções -->
+  <div class="quiz-options">
+    {% for option in question.options %}
+      <button class="option-btn" onclick="submitAnswer('{{ option.id }}')">
+        {{ option.text }}
+      </button>
+    {% endfor %}
+  </div>
+
+  <!-- Feedback -->
+  <div id="feedback" class="feedback"></div>
+</div>
+
+<script>
+function submitAnswer(optionId) {
+    fetch('{{ url_for("quiz_answer", question_id=question.id) }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selected_option: optionId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const feedbackDiv = document.getElementById('feedback');
+
+        if(data.correct) {
+            feedbackDiv.textContent = '✅ Correto!';
+            feedbackDiv.style.color = 'green';
+        } else {
+            feedbackDiv.textContent = '❌ Errado! A resposta correta é: ' + data.correct_answer;
+            feedbackDiv.style.color = 'red';
+        }
+
+        // Aguarda 1.5s antes de ir para a próxima pergunta
+        setTimeout(() => {
+            if (data.next_question_url) {
+                window.location.href = data.next_question_url;
+            } else {
+                // Se não houver próxima pergunta, volta para a página inicial ou resultado
+                window.location.href = '{{ url_for("quiz_result") }}';
+            }
+        }, 1500);
+    })
+    .catch(error => console.error('Erro:', error));
+}
+</script>
 
 <style>
-.quiz-card {
-  background: var(--card);
-  padding: 25px;
-  border-radius: 20px;
-  border: 1px solid #1d4b2b;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-  text-align: center;
+.quiz-container {
+    text-align: center;
+    margin-top: 50px;
 }
 
-.question h2 {
-  font-size: 18px;
-  margin-bottom: 20px;
-  color: var(--text);
-}
-
-.options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
+.quiz-question h2 {
+    font-size: 24px;
+    margin-bottom: 30px;
 }
 
 .option-btn {
-  display: block;
-  text-decoration: none;
-  background-color: #3cb371;
-  color: #fff;
-  font-weight: 600;
-  border-radius: 12px;
-  padding: 12px 10px;
-  text-align: center;
-  transition: all 0.2s ease;
+    display: block;
+    width: 60%;
+    margin: 10px auto;
+    padding: 15px;
+    font-size: 18px;
+    border-radius: 12px;
+    border: none;
+    background-color: #3b82f6;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
 .option-btn:hover {
-  background-color: #2e8b57;
-  transform: scale(1.03);
+    transform: scale(1.05);
+    background-color: #2563eb;
 }
 
-/* Hero e logo já mantidos do template original */
-.hero-logo { width: 140px; margin-bottom: 20px; animation: bounce 1s infinite alternate; }
-@keyframes bounce { 0% { transform: translateY(0); } 100% { transform: translateY(-10px); } }
-
-@media(max-width:480px){
-  .options { grid-template-columns: 1fr; }
-  .question h2 { font-size: 16px; }
-  .option-btn { font-size: 14px; padding: 10px; }
+.feedback {
+    margin-top: 20px;
+    font-size: 20px;
+    font-weight: bold;
 }
 </style>
 {% endblock %}
