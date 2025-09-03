@@ -377,6 +377,23 @@ def weekly_event_start():
 
 
 
+@app.route("/weekly_ranking")
+def weekly_ranking():
+    if not require_login():
+        return redirect(url_for("login"))
+
+    event = WeeklyEvent.query.filter_by(is_active=True).first()
+    scores = []
+    if event:
+        scores = (
+            db.session.query(User.name, WeeklyScore.score, WeeklyScore.play_date)
+            .join(User, User.id == WeeklyScore.player_id)
+            .filter(WeeklyScore.event_id == event.id)
+            .order_by(WeeklyScore.score.desc())
+            .all()
+        )
+
+    return render_template("weekly_ranking.html", scores=scores, event=event)
 
 
 
