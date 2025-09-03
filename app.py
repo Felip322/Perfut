@@ -681,18 +681,26 @@ def quiz_result():
 
 
 
-@app.route('/quiz/result', methods=['POST'])
+@app.route("/quiz/result", methods=["GET", "POST"])
 def quiz_result():
-    username = request.form.get('username')  # ou user logado
-    score = int(request.form.get('score'))
+    if request.method == "POST":
+        username = request.form.get("username")
+        score = int(request.form.get("score"))
 
-    # Salvar no banco
-    new_score = QuizScore(username=username, score=score, played_at=datetime.now())
-    db.session.add(new_score)
-    db.session.commit()
+        new_score = QuizScore(username=username, score=score, played_at=datetime.now())
+        db.session.add(new_score)
+        db.session.commit()
 
-    total = Quiz.query.count()
-    return render_template('quiz_result.html', score=score, total=total)
+        total = Quiz.query.count()
+        return render_template("quiz_result.html", score=score, total=total)
+
+    else:  # GET
+        if not require_login():
+            return redirect(url_for("login"))
+        score = session.get("quiz_score", 0)
+        total = len(session.get("quiz_asked", []))
+        return render_template("quiz_result.html", score=score, total=total)
+
 
 
 @app.route('/quiz/ranking')
