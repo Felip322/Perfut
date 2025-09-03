@@ -615,12 +615,13 @@ def quiz_start():
 
     session['quiz_score'] = 0
     session['quiz_asked'] = []
-    
-    # Pega primeira pergunta
+
+    # Pega todas as perguntas
     questions = Quiz.query.all()
     if not questions:
-        return "Sem perguntas cadastradas"
-    
+        flash("Nenhuma pergunta disponível.", "warning")
+        return redirect(url_for("game_mode_select"))
+
     first_quiz = random.choice(questions)
     session['current_quiz'] = first_quiz.id
     return redirect(url_for("quiz_play", question_id=first_quiz.id))
@@ -642,19 +643,18 @@ def quiz_answer(question_id):
     selected_option = int(data.get("selected_option"))
 
     quiz = Quiz.query.get_or_404(question_id)
-    
-    # Atualiza pontuação
-    correct = (selected_option == quiz.correct_option)
+
+    correct = (selected_option == quiz.quiz_correct_option)
     if correct:
         session['quiz_score'] = session.get('quiz_score', 0) + 1
 
-    # Marca como respondida
     asked = session.get('quiz_asked', [])
     asked.append(quiz.id)
     session['quiz_asked'] = asked
 
-    # Próxima pergunta
+    # Pega próximas perguntas de **todos os temas**
     remaining_questions = Quiz.query.filter(~Quiz.id.in_(asked)).all()
+
     if remaining_questions:
         next_quiz = random.choice(remaining_questions)
         next_question_url = url_for('quiz_play', question_id=next_quiz.id)
@@ -663,9 +663,10 @@ def quiz_answer(question_id):
 
     return {
         "correct": correct,
-        "correct_answer": quiz.options[quiz.correct_option],
+        "correct_answer": getattr(quiz, f"quiz_option{quiz.quiz_correct_option}"),
         "next_question_url": next_question_url
     }
+
 
 
 @app.route("/quiz/result")
@@ -675,7 +676,6 @@ def quiz_result():
     score = session.get("quiz_score", 0)
     total = len(session.get("quiz_asked", []))
     return render_template("quiz_result.html", score=score, total=total)
-
 
 
 
