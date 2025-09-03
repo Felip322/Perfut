@@ -623,18 +623,19 @@ def quiz_start():
     if not require_login():
         return redirect(url_for("login"))
 
+    # Reseta sessão
     session['quiz_score'] = 0
     session['quiz_asked'] = []
 
-    # Pega todas as perguntas
-    questions = Quiz.query.all()
-    if not questions:
+    # Pega a primeira pergunta disponível (ou aleatória, se preferir)
+    first_question = Quiz.query.order_by(Quiz.id).first()
+    if not first_question:
         flash("Nenhuma pergunta disponível.", "warning")
         return redirect(url_for("game_mode_select"))
 
-    first_quiz = random.choice(questions)
-    session['current_quiz'] = first_quiz.id
-    return redirect(url_for("quiz_play", question_id=first_quiz.id))
+    # Renderiza a tela inicial do quiz
+    return render_template("quiz_start.html", first_question_id=first_question.id)
+
 
 
 
