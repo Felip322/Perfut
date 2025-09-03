@@ -182,6 +182,15 @@ class WeeklyScore(db.Model):
     player = db.relationship("User")
 
 
+class Quiz(db.Model):
+    __tablename__ = "quiz"
+    id = db.Column(db.Integer, primary_key=True)
+    question = db.Column(db.String(300), nullable=False)
+    option1 = db.Column(db.String(100), nullable=False)
+    option2 = db.Column(db.String(100), nullable=False)
+    option3 = db.Column(db.String(100), nullable=False)
+    option4 = db.Column(db.String(100), nullable=False)
+    correct_option = db.Column(db.Integer, nullable=False)  # 1,2,3 ou 4
 
 
 
@@ -598,6 +607,58 @@ def weekly_ranking():
 
     return render_template("weekly_ranking.html", scores=scores, event=event)
 
+
+
+
+@app.route("/quiz/start")
+def quiz_start():
+    if not require_login():
+        return redirect(url_for("login"))
+
+    session['quiz_score'] = 0
+    session['quiz_asked'] = []
+    return redirect(url_for("quiz_question"))
+
+@app.route("/quiz/question")
+def quiz_question():
+    if not require_login():
+        return redirect(url_for("login"))
+
+    asked = session.get("quiz_asked", [])
+    questions = Quiz.query.filter(~Quiz.id.in_(asked)).all()
+    if not questions:
+        return redirect(url_for("quiz_result"))
+
+    quiz = random.choice(questions)
+    session['current_quiz'] = quiz.id
+    return render_template("quiz.html", quiz=quiz)
+
+@app.route("/quiz/answer/<int:selected>")
+def quiz_answer(selected):
+    if not require_login():
+        return redirect(url_for("login"))
+
+    quiz_id = session.get("current_quiz")
+    quiz = Quiz.query.get_or_404(quiz_id)
+    
+    # Atualiza pontuação
+    if selected == quiz.correct_option:
+        session['quiz_score'] = session.get('quiz_score', 0) + 1
+
+    # Marca como respondida
+    asked = session.get('quiz_asked', [])
+    asked.append(quiz.id)
+    session['quiz_asked'] = asked
+
+    return redirect(url_for("quiz_question"))
+
+@app.route("/quiz/result")
+def quiz_result():
+    if not require_login():
+        return redirect(url_for("login"))
+    score = session.get("quiz_score", 0)
+    total = len(session.get("quiz_asked", []))
+    return render_template("quiz_result.html", score=score, total=total)
 
 
 
