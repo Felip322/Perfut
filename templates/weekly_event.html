@@ -1,31 +1,40 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="hero">
-  <div class="hero-content">
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="PERFUT" class="hero-logo">
-    <h1>Evento Semanal</h1>
+<div class="page-container">
 
-    <div class="card-grid">
-      {% if event %}
-        {% if already_played %}
-          <a href="{{ url_for('weekly_ranking') }}" class="card">
-            <h2>📊 Ranking Semanal</h2>
-            <p>Você já jogou hoje! Confira sua posição no ranking semanal.</p>
-          </a>
-        {% else %}
-          <a href="{{ url_for('weekly_event_start') }}" class="card">
-            <h2>🎯 Desafio Diário</h2>
-            <p>Responda a rodada de hoje e aumente sua pontuação semanal!</p>
-          </a>
-        {% endif %}
+  <!-- Título e logo -->
+  <div class="page-header">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="PERFUT" class="logo">
+    <h1>Evento Semanal</h1>
+  </div>
+
+  <!-- Grid de cards -->
+  <div class="card-grid">
+    {% if event %}
+      {% if already_played %}
+        <a href="{{ url_for('weekly_ranking') }}" class="card">
+          <h2>📊 Ranking Semanal</h2>
+          <p>Você já jogou hoje! Confira sua posição no ranking semanal.</p>
+        </a>
       {% else %}
-        <a href="#" class="card disabled">
-          <h2>⏳ Sem Evento</h2>
-          <p>Não há nenhum evento ativo no momento.</p>
+        <a href="{{ url_for('weekly_event_start') }}" class="card">
+          <h2>🎯 Desafio Diário</h2>
+          <p>Responda a rodada de hoje e aumente sua pontuação semanal!</p>
         </a>
       {% endif %}
-    </div>
+    {% else %}
+      <div class="card disabled">
+        <h2>⏳ Sem Evento</h2>
+        <p>Não há nenhum evento ativo no momento.</p>
+      </div>
+    {% endif %}
   </div>
-</section>
+
+  <!-- Botão voltar -->
+  <div class="back-button-container">
+    <a href="{{ url_for('index') }}" class="btn btn-back">← Voltar</a>
+  </div>
+
+</div>
 {% endblock %}
