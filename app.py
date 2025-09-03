@@ -163,7 +163,13 @@ class WeeklyEvent(db.Model):
     end_date = db.Column(db.Date, nullable=False)
     is_active = db.Column(db.Boolean, default=True)
 
-    scores = db.relationship("WeeklyScore", backref="event")
+    scores = db.relationship("WeeklyScore", backref="event", lazy="dynamic")
+
+    @property
+    def is_today_active(self):
+        """Verifica se o evento está ativo no dia atual."""
+        today = datetime.utcnow().date()
+        return self.is_active and self.start_date <= today <= self.end_date
 
 class WeeklyScore(db.Model):
     __tablename__ = "weekly_scores"
@@ -174,6 +180,7 @@ class WeeklyScore(db.Model):
     play_date = db.Column(db.Date, nullable=False)
 
     player = db.relationship("User")
+
 
 
 
