@@ -1,8 +1,33 @@
 {% extends "base.html" %}
 {% block content %}
-<div style="text-align:center; margin-top:50px;">
+<div class="quiz-result">
   <h2>Quiz finalizado!</h2>
   <p>Sua pontuação: {{ score }} / {{ total }}</p>
-  <a href="{{ url_for('quiz_start') }}" class="option-btn" style="margin-top:20px;">Jogar novamente</a>
+  <a href="{{ url_for('quiz_start') }}" class="option-btn">Jogar novamente</a>
 </div>
+
+<style>
+.quiz-result {
+  text-align: center;
+  margin-top: 50px;
+}
+
+.option-btn {
+  display: inline-block;
+  text-decoration: none;
+  background-color: #3cb371;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 12px 20px;
+  text-align: center;
+  transition: all 0.2s ease;
+  margin-top: 20px;
+}
+
+.option-btn:hover {
+  background-color: #2e8b57;
+  transform: scale(1.03);
+}
+</style>
 {% endblock %}
