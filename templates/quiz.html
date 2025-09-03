@@ -1,23 +1,72 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="quiz-container">
-  <div class="quiz-card">
-    <div class="question">
-      <h2>{{ quiz.question }}</h2>
-    </div>
-    <div class="options">
-      {% for idx, option in enumerate([quiz.option1, quiz.option2, quiz.option3, quiz.option4], 1) %}
-      <a href="{{ url_for('quiz_answer', selected=idx) }}" class="option-btn">{{ option }}</a>
-      {% endfor %}
+<section class="hero">
+  <div class="hero-content">
+    <!-- Logo maior -->
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="PERFUT" class="hero-logo">
+
+    <p>Mostre seu conhecimento em futebol e suba no ranking!</p>
+
+    <div class="game-card quiz-card">
+      <div class="question">
+        <h2>{{ quiz.question }}</h2>
+      </div>
+      <div class="options">
+        {% for idx, option in enumerate([quiz.option1, quiz.option2, quiz.option3, quiz.option4], 1) %}
+        <a href="{{ url_for('quiz_answer', selected=idx) }}" class="btn option-btn">{{ option }}</a>
+        {% endfor %}
+      </div>
     </div>
   </div>
 </section>
 
 <style>
-.quiz-container { display:flex; justify-content:center; margin-top:50px; }
-.quiz-card { background:#1e1e2f; padding:30px; border-radius:20px; max-width:500px; text-align:center; }
-.options { display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-top:20px; }
-.option-btn { padding:15px; border:none; border-radius:12px; background:#2e2e4d; color:#fff; font-weight:bold; text-decoration:none; display:block; transition:0.2s; }
-.option-btn:hover { background:#4CAF50; }
+.quiz-card {
+  background: var(--card);
+  padding: 25px;
+  border-radius: 20px;
+  border: 1px solid #1d4b2b;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  text-align: center;
+}
+
+.question h2 {
+  font-size: 18px;
+  margin-bottom: 20px;
+  color: var(--text);
+}
+
+.options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.option-btn {
+  display: block;
+  text-decoration: none;
+  background-color: #3cb371;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 12px 10px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.option-btn:hover {
+  background-color: #2e8b57;
+  transform: scale(1.03);
+}
+
+/* Hero e logo já mantidos do template original */
+.hero-logo { width: 140px; margin-bottom: 20px; animation: bounce 1s infinite alternate; }
+@keyframes bounce { 0% { transform: translateY(0); } 100% { transform: translateY(-10px); } }
+
+@media(max-width:480px){
+  .options { grid-template-columns: 1fr; }
+  .question h2 { font-size: 16px; }
+  .option-btn { font-size: 14px; padding: 10px; }
+}
 </style>
 {% endblock %}
