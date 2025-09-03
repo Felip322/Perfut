@@ -275,36 +275,34 @@ def login():
 
 @app.route("/game/mode")
 def game_mode_select():
-    if not require_login():
+    if "user_id" not in session:
+        flash("Faça login para jogar.", "warning")
         return redirect(url_for("login"))
 
     user = User.query.get(session["user_id"])
     today = datetime.utcnow().date()
 
-    # Pega todos eventos ativos
-    events = WeeklyEvent.query.filter(
+    # --- Busca todos eventos ativos hoje ---
+    events_today = WeeklyEvent.query.filter(
         WeeklyEvent.is_active == True,
         WeeklyEvent.start_date <= today,
         WeeklyEvent.end_date >= today
-    ).all()
+    ).order_by(WeeklyEvent.start_date.asc()).all()
 
-    # Seleciona um evento do dia, se houver
-    active_event = next((e for e in events if e.start_date <= today <= e.end_date), None)
+    # --- Verifica quais eventos o usuário já jogou hoje ---
+    played_events = {
+        ws.event_id for ws in WeeklyScore.query.filter(
+            WeeklyScore.player_id == user.id,
+            WeeklyScore.play_date == today
+        ).all()
+    }
 
-    # Verifica se o usuário já jogou hoje
-    already_played = False
-    if active_event:
-        already_played = WeeklyScore.query.filter_by(
-            event_id=active_event.id,
-            player_id=user.id,
-            play_date=today
-        ).first() is not None
-
+    # --- Envia os dados para o template ---
     return render_template(
         "game_mode.html",
         user=user,
-        weekly_event=active_event,   # envia para o template
-        already_played=already_played
+        events_today=events_today,
+        played_events=played_events
     )
 
 
