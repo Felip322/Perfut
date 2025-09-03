@@ -599,10 +599,11 @@ def weekly_ranking():
     event = WeeklyEvent.query.filter_by(is_active=True).first()
     scores = []
     if event:
+        # Trazer objetos WeeklyScore e acessar player.name no template
         scores = (
-            db.session.query(User.name, WeeklyScore.score, WeeklyScore.play_date)
+            WeeklyScore.query
+            .filter_by(event_id=event.id)
             .join(User, User.id == WeeklyScore.player_id)
-            .filter(WeeklyScore.event_id == event.id)
             .order_by(WeeklyScore.score.desc())
             .all()
         )
