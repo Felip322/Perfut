@@ -1,70 +1,40 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
-from flask_sqlalchemy import SQLAlchemy
+<div class="quiz-result">
+  <h2>Quiz finalizado!</h2>
+  <p>Sua pontuação: {{ score }} / {{ total }}</p>
+  
+  <a href="{{ url_for('quiz_start') }}" class="option-btn">Jogar novamente</a>
+  <a href="{{ url_for('quiz_ranking') }}" class="option-btn ranking-btn">Ver Ranking</a>
+</div>
 
-app = Flask(__name__)
-app.secret_key = 'seu_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://usuario:senha@localhost/perfut_db'
-db = SQLAlchemy(app)
+<style>
+.quiz-result {
+  text-align: center;
+  margin-top: 50px;
+}
 
-class Quiz(db.Model):
-    __tablename__ = 'quiz'
-    id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.Text, nullable=False)
-    option1 = db.Column(db.Text, nullable=False)
-    option2 = db.Column(db.Text, nullable=False)
-    option3 = db.Column(db.Text, nullable=False)
-    option4 = db.Column(db.Text, nullable=False)
-    correct_option = db.Column(db.Integer, nullable=False)
-    theme = db.Column(db.Text)  # opcional
+.option-btn {
+  display: inline-block;
+  text-decoration: none;
+  background-color: #3cb371;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 12px 20px;
+  text-align: center;
+  transition: all 0.2s ease;
+  margin-top: 20px;
+}
 
-@app.route('/quiz')
-def quiz_start():
-    session['score'] = 0
-    session['question_index'] = 0
-    return redirect(url_for('quiz_play'))
+.option-btn:hover {
+  background-color: #2e8b57;
+  transform: scale(1.03);
+}
 
-@app.route('/quiz/play')
-def quiz_play():
-    questions = Quiz.query.all()
-    index = session.get('question_index', 0)
+.ranking-btn {
+  background-color: #ffa500; /* laranja para diferenciar */
+}
 
-    if index >= len(questions):
-        return redirect(url_for('quiz_result'))
-
-    question = questions[index]
-    options = [
-        {'id': 1, 'text': question.option1},
-        {'id': 2, 'text': question.option2},
-        {'id': 3, 'text': question.option3},
-        {'id': 4, 'text': question.option4},
-    ]
-
-    return render_template('quiz_play.html', question={'id': question.id, 'text': question.text, 'options': options})
-
-@app.route('/quiz/answer/<int:question_id>', methods=['POST'])
-def quiz_answer(question_id):
-    data = request.get_json()
-    selected_option = int(data['selected_option'])
-    question = Quiz.query.get_or_404(question_id)
-
-    correct = selected_option == question.correct_option
-    if correct:
-        session['score'] = session.get('score', 0) + 1
-
-    session['question_index'] = session.get('question_index', 0) + 1
-    next_question_url = url_for('quiz_play')
-
-    return jsonify({
-        'correct': correct,
-        'correct_answer': getattr(question, f'option{question.correct_option}'),
-        'next_question_url': next_question_url
-    })
-
-@app.route('/quiz/result')
-def quiz_result():
-    score = session.get('score', 0)
-    total = Quiz.query.count()
-    return render_template('quiz_result.html', score=score, total=total)
-
-if __name__ == '__main__':
-    app.run(debug=True)
+.ranking-btn:hover {
+  background-color: #ff8c00;
+}
+</style>
