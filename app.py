@@ -977,20 +977,22 @@ def game_hint(round_id):
     if not require_login():
         return redirect(url_for("login"))
 
+    # Pega a rodada pelo ID
     r = Round.query.get_or_404(round_id)
+
+    # Se a rodada já terminou, volta para a página do jogo
     if r.finished:
         return redirect(url_for("game_play", game_id=r.game_id))
 
-    hints_total = len(json.loads(r.hints_order_json or "[]"))
-    if r.requested_hints < hints_total:
-        r.requested_hints += 1
+    # Marca que o jogador usou a dica
+    if not r.hint_used:
+        r.hint_used = True
         db.session.commit()
-        flash("Dica liberada! Veja abaixo.", "info")
-    else:
-        flash("Você já revelou todas as dicas deste card.", "warning")
-
+        flash("Dica usada! Você receberá menos pontos nesta rodada.", "info")
+    
+    # Redireciona de volta para a rodada atual do jogo
     return redirect(url_for("game_play", game_id=r.game_id))
-)
+
 
 
 
