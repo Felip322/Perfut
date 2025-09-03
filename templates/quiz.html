@@ -1,7 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="quiz-container">
+<div class="quiz-wrapper">
+  <!-- Cabeçalho -->
+  <div class="quiz-header">
+    <h1 class="quiz-title">Quiz!</h1>
+    <p class="quiz-progress">Pergunta {{ current }}/{{ total }}</p>
+  </div>
+
   <!-- Pergunta -->
   <div class="quiz-question">
     <h2>{{ question.text }}</h2>
@@ -38,20 +44,14 @@ function submitAnswer(optionId) {
 
         if(data.correct) {
             feedbackDiv.textContent = '✅ Correto!';
-            feedbackDiv.style.color = 'green';
+            feedbackDiv.className = 'feedback correct';
         } else {
-            feedbackDiv.textContent = '❌ Errado! A resposta correta é: ' + data.correct_answer;
-            feedbackDiv.style.color = 'red';
+            feedbackDiv.textContent = '❌ Errado! Resposta certa: ' + data.correct_answer;
+            feedbackDiv.className = 'feedback wrong';
         }
 
-        // Aguarda 1.5s antes de ir para a próxima pergunta
         setTimeout(() => {
-            if (data.next_question_url) {
-                window.location.href = data.next_question_url;
-            } else {
-                // Se não houver próxima pergunta, vai para a página de resultado
-                window.location.href = '{{ url_for("quiz_result") }}';
-            }
+            window.location.href = data.next_question_url;
         }, 1500);
     })
     .catch(error => console.error('Erro:', error));
@@ -59,40 +59,67 @@ function submitAnswer(optionId) {
 </script>
 
 <style>
-.quiz-container {
-    text-align: center;
-    margin-top: 50px;
+.quiz-wrapper {
+  max-width: 600px;
+  margin: 50px auto;
+  text-align: center;
+  background: linear-gradient(145deg, #ffecd2, #fcb69f);
+  padding: 30px;
+  border-radius: 25px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.quiz-header {
+  margin-bottom: 20px;
+}
+
+.quiz-title {
+  font-size: 36px;
+  font-weight: 700;
+  color: #ff6b6b;
+}
+
+.quiz-progress {
+  font-size: 16px;
+  color: #555;
 }
 
 .quiz-question h2 {
-    font-size: 24px;
-    margin-bottom: 30px;
+  font-size: 24px;
+  margin: 20px 0;
+  color: #222;
+}
+
+.quiz-options {
+  display: grid;
+  gap: 15px;
+  margin-top: 20px;
 }
 
 .option-btn {
-    display: block;
-    width: 60%;
-    margin: 10px auto;
-    padding: 15px;
-    font-size: 18px;
-    border-radius: 12px;
-    border: none;
-    background-color: #3b82f6;
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.2s ease, background-color 0.2s ease;
+  padding: 15px;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 50px;
+  border: none;
+  background: #4facfe;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
 }
 
 .option-btn:hover {
-    transform: scale(1.05);
-    background-color: #2563eb;
+  transform: scale(1.05);
+  background: #00f2fe;
 }
 
 .feedback {
-    margin-top: 20px;
-    font-size: 20px;
-    font-weight: bold;
+  margin-top: 25px;
+  font-size: 20px;
+  font-weight: bold;
 }
+
+.feedback.correct { color: #27ae60; }
+.feedback.wrong { color: #e74c3c; }
 </style>
 {% endblock %}
