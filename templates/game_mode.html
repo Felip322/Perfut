@@ -8,17 +8,24 @@
 
     <h1>Modo de Jogo</h1>
 
-    <div class="card-grid">
-      <a href="{{ url_for('index') }}" class="card">
-        <h2>🏆 Torneio</h2>
-        <p>Participe do modo Ranking com pontuação geral dos jogadores.</p>
-      </a>
+   <div class="card-grid">
+  <a href="{{ url_for('index') }}" class="card">
+    <h2>🏆 Torneio</h2>
+    <p>Participe do modo Ranking com pontuação geral dos jogadores.</p>
+  </a>
 
-      <a href="{{ url_for('game_duel_setup') }}" class="card">
-        <h2>⚔ Duelo</h2>
-        <p>Enfrente rivais em partidas emocionantes 1 vs 1.</p>
-      </a>
-    </div>
+  <a href="{{ url_for('game_duel_setup') }}" class="card">
+    <h2>⚔ Duelo</h2>
+    <p>Enfrente rivais em partidas emocionantes 1 vs 1.</p>
+  </a>
+
+  <!-- Novo card do Quiz -->
+  <a href="{{ url_for('quiz_start') }}" class="card">
+    <h2>❓ Quiz</h2>
+    <p>Teste seus conhecimentos respondendo perguntas e suba no ranking de pontuação!</p>
+  </a>
+</div>
+
 
     <h2 class="section-title">Eventos</h2>
     <div class="card-grid">
