@@ -288,23 +288,24 @@ def game_mode_select():
         WeeklyEvent.end_date >= today
     ).all()
 
-    # Mapeia quais eventos o jogador já jogou hoje
-    played_events = {
-        e.id: WeeklyScore.query.filter_by(
-            event_id=e.id,
+    # Seleciona um evento do dia, se houver
+    active_event = next((e for e in events if e.start_date <= today <= e.end_date), None)
+
+    # Verifica se o usuário já jogou hoje
+    already_played = False
+    if active_event:
+        already_played = WeeklyScore.query.filter_by(
+            event_id=active_event.id,
             player_id=user.id,
             play_date=today
         ).first() is not None
-        for e in events
-    }
 
     return render_template(
         "game_mode.html",
         user=user,
-        events=events,
-        played_events=played_events
+        weekly_event=active_event,   # envia para o template
+        already_played=already_played
     )
-
 
 @app.route("/duel/join/<code>")
 def duel_join(code):
