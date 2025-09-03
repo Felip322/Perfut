@@ -9,7 +9,7 @@
     <p>
         Teste seus conhecimentos! Você terá várias perguntas e receberá feedback imediato após cada resposta.
         <br><br>
-        Cada pergunta correta vale 1 ponto. Tente acertar todas!
+        Cada pergunta correta vale 1 ponto. Tente acertar o máximo que conseguir!
     </p>
 
     <button class="start-btn" onclick="startQuiz()">Iniciar Quiz</button>
@@ -27,39 +27,50 @@ function startQuiz() {
     text-align: center;
     margin-top: 50px;
     padding: 0 20px;
+    background: var(--card);
+    color: var(--text);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 20px;
+    padding: 40px 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
 }
 
 .quiz-logo {
-    max-width: 200px;
+    max-width: 180px;
     margin-bottom: 30px;
 }
 
 h1 {
     font-size: 32px;
     margin-bottom: 20px;
-    color: #D15106;
+    color: var(--accent);
+    font-weight: 700;
 }
 
 p {
     font-size: 18px;
     margin-bottom: 40px;
+    line-height: 1.5;
 }
 
 .start-btn {
     padding: 15px 40px;
-    font-size: 20px;
-    font-weight: 600;
-    color: white;
-    background-color: #3b82f6;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--card);
+    background: var(--accent);
     border: none;
     border-radius: 12px;
     cursor: pointer;
-    transition: transform 0.2s ease, background-color 0.2s ease;
+    transition: transform 0.2s ease, background 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 .start-btn:hover {
     transform: scale(1.05);
-    background-color: #2563eb;
+    background: #ffc107; /* leve variação do amarelo padrão */
 }
 </style>
 {% endblock %}
