@@ -25,8 +25,9 @@
       {% if events_today %}
         {% for event in events_today %}
           {% set played = event.id in played_events %}
-          <a href="{% if played %}{{ url_for('weekly_ranking', event_id=event.id) }}{% else %}{{ url_for('weekly_event_start_by_id', event_id=event.id) }}{% endif %}" 
-             class="card {% if played %}disabled{% endif %}">
+         <a href="{% if played %}{{ url_for('weekly_ranking', event_id=event.id) }}{% else %}{{ url_for('weekly_event_start', event_id=event.id) }}{% endif %}" 
+   class="card {% if played %}disabled{% endif %}">
+
             <h2>🎯 {{ event.name }}</h2>
             <p>
               {% if played %}
