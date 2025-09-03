@@ -649,7 +649,7 @@ def quiz_play(question_id):
         return redirect(url_for("quiz_start_page"))
 
     return render_template(
-        "quiz_play.html",
+        "quiz.html",
         question=question
     )
 
