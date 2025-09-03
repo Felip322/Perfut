@@ -12,7 +12,6 @@ from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from models import Quiz, User, QuizScore  
 
 # ----------------------
 # App config
@@ -195,6 +194,12 @@ class Quiz(db.Model):
     correct_option = db.Column(db.Integer, nullable=False)
     theme = db.Column(db.Text)
 
+class QuizScore(db.Model):
+    __tablename__ = 'quiz_scores'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), nullable=False)
+    score = db.Column(db.Integer, nullable=False)
+    played_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 
@@ -677,8 +682,8 @@ def quiz_answer(question_id):
     selected_option = int(data.get("selected_option"))
 
     quiz = Quiz.query.get_or_404(question_id)
+    correct = (selected_option == quiz.correct_option)  # aqui era quiz.quiz_correct_option
 
-    correct = (selected_option == quiz.quiz_correct_option)
     if correct:
         session['quiz_score'] = session.get('quiz_score', 0) + 1
 
@@ -686,9 +691,7 @@ def quiz_answer(question_id):
     asked.append(quiz.id)
     session['quiz_asked'] = asked
 
-    # Pega próximas perguntas de **todos os temas**
     remaining_questions = Quiz.query.filter(~Quiz.id.in_(asked)).all()
-
     if remaining_questions:
         next_quiz = random.choice(remaining_questions)
         next_question_url = url_for('quiz_play', question_id=next_quiz.id)
@@ -697,9 +700,10 @@ def quiz_answer(question_id):
 
     return {
         "correct": correct,
-        "correct_answer": getattr(quiz, f"quiz_option{quiz.quiz_correct_option}"),
+        "correct_answer": getattr(quiz, f"option{quiz.correct_option}"),  # ajustado
         "next_question_url": next_question_url
     }
+
 
 
 
