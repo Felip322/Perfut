@@ -608,8 +608,6 @@ def weekly_ranking():
     return render_template("weekly_ranking.html", scores=scores, event=event)
 
 
-
-
 @app.route("/quiz/start")
 def quiz_start():
     if not require_login():
@@ -617,32 +615,37 @@ def quiz_start():
 
     session['quiz_score'] = 0
     session['quiz_asked'] = []
-    return redirect(url_for("quiz_question"))
-
-@app.route("/quiz/question")
-def quiz_question():
-    if not require_login():
-        return redirect(url_for("login"))
-
-    asked = session.get("quiz_asked", [])
-    questions = Quiz.query.filter(~Quiz.id.in_(asked)).all()
+    
+    # Pega primeira pergunta
+    questions = Quiz.query.all()
     if not questions:
-        return redirect(url_for("quiz_result"))
+        return "Sem perguntas cadastradas"
+    
+    first_quiz = random.choice(questions)
+    session['current_quiz'] = first_quiz.id
+    return redirect(url_for("quiz_play", question_id=first_quiz.id))
 
-    quiz = random.choice(questions)
-    session['current_quiz'] = quiz.id
-    return render_template("quiz.html", quiz=quiz)
 
-@app.route("/quiz/answer/<int:selected>")
-def quiz_answer(selected):
+
+@app.route('/quiz/play/<int:question_id>')
+def quiz_play(question_id):
+    question = Quiz.query.get_or_404(question_id)
+    return render_template('quiz.html', question=question)
+
+
+@app.route('/quiz/answer/<int:question_id>', methods=['POST'])
+def quiz_answer(question_id):
     if not require_login():
         return redirect(url_for("login"))
 
-    quiz_id = session.get("current_quiz")
-    quiz = Quiz.query.get_or_404(quiz_id)
+    data = request.get_json()
+    selected_option = int(data.get("selected_option"))
+
+    quiz = Quiz.query.get_or_404(question_id)
     
     # Atualiza pontuação
-    if selected == quiz.correct_option:
+    correct = (selected_option == quiz.correct_option)
+    if correct:
         session['quiz_score'] = session.get('quiz_score', 0) + 1
 
     # Marca como respondida
@@ -650,7 +653,20 @@ def quiz_answer(selected):
     asked.append(quiz.id)
     session['quiz_asked'] = asked
 
-    return redirect(url_for("quiz_question"))
+    # Próxima pergunta
+    remaining_questions = Quiz.query.filter(~Quiz.id.in_(asked)).all()
+    if remaining_questions:
+        next_quiz = random.choice(remaining_questions)
+        next_question_url = url_for('quiz_play', question_id=next_quiz.id)
+    else:
+        next_question_url = url_for('quiz_result')
+
+    return {
+        "correct": correct,
+        "correct_answer": quiz.options[quiz.correct_option],
+        "next_question_url": next_question_url
+    }
+
 
 @app.route("/quiz/result")
 def quiz_result():
@@ -659,8 +675,6 @@ def quiz_result():
     score = session.get("quiz_score", 0)
     total = len(session.get("quiz_asked", []))
     return render_template("quiz_result.html", score=score, total=total)
-
-
 
 
 
