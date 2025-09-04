@@ -32,18 +32,17 @@
   <div id="feedback" class="feedback"></div>
 
   <!-- Sons -->
-  <audio id="start-sound" src="{{ url_for('static', filename='sounds/start-whistle.mp3') }}"></audio>
+  <audio id="whistle-sound" src="{{ url_for('static', filename='sounds/whistle.mp3') }}"></audio>
   <audio id="correct-sound" src="{{ url_for('static', filename='sounds/goal.mp3') }}"></audio>
   <audio id="wrong-sound" src="{{ url_for('static', filename='sounds/error.mp3') }}"></audio>
-  <audio id="end-sound" src="{{ url_for('static', filename='sounds/end-whistle.mp3') }}"></audio>
 </div>
 
 <script>
 let timeLeft = 120; // 2 minutos
 const timerElement = document.getElementById("timer-display");
 
-// Toca apito de início
-document.getElementById('start-sound').play();
+// Toca apito no início
+document.getElementById('whistle-sound').play();
 
 function updateTimer() {
     let minutes = Math.floor(timeLeft / 60);
@@ -58,7 +57,7 @@ function updateTimer() {
     }
 
     if (timeLeft <= 0) {
-        document.getElementById('end-sound').play();
+        document.getElementById('whistle-sound').play(); // Apito final
         window.location.href = "{{ url_for('quiz_result') }}";
     }
     timeLeft--;
