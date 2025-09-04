@@ -776,10 +776,13 @@ def logout():
 
 @app.route("/")
 def index():
-    user = None
     if "user_id" in session:
-        user = User.query.get(session["user_id"])
-    return render_template("index.html", user=user, themes=THEMES)
+        # Usuário logado → vai direto para a seleção de modo
+        return redirect(url_for("game_mode_select"))
+    else:
+        # Usuário não logado → mostra página de login ou cadastro
+        return redirect(url_for("login"))
+
 
 # --- Reset & Forgot Password
 @app.route("/reset_password/<token>", methods=["GET", "POST"])
