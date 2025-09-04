@@ -6,7 +6,7 @@
   <div class="quiz-header">
     <h1 class="quiz-title">Quiz!</h1>
     <p class="quiz-progress">Pergunta {{ current }}/{{ total }}</p>
-    <p class="quiz-timer">⏳ Tempo restante: <span id="time">02:00</span></p>
+    <p class="quiz-timer">⏱️ <span id="timer-display">02:00</span></p>
   </div>
 
   <!-- Pergunta -->
@@ -32,9 +32,18 @@
   <div id="feedback" class="feedback"></div>
 </div>
 
+<!-- Sons -->
+<audio id="start-sound" src="{{ url_for('static', filename='sounds/whistle_start.mp3') }}"></audio>
+<audio id="end-sound" src="{{ url_for('static', filename='sounds/whistle_end.mp3') }}"></audio>
+<audio id="goal-sound" src="{{ url_for('static', filename='sounds/goal.mp3') }}"></audio>
+<audio id="error-sound" src="{{ url_for('static', filename='sounds/error.mp3') }}"></audio>
+
 <script>
-let timeLeft = 120; // 2 minutos em segundos
-const timerElement = document.getElementById("time");
+let timeLeft = 120; // 2 minutos
+const timerElement = document.getElementById("timer-display");
+
+// Toca apito de início
+document.getElementById('start-sound').play();
 
 function updateTimer() {
     let minutes = Math.floor(timeLeft / 60);
@@ -44,6 +53,7 @@ function updateTimer() {
         (seconds < 10 ? "0" : "") + seconds;
 
     if (timeLeft <= 0) {
+        document.getElementById('end-sound').play();
         window.location.href = "{{ url_for('quiz_result') }}";
     }
     timeLeft--;
@@ -63,9 +73,11 @@ function submitAnswer(optionId) {
         if(data.correct) {
             feedbackDiv.textContent = '✅ Correto!';
             feedbackDiv.className = 'feedback correct';
+            document.getElementById('goal-sound').play();
         } else {
             feedbackDiv.textContent = '❌ Errado! Resposta certa: ' + data.correct_answer;
             feedbackDiv.className = 'feedback wrong';
+            document.getElementById('error-sound').play();
         }
 
         setTimeout(() => {
@@ -86,6 +98,7 @@ function submitAnswer(optionId) {
   padding: 40px 30px;
   border-radius: 25px;
   box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  font-family: 'Arial Black', sans-serif;
 }
 
 .quiz-header {
@@ -98,10 +111,23 @@ function submitAnswer(optionId) {
   color: var(--accent);
 }
 
-.quiz-progress, .quiz-timer {
-  font-size: 16px;
-  color: var(--text);
-  margin: 5px 0;
+.quiz-progress {
+  font-size: 18px;
+  margin-bottom: 5px;
+  color: #fff;
+  text-shadow: 1px 1px 3px #000;
+}
+
+.quiz-timer {
+  font-size: 28px;
+  font-weight: bold;
+  color: #ff3b3b;
+  text-shadow: 2px 2px 5px #000;
+  background: #000;
+  padding: 5px 15px;
+  border-radius: 8px;
+  display: inline-block;
+  letter-spacing: 2px;
 }
 
 .quiz-question h2 {
@@ -131,12 +157,12 @@ function submitAnswer(optionId) {
 
 .option-btn:hover {
   transform: scale(1.05);
-  background: #ffc107; /* leve variação do amarelo padrão */
+  background: #ffc107;
 }
 
 .feedback {
   margin-top: 25px;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: bold;
 }
 
