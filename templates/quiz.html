@@ -6,6 +6,9 @@
   <div class="quiz-header">
     <h1 class="quiz-title">Quiz!</h1>
     <p class="quiz-progress">Pergunta {{ current }}/{{ total }}</p>
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: {{ current / total * 100 }}%"></div>
+    </div>
     <p class="quiz-timer">⏱ <span id="timer-display">02:00</span></p>
   </div>
 
@@ -41,12 +44,7 @@ const wrongSound = document.getElementById('wrong-sound');
 let whistlePlayed = false;
 
 window.addEventListener("DOMContentLoaded", () => {
-    whistleSound.play().then(() => {
-        whistlePlayed = true;
-    }).catch(err => {
-        console.log("⚠️ Autoplay bloqueado. O som será tocado na primeira interação.");
-    });
-
+    whistleSound.play().then(() => { whistlePlayed = true; }).catch(() => {});
     startTimer();
 });
 
@@ -55,13 +53,13 @@ function startTimer() {
 }
 
 function updateTimer() {
-    if (timeLeft < 0) {
-        whistleSound.play().finally(() => {
-            setTimeout(() => {
-                window.location.href = "{{ url_for('quiz_result') }}";
-            }, 1500);
-        });
+    if (timeLeft <= 0) {
+        playFinalSoundAndRedirect();
         return;
+    }
+
+    if (timeLeft === 10) { // alerta de 10s
+        whistleSound.play();
     }
 
     let minutes = Math.floor(timeLeft / 60);
@@ -73,6 +71,14 @@ function updateTimer() {
     timeLeft--;
 }
 
+function playFinalSoundAndRedirect() {
+    whistleSound.play().finally(() => {
+        const wrapper = document.querySelector('.quiz-wrapper');
+        wrapper.classList.add('fade-out');
+        setTimeout(() => window.location.href = "{{ url_for('quiz_result') }}", 500);
+    });
+}
+
 function submitAnswer(optionId) {
     if (!whistlePlayed) {
         whistleSound.play();
@@ -80,6 +86,7 @@ function submitAnswer(optionId) {
     }
 
     const buttons = document.querySelectorAll('.option-btn');
+    const questionDiv = document.querySelector('.quiz-question');
 
     fetch('{{ url_for("quiz_answer", question_id=question.id) }}', {
         method: 'POST',
@@ -89,125 +96,85 @@ function submitAnswer(optionId) {
     .then(response => response.json())
     .then(data => {
         const feedbackDiv = document.getElementById('feedback');
-        buttons.forEach(btn => btn.disabled = true);
+        buttons.forEach(btn => {
+            btn.disabled = true;
+            btn.classList.add('disabled');
+        });
 
-        let nextUrl = data.next_question_url || "{{ url_for('quiz_result') }}"; // fallback
-        const blinkDuration = 800; // 0.8s por ciclo
-        const blinkCount = 2; // ciclos de piscar
+        let nextUrl = data.next_question_url || "{{ url_for('quiz_result') }}";
+        const blinkDuration = 800;
+        const blinkCount = 2;
 
         function proceedNext() {
-            setTimeout(() => {
-                window.location.href = nextUrl;
-            }, blinkDuration * blinkCount);
+            const wrapper = document.querySelector('.quiz-wrapper');
+            wrapper.classList.add('fade-out');
+            setTimeout(() => { window.location.href = nextUrl; }, 500);
         }
 
         if (data.correct) {
             feedbackDiv.textContent = '✅ Correto!';
             feedbackDiv.className = 'feedback correct';
             correctSound.play();
-            buttons[optionId - 1].classList.add('blink-green');
-            proceedNext();
+            buttons[optionId - 1].classList.add('blink-green', 'correct-zoom');
+            questionDiv.classList.add('correct-question');
         } else {
             feedbackDiv.textContent = '❌ Errado! Resposta certa: ' + data.correct_answer;
             feedbackDiv.className = 'feedback wrong';
             wrongSound.play();
 
-            // Pisca botão errado de vermelho
             buttons[optionId - 1].classList.add('blink-red');
-
-            // Pisca botão correto de azul (somente se existe)
             if (data.correct_option) {
                 const correctIndex = data.correct_option - 1;
-                if (buttons[correctIndex]) {
-                    buttons[correctIndex].classList.add('blink-blue');
-                }
+                buttons[correctIndex].classList.add('blink-blue', 'correct-zoom');
             }
-
-            proceedNext();
+            questionDiv.classList.add('wrong-question');
         }
+
+        proceedNext();
     })
-    .catch(error => {
-        console.error('Erro:', error);
-        window.location.href = "{{ url_for('quiz_result') }}";
-    });
+    .catch(() => window.location.href = "{{ url_for('quiz_result') }}");
 }
 </script>
 
 <style>
-/* Piscar sincronizado */
-@keyframes blink-green { 0%,100% { background-color: #27ae60; } 50% { background-color: var(--accent); } }
-@keyframes blink-red { 0%,100% { background-color: #e74c3c; } 50% { background-color: var(--accent); } }
-@keyframes blink-blue { 0%,100% { background-color: #3498db; } 50% { background-color: var(--accent); } }
-
-.blink-green { animation: blink-green 0.8s ease 0s 2; }
-.blink-red { animation: blink-red 0.8s ease 0s 2; }
-.blink-blue { animation: blink-blue 0.8s ease 0s 2; }
-</style>
-
-<style>
-.quiz-wrapper {
-  max-width: 650px;
-  margin: 50px auto;
-  text-align: center;
-  background: var(--card);
-  color: var(--text);
-  padding: 40px 30px;
-  border-radius: 25px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-  font-family: 'Arial', sans-serif;
-}
-
+/* Quiz base */
+.quiz-wrapper { max-width: 650px; margin: 50px auto; text-align: center; background: var(--card); color: var(--text); padding: 40px 30px; border-radius: 25px; box-shadow: 0 8px 25px rgba(0,0,0,0.4); font-family: 'Arial', sans-serif; }
 .quiz-header { margin-bottom: 25px; }
-
 .quiz-title { font-size: 38px; font-weight: 700; color: var(--accent); margin-bottom: 10px; }
-
 .quiz-progress { font-size: 16px; color: var(--text); margin: 5px 0; }
-
-.quiz-timer {
-  font-size: 32px;
-  font-weight: bold;
-  color: #ffcb3f;
-  background: rgba(0,0,0,0.3);
-  padding: 6px 18px;
-  border-radius: 8px;
-  display: inline-block;
-  letter-spacing: 2px;
-  margin-top: 10px;
-}
-
+.quiz-timer { font-size: 32px; font-weight: bold; color: #ffcb3f; background: rgba(0,0,0,0.3); padding: 6px 18px; border-radius: 8px; display: inline-block; letter-spacing: 2px; margin-top: 10px; }
 .quiz-question h2 { font-size: 26px; margin: 25px 0; color: var(--text); }
-
 .quiz-options { display: grid; gap: 15px; margin-top: 25px; }
-
-.option-btn {
-  padding: 16px;
-  font-size: 18px;
-  font-weight: bold;
-  border-radius: 50px;
-  border: none;
-  background: var(--accent);
-  color: var(--card);
-  cursor: pointer;
-  transition: transform 0.2s, background 0.2s;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.25);
-}
-
-.option-btn:disabled { cursor: not-allowed; opacity: 0.6; }
-
+.option-btn { padding: 16px; font-size: 18px; font-weight: bold; border-radius: 50px; border: none; background: var(--accent); color: var(--card); cursor: pointer; transition: transform 0.2s, background 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.25); }
+.option-btn:disabled, .option-btn.disabled { cursor: not-allowed; opacity: 0.6; pointer-events: none; }
 .option-btn:hover:enabled { transform: scale(1.05); background: #ffc107; }
-
 .feedback { margin-top: 28px; font-size: 20px; font-weight: bold; }
-
 .feedback.correct { color: #27ae60; }
 .feedback.wrong { color: #e74c3c; }
 
-/* Animações de piscar */
+/* Barra de progresso */
+.progress-bar { background: #ddd; border-radius: 10px; height: 10px; margin: 15px 0; }
+.progress-fill { height: 10px; background: #27ae60; border-radius: 10px; transition: width 0.3s ease; }
+
+/* Piscar e zoom */
 @keyframes blink-green { 0%,100% { background-color: #27ae60; } 50% { background-color: var(--accent); } }
 @keyframes blink-red { 0%,100% { background-color: #e74c3c; } 50% { background-color: var(--accent); } }
 @keyframes blink-blue { 0%,100% { background-color: #3498db; } 50% { background-color: var(--accent); } }
-
 .blink-green { animation: blink-green 0.8s ease 0s 2; }
 .blink-red { animation: blink-red 0.8s ease 0s 2; }
 .blink-blue { animation: blink-blue 0.8s ease 0s 2; }
+
+.correct-zoom { animation: zoom 0.6s ease 0s 1; }
+@keyframes zoom { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+
+/* Destaque pergunta */
+.correct-question { animation: highlight-green 0.8s ease 0s 2; }
+.wrong-question { animation: highlight-red 0.8s ease 0s 2; }
+@keyframes highlight-green { 0%,100% { background-color: #27ae60; } 50% { background-color: transparent; } }
+@keyframes highlight-red { 0%,100% { background-color: #e74c3c; } 50% { background-color: transparent; } }
+
+/* Fade-out */
+.fade-out { animation: fadeOut 0.5s forwards; }
+@keyframes fadeOut { 0% { opacity: 1; } 100% { opacity: 0; } }
 </style>
 {% endblock %}
