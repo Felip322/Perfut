@@ -828,8 +828,15 @@ def ranking():
     if "user_id" not in session:
         flash("Faça login para ver o ranking.", "warning")
         return redirect(url_for("login"))
-    
-    # soma dos pontos por usuário
+
+    # Atualiza nível de todos os usuários
+    users = User.query.all()
+    for u in users:
+        total_score = sum(g.user_score for g in u.games)
+        u.level = total_score // 100 + 1
+    db.session.commit()
+
+    # Cria ranking
     score_sum = (
         db.session.query(
             Game.user_id,
@@ -839,14 +846,6 @@ def ranking():
         .subquery()
     )
 
-    # atualiza nível de todos os usuários antes de gerar ranking
-    users = User.query.all()
-    for u in users:
-        total_score = sum(g.user_score for g in u.games)
-        u.level = total_score // 100 + 1
-    db.session.commit()
-
-    # busca dados para ranking
     rows = (
         db.session.query(
             User.name,
@@ -857,7 +856,7 @@ def ranking():
         .order_by(
             User.level.desc(),
             score_sum.c.total_score.desc(),
-            User.coins.desc(),
+            getattr(User, "coins", 0).desc(),  # evita erro se coins não existir
             User.name.asc()
         )
         .all()
@@ -865,6 +864,10 @@ def ranking():
 
     rankings = [(name, int(total_score), level) for name, total_score, level in rows]
     current_user = User.query.get(session["user_id"])
+    if not current_user:
+        flash("Usuário não encontrado.", "danger")
+        return redirect(url_for("login"))
+
     return render_template("ranking.html", rankings=rankings, user=current_user)
 
 
