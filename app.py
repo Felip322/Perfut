@@ -1190,15 +1190,16 @@ def game_result(game_id):
     )
 
 
-@app.route("/coins/watch-ad", methods=["POST"])
-def watch_ad():
-    if not require_login():
-        return redirect(url_for("login"))
-    user = User.query.get(session["user_id"])
-    user.coins += 10
-    db.session.commit()
-    flash("Obrigado por assistir! Você ganhou 10 moedas.", "success")
-    return redirect(url_for("index"))
+# @app.route("/coins/watch-ad", methods=["POST"])
+# def watch_ad():
+#     if not require_login():
+#         return redirect(url_for("login"))
+#     user = User.query.get(session["user_id"])
+#     user.coins += 10
+#     db.session.commit()
+#     flash("Obrigado por assistir! Você ganhou 10 moedas.", "success")
+#     return redirect(url_for("index"))
+
 
 @app.route("/termos")
 def termos():
