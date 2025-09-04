@@ -630,21 +630,25 @@ def quiz_play(question_id):
     if not require_login():
         return redirect(url_for("login"))
 
-    # Pega o índice atual da sessão
-    current_index = session.get('quiz_current_index', 0)
     question_ids = session.get('quiz_question_ids', [])
+    if not question_ids or question_id not in question_ids:
+        flash("Nenhum quiz em andamento.", "warning")
+        return redirect(url_for("quiz_start_page"))
 
-    if current_index >= len(question_ids):
-        return redirect(url_for("quiz_result"))
-
-    # Garante que a pergunta atual é da lista
-    question_id = question_ids[current_index]
+    current_index = question_ids.index(question_id)
     question = Quiz.query.get_or_404(question_id)
 
     # Marca início da pergunta
     session[f'quiz_question_start_{question_id}'] = datetime.utcnow().isoformat()
+    session['quiz_current_index'] = current_index
 
-    return render_template("quiz.html", question=question, current_index=current_index+1, total=len(question_ids))
+    return render_template(
+        "quiz.html", 
+        question=question, 
+        current_index=current_index + 1, 
+        total=len(question_ids)
+    )
+
 
 
 
@@ -743,16 +747,6 @@ def quiz_result():
     for key in ['quiz_score', 'quiz_current_index', 'quiz_question_ids']:
         session.pop(key, None)
 
-    return render_template("quiz_result.html", score=score, total=total)
-
-
-    # GET: exibir resultado
-    if 'quiz_score' not in session:
-        flash("Nenhum quiz em andamento.", "warning")
-        return redirect(url_for("game_mode_select"))
-
-    score = session.get('quiz_score', 0)
-    total = session.get('quiz_total', 0)
     return render_template("quiz_result.html", score=score, total=total)
 
 
