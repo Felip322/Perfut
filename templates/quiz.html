@@ -32,7 +32,7 @@
   <div id="feedback" class="feedback"></div>
 
   <!-- Sons -->
-  <!-- Sons -->
+  
 <audio id="whistle-sound" src="{{ url_for('static', filename='whistle.mp3') }}"></audio>
 <audio id="correct-sound" src="{{ url_for('static', filename='goal.mp3') }}"></audio>
 <audio id="wrong-sound" src="{{ url_for('static', filename='error.mp3') }}"></audio>
@@ -45,12 +45,32 @@ const whistleSound = document.getElementById('whistle-sound');
 const correctSound = document.getElementById('correct-sound');
 const wrongSound = document.getElementById('wrong-sound');
 
-// Toca apito no início
-whistleSound.play();
+let whistlePlayed = false;
+
+window.addEventListener("DOMContentLoaded", () => {
+    // Tenta tocar apito no início
+    whistleSound.play().then(() => {
+        whistlePlayed = true;
+    }).catch(err => {
+        console.log("⚠️ Autoplay bloqueado. O som será tocado na primeira interação.");
+    });
+
+    // Inicia o timer
+    startTimer();
+});
+
+function startTimer() {
+    setInterval(updateTimer, 1000);
+}
 
 function updateTimer() {
     if (timeLeft < 0) {
-        window.location.href = "{{ url_for('quiz_result') }}";
+        // 🔊 toca apito final antes de sair
+        whistleSound.play().finally(() => {
+            setTimeout(() => {
+                window.location.href = "{{ url_for('quiz_result') }}";
+            }, 1500); // espera 1.5s para o som tocar
+        });
         return;
     }
 
@@ -62,9 +82,15 @@ function updateTimer() {
 
     timeLeft--;
 }
-const timerInterval = setInterval(updateTimer, 1000);
+
 
 function submitAnswer(optionId) {
+    // 🔊 Se o apito não tiver tocado ainda, toca agora na primeira interação
+    if (!whistlePlayed) {
+        whistleSound.play();
+        whistlePlayed = true;
+    }
+
     fetch('{{ url_for("quiz_answer", question_id=question.id) }}', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -95,6 +121,8 @@ function submitAnswer(optionId) {
     .catch(error => console.error('Erro:', error));
 }
 </script>
+
+
 
 <style>
 .quiz-wrapper {
