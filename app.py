@@ -681,7 +681,7 @@ def quiz_start():
     session['quiz_start_time'] = datetime.utcnow().isoformat()
 
     # Redireciona para a primeira pergunta
-    return redirect(url_for("quiz_play", question_id=all_questions[0].id))
+    return redirect(url_for("quiz_start", question_id=all_questions[0].id))
 
 
 
