@@ -734,25 +734,36 @@ def quiz_answer(question_id):
 
 
 
-@app.route("/quiz/result", methods=["GET", "POST"])
+@@app.route("/quiz/result", methods=["GET", "POST"])
 def quiz_result():
+    from datetime import datetime
+
+    # POST: salvar resultado
     if request.method == "POST":
-        username = request.form.get("username")
-        score = int(request.form.get("score"))
-
-        new_score = QuizScore(username=username, score=score, played_at=datetime.now())
-        db.session.add(new_score)
-        db.session.commit()
-
+        username = request.form.get("username") or session.get("username")
+        score = int(request.form.get("score", 0))
+        if username:
+            new_score = QuizScores(username=username, score=score, played_at=datetime.utcnow())
+            db.session.add(new_score)
+            db.session.commit()
         total = Quiz.query.count()
+        # Limpa sessão
+        session.pop('quiz_score', None)
+        session.pop('quiz_asked', None)
+        session.pop('current_quiz', None)
+        session.pop('quiz_start_time', None)
+        session.pop('quiz_total', None)
         return render_template("quiz_result.html", score=score, total=total)
 
-    else:  # GET
-        if not require_login():
-            return redirect(url_for("login"))
-        score = session.get("quiz_score", 0)
-        total = len(session.get("quiz_asked", []))
-        return render_template("quiz_result.html", score=score, total=total)
+    # GET: exibir resultado
+    if 'quiz_score' not in session:
+        flash("Nenhum quiz em andamento.", "warning")
+        return redirect(url_for("game_mode_select"))
+
+    score = session.get('quiz_score', 0)
+    total = session.get('quiz_total', 0)
+    return render_template("quiz_result.html", score=score, total=total)
+
 
 
 @app.route('/quiz/ranking')
@@ -762,27 +773,6 @@ def quiz_ranking():
     return render_template('quiz_ranking.html', scores=top_scores)
 
 
-@app.route("/quiz/result")
-def quiz_result():
-    if 'quiz_score' not in session:
-        flash("Nenhum quiz em andamento.", "warning")
-        return redirect(url_for("game_mode_select"))
-
-    score = session.get('quiz_score', 0)
-    username = session.get('username')  # ou user.username se usar login
-    if username:
-        from datetime import datetime
-        new_score = QuizScores(username=username, score=score, played_at=datetime.utcnow())
-        db.session.add(new_score)
-        db.session.commit()
-
-    # Limpa sessão do quiz
-    session.pop('quiz_score', None)
-    session.pop('quiz_asked', None)
-    session.pop('current_quiz', None)
-    session.pop('quiz_start_time', None)
-
-    return render_template("quiz_result.html", score=score, total=session.get('quiz_total', 0))
 
 
 
