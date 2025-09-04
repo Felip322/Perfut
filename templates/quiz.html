@@ -91,13 +91,22 @@ function submitAnswer(optionId) {
         const feedbackDiv = document.getElementById('feedback');
         buttons.forEach(btn => btn.disabled = true);
 
-        if(data.correct){
+        let nextUrl = data.next_question_url || "{{ url_for('quiz_result') }}"; // fallback
+        const blinkDuration = 800; // 0.8s por ciclo
+        const blinkCount = 2; // ciclos de piscar
+
+        function proceedNext() {
+            setTimeout(() => {
+                window.location.href = nextUrl;
+            }, blinkDuration * blinkCount);
+        }
+
+        if (data.correct) {
             feedbackDiv.textContent = '✅ Correto!';
             feedbackDiv.className = 'feedback correct';
             correctSound.play();
-
-            // Pisca botão verde
             buttons[optionId - 1].classList.add('blink-green');
+            proceedNext();
         } else {
             feedbackDiv.textContent = '❌ Errado! Resposta certa: ' + data.correct_answer;
             feedbackDiv.className = 'feedback wrong';
@@ -106,18 +115,34 @@ function submitAnswer(optionId) {
             // Pisca botão errado de vermelho
             buttons[optionId - 1].classList.add('blink-red');
 
-            // Pisca botão correto de azul
-            const correctIndex = data.correct_option - 1;
-            buttons[correctIndex].classList.add('blink-blue');
-        }
+            // Pisca botão correto de azul (somente se existe)
+            if (data.correct_option) {
+                const correctIndex = data.correct_option - 1;
+                if (buttons[correctIndex]) {
+                    buttons[correctIndex].classList.add('blink-blue');
+                }
+            }
 
-        setTimeout(() => {
-            window.location.href = data.next_question_url;
-        }, 1500);
+            proceedNext();
+        }
     })
-    .catch(error => console.error('Erro:', error));
+    .catch(error => {
+        console.error('Erro:', error);
+        window.location.href = "{{ url_for('quiz_result') }}";
+    });
 }
 </script>
+
+<style>
+/* Piscar sincronizado */
+@keyframes blink-green { 0%,100% { background-color: #27ae60; } 50% { background-color: var(--accent); } }
+@keyframes blink-red { 0%,100% { background-color: #e74c3c; } 50% { background-color: var(--accent); } }
+@keyframes blink-blue { 0%,100% { background-color: #3498db; } 50% { background-color: var(--accent); } }
+
+.blink-green { animation: blink-green 0.8s ease 0s 2; }
+.blink-red { animation: blink-red 0.8s ease 0s 2; }
+.blink-blue { animation: blink-blue 0.8s ease 0s 2; }
+</style>
 
 <style>
 .quiz-wrapper {
@@ -134,12 +159,7 @@ function submitAnswer(optionId) {
 
 .quiz-header { margin-bottom: 25px; }
 
-.quiz-title {
-  font-size: 38px;
-  font-weight: 700;
-  color: var(--accent);
-  margin-bottom: 10px;
-}
+.quiz-title { font-size: 38px; font-weight: 700; color: var(--accent); margin-bottom: 10px; }
 
 .quiz-progress { font-size: 16px; color: var(--text); margin: 5px 0; }
 
