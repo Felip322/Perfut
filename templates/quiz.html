@@ -22,7 +22,7 @@
         (question.option3, 3),
         (question.option4, 4)
     ] %}
-      <button class="option-btn" onclick="submitAnswer('{{ option_id }}')">
+      <button class="option-btn" onclick="submitAnswer({{ option_id }})">
         {{ option_text }}
       </button>
     {% endfor %}
@@ -40,24 +40,28 @@
 <script>
 let timeLeft = 120; // 2 minutos
 const timerElement = document.getElementById("timer-display");
+const whistleSound = document.getElementById('whistle-sound');
+const correctSound = document.getElementById('correct-sound');
+const wrongSound = document.getElementById('wrong-sound');
 
 // Toca apito no início
-document.getElementById('whistle-sound').play();
+whistleSound.play();
 
 function updateTimer() {
+    if (timeLeft < 0) {
+        window.location.href = "{{ url_for('quiz_result') }}";
+        return;
+    }
+
     let minutes = Math.floor(timeLeft / 60);
     let seconds = timeLeft % 60;
     timerElement.textContent =
         (minutes < 10 ? "0" : "") + minutes + ":" +
         (seconds < 10 ? "0" : "") + seconds;
 
-    if (timeLeft <= 0) {
-        document.getElementById('whistle-sound').play(); // Apito final
-        window.location.href = "{{ url_for('quiz_result') }}";
-    }
     timeLeft--;
 }
-setInterval(updateTimer, 1000);
+const timerInterval = setInterval(updateTimer, 1000);
 
 function submitAnswer(optionId) {
     fetch('{{ url_for("quiz_answer", question_id=question.id) }}', {
@@ -69,16 +73,20 @@ function submitAnswer(optionId) {
     .then(data => {
         const feedbackDiv = document.getElementById('feedback');
 
+        // Bloqueia botões após responder
+        document.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
+
         if(data.correct) {
             feedbackDiv.textContent = '✅ Correto!';
             feedbackDiv.className = 'feedback correct';
-            document.getElementById('correct-sound').play();
+            correctSound.play();
         } else {
             feedbackDiv.textContent = '❌ Errado! Resposta certa: ' + data.correct_answer;
             feedbackDiv.className = 'feedback wrong';
-            document.getElementById('wrong-sound').play();
+            wrongSound.play();
         }
 
+        // Navega para próxima pergunta após 1,5s
         setTimeout(() => {
             window.location.href = data.next_question_url;
         }, 1500);
@@ -154,7 +162,12 @@ function submitAnswer(optionId) {
   box-shadow: 0 5px 15px rgba(0,0,0,0.25);
 }
 
-.option-btn:hover {
+.option-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.option-btn:hover:enabled {
   transform: scale(1.05);
   background: #ffc107;
 }
