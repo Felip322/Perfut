@@ -619,25 +619,7 @@ def weekly_ranking():
 
 from datetime import datetime, timedelta
 
-@app.route("/quiz/start")
-def quiz_start():
-    if not require_login():
-        return redirect(url_for("login"))
 
-    session['quiz_score'] = 0
-    session['quiz_asked'] = []
-
-    # Seleciona 10 perguntas aleatórias
-    all_questions = Quiz.query.order_by(db.func.random()).limit(10).all()
-    session['quiz_question_ids'] = [q.id for q in all_questions]
-    session['quiz_current_index'] = 0
-    session['quiz_start_time'] = datetime.utcnow().isoformat()
-
-    if not all_questions:
-        flash("Nenhuma pergunta disponível.", "warning")
-        return redirect(url_for("game_mode_select"))
-
-    return redirect(url_for("quiz_play", question_id=all_questions[0].id))
 
 
 
