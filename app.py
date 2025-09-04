@@ -197,11 +197,17 @@ class Quiz(db.Model):
     theme = db.Column(db.Text)
 
 class QuizScore(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), unique=True, nullable=False)
-    score = db.Column(db.Integer, default=0)
+    __tablename__ = "quiz_scores"
 
-    user = db.relationship("User", backref="quiz_score")
+    id = db.Column(db.Integer, primary_key=True)
+    quiz_id = db.Column(db.Integer, db.ForeignKey("quiz.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)  # <-- importante
+    score = db.Column(db.Integer, nullable=False)
+
+    # Relacionamentos
+    user = db.relationship("User", backref="quiz_scores")
+    quiz = db.relationship("Quiz", backref="scores")
+
 
 
 
