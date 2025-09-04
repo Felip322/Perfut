@@ -1,99 +1,46 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="quiz-ranking-wrapper">
-  <h1>🏆 Ranking do Quiz</h1>
-
-  {% if scores %}
-  <table class="quiz-ranking-table">
-    <thead>
-      <tr>
-        <th>Posição</th>
-        <th>Usuário</th>
-        <th>Pontuação</th>
-        <th>Data</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for idx, score in enumerate(scores, start=1) %}
-      <tr>
-        <td>{{ idx }}</td>
-        <td>{{ score.username }}</td>
-        <td>{{ score.score }}</td>
-        <td>{{ score.played_at.strftime('%d/%m/%Y %H:%M') }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <p class="no-scores">Nenhuma pontuação registrada ainda.</p>
-  {% endif %}
-
-  <div class="quiz-ranking-buttons">
-    <a href="{{ url_for('quiz_start_page') }}" class="btn primary">Jogar novamente</a>
-    <a href="{{ url_for('game_mode_select') }}" class="btn">Início 🏠</a>
+<div class="quiz-result-wrapper">
+  <h2>🎉 Quiz finalizado!</h2>
+  <p class="quiz-score">Sua pontuação: <span>{{ score }} / {{ total }}</span></p>
+  
+  <div class="quiz-result-buttons">
+    <a href="{{ url_for('quiz_start') }}" class="btn primary">Jogar novamente</a>
+    <a href="{{ url_for('quiz_ranking') }}" class="btn">Ver Ranking</a>
   </div>
 </div>
 
 <style>
-.quiz-ranking-wrapper {
-  max-width: 900px;
-  margin: 50px auto;
+.quiz-result-wrapper {
+  max-width: 700px;
+  margin: 60px auto;
   text-align: center;
-  padding: 30px 25px;
+  padding: 40px 30px;
   background: var(--card);
   color: var(--text);
   border-radius: 25px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.25);
-  font-family: 'Arial', sans-serif;
 }
 
-.quiz-ranking-wrapper h1 {
+.quiz-result-wrapper h2 {
   font-size: 36px;
   font-weight: 700;
-  margin-bottom: 30px;
+  margin-bottom: 25px;
   color: var(--accent);
 }
 
-.quiz-ranking-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 30px;
-  background: rgba(255,255,255,0.05);
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: inset 0 0 8px rgba(0,0,0,0.1);
+.quiz-score {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 35px;
 }
 
-.quiz-ranking-table th,
-.quiz-ranking-table td {
-  padding: 12px 15px;
-  font-size: 16px;
-  text-align: center;
-}
-
-.quiz-ranking-table th {
-  background: linear-gradient(135deg, #ffcb3f, #ffb300);
-  color: #0b1f14;
+.quiz-score span {
+  color: #ffcb3f; /* destaque da pontuação */
   font-weight: 700;
 }
 
-.quiz-ranking-table tr:nth-child(even) {
-  background: rgba(255,255,255,0.05);
-}
-
-.quiz-ranking-table tr:hover {
-  background: rgba(255,255,255,0.15);
-  transition: background 0.2s ease;
-}
-
-.no-scores {
-  font-size: 18px;
-  font-weight: 500;
-  color: #aaa;
-  margin: 20px 0;
-}
-
-.quiz-ranking-buttons {
+.quiz-result-buttons {
   display: flex;
   justify-content: center;
   gap: 20px;
@@ -101,12 +48,12 @@
 }
 
 .btn {
-  min-width: 140px;
+  min-width: 160px;
   text-align: center;
   background: linear-gradient(135deg, #1f5f3a, #2e8b57);
   border: none;
   border-radius: 999px;
-  padding: 12px 22px;
+  padding: 14px 22px;
   color: #fff;
   font-weight: 700;
   cursor: pointer;
