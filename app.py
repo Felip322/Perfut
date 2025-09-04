@@ -745,6 +745,29 @@ def quiz_ranking():
     return render_template('quiz_ranking.html', scores=top_scores)
 
 
+@app.route("/quiz/result")
+def quiz_result():
+    if 'quiz_score' not in session:
+        flash("Nenhum quiz em andamento.", "warning")
+        return redirect(url_for("game_mode_select"))
+
+    score = session.get('quiz_score', 0)
+    username = session.get('username')  # ou user.username se usar login
+    if username:
+        from datetime import datetime
+        new_score = QuizScores(username=username, score=score, played_at=datetime.utcnow())
+        db.session.add(new_score)
+        db.session.commit()
+
+    # Limpa sessão do quiz
+    session.pop('quiz_score', None)
+    session.pop('quiz_asked', None)
+    session.pop('current_quiz', None)
+    session.pop('quiz_start_time', None)
+
+    return render_template("quiz_result.html", score=score, total=session.get('quiz_total', 0))
+
+
 
 
 
