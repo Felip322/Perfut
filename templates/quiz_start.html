@@ -17,8 +17,8 @@
 
 <script>
 function startQuiz() {
-    // Redireciona para a primeira pergunta do quiz
-    window.location.href = "{{ url_for('quiz_play', question_id=first_question_id) }}";
+    // Redireciona para a rota que inicializa o quiz e preenche a sessão
+    window.location.href = "{{ url_for('quiz_start') }}";
 }
 </script>
 
