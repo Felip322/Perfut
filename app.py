@@ -671,10 +671,17 @@ def quiz_start_page():
         flash("O quiz ainda não tem perguntas cadastradas.", "warning")
         return redirect(url_for("index"))
 
+    user = User.query.get(session["user_id"])  # pega o usuário logado
+
     return render_template(
         "quiz_start.html",
-        first_question_id=first_question.id
+        first_question_id=first_question.id,
+        user=user,
+        quiz_mode=True,       # habilita menu do quiz
+        event_weekly=False,   # não é evento semanal
+        hide_ranking=False    # mostra ranking
     )
+
 
 # Inicia o quiz (após clicar "Começar Quiz" na página inicial)
 @app.route("/quiz/start")
