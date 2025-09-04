@@ -200,14 +200,11 @@ class QuizScore(db.Model):
     __tablename__ = "quiz_scores"
 
     id = db.Column(db.Integer, primary_key=True)
-    quiz_id = db.Column(db.Integer, db.ForeignKey("quiz.id"), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)  # <-- importante
     score = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    played_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)  # ✅ Adicione esta linha
 
-    # Relacionamentos
     user = db.relationship("User", backref="quiz_scores")
-    quiz = db.relationship("Quiz", backref="scores")
-
 
 
 
