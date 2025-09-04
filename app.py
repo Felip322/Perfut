@@ -52,16 +52,17 @@ class User(db.Model):
     coins = db.Column(db.Integer, default=100)
     level = db.Column(db.Integer, default=1)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # NOVOS CAMPOS PARA LOGIN DIÁRIO
-    last_login = db.Column(db.DateTime, nullable=True)   # Último login
-    login_streak = db.Column(db.Integer, default=0)      # Dias consecutivos logados
+
+    # Novas colunas
+    last_login = db.Column(db.DateTime, nullable=True)
+    login_streak = db.Column(db.Integer, default=0)
 
     def set_password(self, pwd):
         self.password_hash = generate_password_hash(pwd)
 
     def check_password(self, pwd):
         return check_password_hash(self.password_hash, pwd)
+
 
 
 
