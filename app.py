@@ -338,6 +338,9 @@ def game_mode_select():
     user = User.query.get(session["user_id"])
     today = datetime.utcnow().date()
 
+    # Atualiza login diário e pega moedas ganhas
+    daily_coins = update_daily_login(user)
+
     # Busca todos eventos ativos no período
     events_today = WeeklyEvent.query.filter(
         WeeklyEvent.is_active == True,
@@ -358,8 +361,10 @@ def game_mode_select():
         user=user,
         hide_ranking=True,
         events_today=events_today,
-        played_events=played_events
+        played_events=played_events,
+        daily_coins=daily_coins  # Passando para o template
     )
+
 
 
 @app.route("/duel/join/<code>")
