@@ -32,10 +32,9 @@
   <div id="feedback" class="feedback"></div>
 
   <!-- Sons -->
-  
-<audio id="whistle-sound" src="{{ url_for('static', filename='whistle.mp3') }}"></audio>
-<audio id="correct-sound" src="{{ url_for('static', filename='goal.mp3') }}"></audio>
-<audio id="wrong-sound" src="{{ url_for('static', filename='error.mp3') }}"></audio>
+  <audio id="whistle-sound" src="{{ url_for('static', filename='whistle.mp3') }}"></audio>
+  <audio id="correct-sound" src="{{ url_for('static', filename='goal.mp3') }}"></audio>
+  <audio id="wrong-sound" src="{{ url_for('static', filename='error.mp3') }}"></audio>
 </div>
 
 <script>
@@ -55,7 +54,6 @@ window.addEventListener("DOMContentLoaded", () => {
         console.log("⚠️ Autoplay bloqueado. O som será tocado na primeira interação.");
     });
 
-    // Inicia o timer
     startTimer();
 });
 
@@ -65,11 +63,10 @@ function startTimer() {
 
 function updateTimer() {
     if (timeLeft < 0) {
-        // 🔊 toca apito final antes de sair
         whistleSound.play().finally(() => {
             setTimeout(() => {
                 window.location.href = "{{ url_for('quiz_result') }}";
-            }, 1500); // espera 1.5s para o som tocar
+            }, 1500);
         });
         return;
     }
@@ -83,9 +80,7 @@ function updateTimer() {
     timeLeft--;
 }
 
-
 function submitAnswer(optionId) {
-    // 🔊 Se o apito não tiver tocado ainda, toca agora na primeira interação
     if (!whistlePlayed) {
         whistleSound.play();
         whistlePlayed = true;
@@ -99,21 +94,31 @@ function submitAnswer(optionId) {
     .then(response => response.json())
     .then(data => {
         const feedbackDiv = document.getElementById('feedback');
+        const buttons = document.querySelectorAll('.option-btn');
 
-        // Bloqueia botões após responder
-        document.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
+        // Bloqueia botões
+        buttons.forEach(btn => btn.disabled = true);
 
         if(data.correct) {
             feedbackDiv.textContent = '✅ Correto!';
             feedbackDiv.className = 'feedback correct';
             correctSound.play();
+            buttons[optionId - 1].classList.add('blink-green');
         } else {
             feedbackDiv.textContent = '❌ Errado! Resposta certa: ' + data.correct_answer;
             feedbackDiv.className = 'feedback wrong';
             wrongSound.play();
+            buttons[optionId - 1].classList.add('blink-red');
+            
+            // Pisca o botão correto de azul
+            {% for i, opt in enumerate([question.option1, question.option2, question.option3, question.option4], start=1) %}
+            if("{{ i }}" == data.correct_option) {
+                buttons[{{ i-1 }}].classList.add('blink-blue');
+            }
+            {% endfor %}
         }
 
-        // Navega para próxima pergunta após 1,5s
+        // Próxima pergunta após 1.5s
         setTimeout(() => {
             window.location.href = data.next_question_url;
         }, 1500);
@@ -121,8 +126,6 @@ function submitAnswer(optionId) {
     .catch(error => console.error('Erro:', error));
 }
 </script>
-
-
 
 <style>
 .quiz-wrapper {
@@ -137,77 +140,29 @@ function submitAnswer(optionId) {
   font-family: 'Arial', sans-serif;
 }
 
-.quiz-header {
-  margin-bottom: 25px;
-}
-
-.quiz-title {
-  font-size: 38px;
-  font-weight: 700;
-  color: var(--accent);
-  margin-bottom: 10px;
-}
-
-.quiz-progress {
-  font-size: 16px;
-  color: var(--text);
-  margin: 5px 0;
-}
-
-.quiz-timer {
-  font-size: 32px;
-  font-weight: bold;
-  color: #ffcb3f;
-  background: rgba(0,0,0,0.3);
-  padding: 6px 18px;
-  border-radius: 8px;
-  display: inline-block;
-  letter-spacing: 2px;
-  margin-top: 10px;
-}
-
-.quiz-question h2 {
-  font-size: 26px;
-  margin: 25px 0;
-  color: var(--text);
-}
-
-.quiz-options {
-  display: grid;
-  gap: 15px;
-  margin-top: 25px;
-}
-
+.quiz-header { margin-bottom: 25px; }
+.quiz-title { font-size: 38px; font-weight: 700; color: var(--accent); margin-bottom: 10px; }
+.quiz-progress { font-size: 16px; color: var(--text); margin: 5px 0; }
+.quiz-timer { font-size: 32px; font-weight: bold; color: #ffcb3f; background: rgba(0,0,0,0.3); padding: 6px 18px; border-radius: 8px; display: inline-block; letter-spacing: 2px; margin-top: 10px; }
+.quiz-question h2 { font-size: 26px; margin: 25px 0; color: var(--text); }
+.quiz-options { display: grid; gap: 15px; margin-top: 25px; }
 .option-btn {
-  padding: 16px;
-  font-size: 18px;
-  font-weight: bold;
-  border-radius: 50px;
-  border: none;
-  background: var(--accent);
-  color: var(--card);
-  cursor: pointer;
-  transition: transform 0.2s, background 0.2s;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.25);
+  padding: 16px; font-size: 18px; font-weight: bold; border-radius: 50px;
+  border: none; background: var(--accent); color: var(--card); cursor: pointer;
+  transition: transform 0.2s, background 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.25);
 }
-
-.option-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.option-btn:hover:enabled {
-  transform: scale(1.05);
-  background: #ffc107;
-}
-
-.feedback {
-  margin-top: 28px;
-  font-size: 20px;
-  font-weight: bold;
-}
-
+.option-btn:disabled { cursor: not-allowed; opacity: 0.6; }
+.option-btn:hover:enabled { transform: scale(1.05); background: #ffc107; }
+.feedback { margin-top: 28px; font-size: 20px; font-weight: bold; }
 .feedback.correct { color: #27ae60; }
 .feedback.wrong { color: #e74c3c; }
+
+/* Animações de piscar */
+@keyframes blink-green { 0%,100%{background-color:var(--accent);} 50%{background-color:#27ae60;} }
+@keyframes blink-red { 0%,100%{background-color:var(--accent);} 50%{background-color:#e74c3c;} }
+@keyframes blink-blue { 0%,100%{background-color:var(--accent);} 50%{background-color:#3498db;} }
+.blink-green { animation: blink-green 0.6s ease 0s 2; }
+.blink-red { animation: blink-red 0.6s ease 0s 2; }
+.blink-blue { animation: blink-blue 0.6s ease 0s 2; }
 </style>
 {% endblock %}
