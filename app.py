@@ -630,25 +630,28 @@ def quiz_play(question_id):
     if not require_login():
         return redirect(url_for("login"))
 
-    question_ids = session.get('quiz_question_ids', [])
-    if not question_ids or question_id not in question_ids:
-        flash("Nenhum quiz em andamento.", "warning")
-        return redirect(url_for("quiz_start_page"))
+    question_ids = session.get('quiz_question_ids')
+
+    if not question_ids:
+        # Se não tiver quiz em andamento, inicia automaticamente
+        return redirect(url_for('quiz_start'))
+
+    if question_id not in question_ids:
+        flash("Pergunta inválida ou quiz já encerrado.", "warning")
+        return redirect(url_for("quiz_start"))
 
     current_index = question_ids.index(question_id)
-    question = Quiz.query.get_or_404(question_id)
-
-    # Marca início da pergunta
-    session[f'quiz_question_start_{question_id}'] = datetime.utcnow().isoformat()
     session['quiz_current_index'] = current_index
 
+    question = Quiz.query.get_or_404(question_id)
+    session[f'quiz_question_start_{question_id}'] = datetime.utcnow().isoformat()
+
     return render_template(
-        "quiz.html", 
-        question=question, 
-        current_index=current_index + 1, 
+        "quiz.html",
+        question=question,
+        current_index=current_index + 1,
         total=len(question_ids)
     )
-
 
 
 
