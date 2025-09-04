@@ -774,14 +774,12 @@ def logout():
     flash("Você saiu da sua conta.", "info")
     return redirect(url_for("index"))
 
-@app.route("/")
+
+@app.route("/") 
 def index():
-    if "user_id" in session:
-        # Usuário logado → vai direto para a seleção de modo
-        return redirect(url_for("game_mode_select"))
-    else:
-        # Usuário não logado → mostra página de login ou cadastro
-        return redirect(url_for("login"))
+    user = None 
+    if "user_id" in session: user = User.query.get(session["user_id"]) 
+    return render_template("index.html", user=user, themes=THEMES)
 
 
 # --- Reset & Forgot Password
