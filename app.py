@@ -52,12 +52,17 @@ class User(db.Model):
     coins = db.Column(db.Integer, default=100)
     level = db.Column(db.Integer, default=1)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # NOVOS CAMPOS PARA LOGIN DIÁRIO
+    last_login = db.Column(db.DateTime, nullable=True)   # Último login
+    login_streak = db.Column(db.Integer, default=0)      # Dias consecutivos logados
 
     def set_password(self, pwd):
         self.password_hash = generate_password_hash(pwd)
 
     def check_password(self, pwd):
         return check_password_hash(self.password_hash, pwd)
+
 
 
 class Card(db.Model):
@@ -251,6 +256,39 @@ def update_user_level(user):
     # Calcula o nível (1 nível a cada 100 pontos)
     user.level = total_score // 100 + 1
     db.session.commit()
+
+
+def update_daily_login(user):
+    today = datetime.utcnow().date()
+    last_login_date = user.last_login.date() if user.last_login else None
+
+    if last_login_date == today:
+        # Já logou hoje
+        return 0
+    elif last_login_date == today - timedelta(days=1):
+        # Streak continua
+        user.login_streak += 1
+    else:
+        # Quebra o streak
+        user.login_streak = 1
+
+    # Recompensa por streak
+    streak_rewards = [5, 10, 15, 20, 25, 30, 50]
+    day_index = min(user.login_streak, len(streak_rewards)) - 1
+    coins_earned = streak_rewards[day_index]
+
+    user.coins += coins_earned
+    user.last_login = datetime.utcnow()
+
+    db.session.commit()
+    return coins_earned
+
+
+
+
+
+
+
 
 # ----------------------
 # Routes (Auth, Game, Admin)
