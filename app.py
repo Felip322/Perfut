@@ -662,6 +662,7 @@ def quiz_play(question_id):
 
 
 
+# Página inicial do quiz
 @app.route("/quiz/start_page")
 def quiz_start_page():
     if not require_login():
@@ -677,6 +678,29 @@ def quiz_start_page():
         "quiz_start.html",
         first_question_id=first_question.id
     )
+
+# Inicia o quiz (após clicar "Começar Quiz" na página inicial)
+@app.route("/quiz/start")
+def quiz_start():
+    if not require_login():
+        return redirect(url_for("login"))
+
+    session['quiz_score'] = 0
+    session['quiz_asked'] = []
+
+    # Seleciona 10 perguntas aleatórias
+    all_questions = Quiz.query.order_by(db.func.random()).limit(10).all()
+    if not all_questions:
+        flash("Nenhuma pergunta disponível.", "warning")
+        return redirect(url_for("quiz_start_page"))  # volta para start_page se não houver perguntas
+
+    session['quiz_question_ids'] = [q.id for q in all_questions]
+    session['quiz_current_index'] = 0
+    session['quiz_start_time'] = datetime.utcnow().isoformat()
+
+    # Redireciona para a primeira pergunta
+    return redirect(url_for("quiz_play", question_id=all_questions[0].id))
+
 
 
 
