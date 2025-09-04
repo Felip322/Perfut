@@ -197,11 +197,12 @@ class Quiz(db.Model):
     theme = db.Column(db.Text)
 
 class QuizScore(db.Model):
-    __tablename__ = 'quiz_scores'
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), nullable=False)
-    score = db.Column(db.Integer, nullable=False)
-    played_at = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), unique=True, nullable=False)
+    score = db.Column(db.Integer, default=0)
+
+    user = db.relationship("User", backref="quiz_score")
+
 
 
 
@@ -742,10 +743,16 @@ def quiz_result():
     score = session.get('quiz_score', 0)
     total = len(session.get('quiz_question_ids', []))
 
-    # Salva no ranking
-    username = session.get("username") or User.query.get(session["user_id"]).name
-    new_score = QuizScore(username=username, score=score, played_at=datetime.utcnow())
-    db.session.add(new_score)
+    user = User.query.get(session["user_id"])
+    quiz_score = QuizScore.query.filter_by(user_id=user.id).first()
+
+    if quiz_score:
+        quiz_score.score += score  # soma ao que já tinha
+        quiz_score.played_at = datetime.utcnow()
+    else:
+        quiz_score = QuizScore(user_id=user.id, score=score, played_at=datetime.utcnow())
+        db.session.add(quiz_score)
+
     db.session.commit()
 
     # Limpa sessão do quiz
@@ -755,12 +762,17 @@ def quiz_result():
     return render_template("quiz_result.html", score=score, total=total)
 
 
-
 @app.route('/quiz/ranking')
 def quiz_ranking():
-    # Pegar top 10 pontuações
-    top_scores = QuizScore.query.order_by(QuizScore.score.desc(), QuizScore.played_at).limit(10).all()
+    # Pegar top 10 pontuações acumuladas
+    top_scores = (
+        QuizScore.query
+        .order_by(QuizScore.score.desc(), QuizScore.played_at.desc())
+        .limit(10)
+        .all()
+    )
     return render_template('quiz_ranking.html', scores=top_scores)
+
 
 
 
