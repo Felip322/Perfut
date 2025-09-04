@@ -8,46 +8,49 @@
 
     <h1>Modo de Jogo</h1>
 
-   <div class="card-grid">
-  <a href="{{ url_for('index') }}" class="card">
-    <h2>🏆 Torneio</h2>
-    <p>Participe do modo Ranking com pontuação geral dos jogadores.</p>
-  </a>
+    <div class="card-grid">
+      <a href="{{ url_for('index') }}" class="card">
+        <h2>🏆 Torneio</h2>
+        <p>Participe do modo Ranking com pontuação geral dos jogadores.</p>
+      </a>
 
-  <a href="{{ url_for('game_duel_setup') }}" class="card">
-    <h2>⚔ Duelo</h2>
-    <p>Enfrente rivais em partidas emocionantes 1 vs 1.</p>
-  </a>
+      <a href="{{ url_for('game_duel_setup') }}" class="card">
+        <h2>⚔ Duelo</h2>
+        <p>Enfrente rivais em partidas emocionantes 1 vs 1.</p>
+      </a>
 
-<!-- Novo card do Quiz -->
-<a href="{{ url_for('quiz_start_page') }}" class="card">
-  <h2>❓ Quiz</h2>
-  <p>Teste seus conhecimentos respondendo perguntas e suba no ranking de pontuação!</p>
-</a>
-</div>
+      <!-- Novo card do Quiz -->
+      <a href="{{ url_for('quiz_start_page') }}" class="card">
+        <h2>❓ Quiz</h2>
+        <p>Teste seus conhecimentos respondendo perguntas e suba no ranking de pontuação!</p>
+      </a>
+    </div>
 
     <h2 class="section-title">Eventos</h2>
     <div class="card-grid">
       {% if events_today %}
         {% for event in events_today %}
           {% set played = event.id in played_events %}
-         <a href="{% if played %}{{ url_for('weekly_ranking', event_id=event.id) }}{% else %}{{ url_for('weekly_event_start', event_id=event.id) }}{% endif %}" 
-   class="card {% if played %}disabled{% endif %}">
-
-            <h2>🎯 {{ event.name }}</h2>
-            <p>
-              {% if played %}
-                Você já jogou hoje! Veja sua posição no ranking do evento.
-              {% else %}
-                Responda as perguntas do dia e acumule pontos para o ranking!
-              {% endif %}
-            </p>
+          <a href="{% if played %}{{ url_for('weekly_ranking', event_id=event.id) }}{% else %}{{ url_for('weekly_event_start', event_id=event.id) }}{% endif %}" 
+             class="card {% if played %}disabled{% endif %}">
+            <div class="card-inner">
+              <h2>🎯 {{ event.name }}</h2>
+              <p>
+                {% if played %}
+                  Você já jogou hoje! Veja sua posição no ranking do evento.
+                {% else %}
+                  Responda as perguntas do dia e acumule pontos para o ranking!
+                {% endif %}
+              </p>
+            </div>
           </a>
         {% endfor %}
       {% else %}
         <a href="#" class="card disabled">
-          <h2>⏳ Sem Evento</h2>
-          <p>Não há nenhum evento ativo no momento.</p>
+          <div class="card-inner">
+            <h2>⏳ Sem Evento</h2>
+            <p>Não há nenhum evento ativo no momento.</p>
+          </div>
         </a>
       {% endif %}
     </div>
@@ -112,6 +115,16 @@ h1 {
   cursor: pointer; 
   text-decoration: none; 
   color: #fff; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: left;
+}
+
+.card-inner {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .card:hover { 
