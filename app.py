@@ -734,7 +734,7 @@ def quiz_answer(question_id):
 
 
 
-@@app.route("/quiz/result", methods=["GET", "POST"])
+@app.route("/quiz/result", methods=["GET", "POST"])
 def quiz_result():
     from datetime import datetime
 
