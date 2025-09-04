@@ -796,15 +796,20 @@ def quiz_result():
 
     score = session.get('quiz_score', 0)
     total = len(session.get('quiz_question_ids', []))
-
     user = User.query.get(session["user_id"])
+
+    # Atualiza ou cria o registro de QuizScore
     quiz_score = QuizScore.query.filter_by(user_id=user.id).first()
 
     if quiz_score:
         quiz_score.score += score  # soma ao que já tinha
         quiz_score.played_at = datetime.utcnow()
     else:
-        quiz_score = QuizScore(user_id=user.id, score=score, played_at=datetime.utcnow())
+        quiz_score = QuizScore(
+            user_id=user.id,
+            score=score,
+            played_at=datetime.utcnow()
+        )
         db.session.add(quiz_score)
 
     db.session.commit()
@@ -813,7 +818,7 @@ def quiz_result():
     for key in ['quiz_score', 'quiz_current_index', 'quiz_question_ids']:
         session.pop(key, None)
 
-    return render_template("quiz_result.html", score=score, total=total)
+    return render_template("quiz_result.html", score=score, total=total, user=user)
 
 
 @app.route('/quiz/ranking')
