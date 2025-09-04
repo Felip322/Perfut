@@ -982,7 +982,7 @@ def game_setup():
         flash(f"Você gastou {cost} moedas para iniciar a partida.", "info")
         return redirect(url_for("game_play", game_id=g.id))
     
-    return render_template("game_setup.html", themes=THEMES, user=user)
+    return render_template("game.html", themes=THEMES, user=user)
 
 
 
