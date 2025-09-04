@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+
 {% block content %}
 <div class="quiz-result-wrapper">
   <h2>🎉 Quiz finalizado!</h2>
@@ -20,6 +21,7 @@
   color: var(--text);
   border-radius: 25px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  font-family: 'Arial', sans-serif;
 }
 
 .quiz-result-wrapper h2 {
@@ -77,6 +79,27 @@
 
 .btn.primary:hover {
   background: linear-gradient(135deg, #ffd74f, #ffc107);
+}
+
+/* Responsividade */
+@media (max-width: 500px) {
+  .quiz-result-wrapper {
+    padding: 30px 20px;
+  }
+
+  .quiz-result-wrapper h2 {
+    font-size: 28px;
+  }
+
+  .quiz-score {
+    font-size: 20px;
+  }
+
+  .btn {
+    min-width: 140px;
+    padding: 12px 20px;
+    font-size: 16px;
+  }
 }
 </style>
 {% endblock %}
