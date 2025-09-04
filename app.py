@@ -630,17 +630,22 @@ def quiz_play(question_id):
     if not require_login():
         return redirect(url_for("login"))
 
+    # Pega o índice atual da sessão
+    current_index = session.get('quiz_current_index', 0)
+    question_ids = session.get('quiz_question_ids', [])
+
+    if current_index >= len(question_ids):
+        return redirect(url_for("quiz_result"))
+
+    # Garante que a pergunta atual é da lista
+    question_id = question_ids[current_index]
     question = Quiz.query.get_or_404(question_id)
 
     # Marca início da pergunta
-    question_start_key = f'quiz_question_start_{question_id}'
-    if question_start_key not in session:
-        session[question_start_key] = datetime.utcnow().isoformat()
+    session[f'quiz_question_start_{question_id}'] = datetime.utcnow().isoformat()
 
-    return render_template(
-        "quiz.html",
-        question=question
-    )
+    return render_template("quiz.html", question=question, current_index=current_index+1, total=len(question_ids))
+
 
 
 
@@ -668,7 +673,7 @@ def quiz_start():
         return redirect(url_for("login"))
 
     session['quiz_score'] = 0
-    session['quiz_asked'] = []
+    session['quiz_current_index'] = 0
 
     # Seleciona 10 perguntas aleatórias
     all_questions = Quiz.query.order_by(db.func.random()).limit(10).all()
@@ -676,13 +681,12 @@ def quiz_start():
         flash("Nenhuma pergunta disponível.", "warning")
         return redirect(url_for("quiz_start_page"))
 
+    # Salva IDs em sessão
     session['quiz_question_ids'] = [q.id for q in all_questions]
-    session['quiz_current_index'] = 0
-    session['quiz_start_time'] = datetime.utcnow().isoformat()
 
-    # Redireciona para a primeira pergunta do quiz
-    return redirect(url_for("quiz_play", question_id=all_questions[0].id))
-
+    # Redireciona para a primeira pergunta
+    first_question_id = session['quiz_question_ids'][0]
+    return redirect(url_for("quiz_play", question_id=first_question_id))
 
 
 
@@ -692,50 +696,29 @@ def quiz_answer(question_id):
     if not require_login():
         return redirect(url_for("login"))
 
-    # Limite de 2 minutos por pergunta
-    question_start_key = f'quiz_question_start_{question_id}'
-    if question_start_key not in session:
-        session[question_start_key] = datetime.utcnow().isoformat()
-    
-    start_time = datetime.fromisoformat(session[question_start_key])
-    if datetime.utcnow() > start_time + timedelta(minutes=2):
-        # Passa para próxima pergunta
-        current_index = session.get('quiz_current_index', 0)
-        question_ids = session.get('quiz_question_ids', [])
-        if current_index + 1 < len(question_ids):
-            next_question_id = question_ids[current_index + 1]
-            session['quiz_current_index'] = current_index + 1
-            return {"time_over": True, "next_question_url": url_for("quiz_play", question_id=next_question_id)}
-        else:
-            return {"time_over": True, "next_question_url": url_for("quiz_result")}
-
-    # processa resposta normalmente...
     data = request.get_json()
     selected_option = int(data.get("selected_option"))
 
-    quiz = Quiz.query.get_or_404(question_id)
-    correct = (selected_option == quiz.correct_option)
+    question = Quiz.query.get_or_404(question_id)
+    correct = (selected_option == question.correct_option)
 
     if correct:
         session['quiz_score'] = session.get('quiz_score', 0) + 1
 
-    asked = session.get('quiz_asked', [])
-    asked.append(quiz.id)
-    session['quiz_asked'] = asked
-
+    # Atualiza índice para próxima pergunta
     current_index = session.get('quiz_current_index', 0)
-    question_ids = session.get('quiz_question_ids', [])
+    session['quiz_current_index'] = current_index + 1
 
+    question_ids = session.get('quiz_question_ids', [])
     if current_index + 1 < len(question_ids):
         next_question_id = question_ids[current_index + 1]
-        session['quiz_current_index'] = current_index + 1
         next_question_url = url_for('quiz_play', question_id=next_question_id)
     else:
         next_question_url = url_for('quiz_result')
 
     return {
         "correct": correct,
-        "correct_answer": getattr(quiz, f"option{quiz.correct_option}"),
+        "correct_answer": getattr(question, f"option{question.correct_option}"),
         "next_question_url": next_question_url
     }
 
@@ -743,24 +726,25 @@ def quiz_answer(question_id):
 
 @app.route("/quiz/result", methods=["GET", "POST"])
 def quiz_result():
-    from datetime import datetime
+    if 'quiz_score' not in session or 'quiz_question_ids' not in session:
+        flash("Nenhum quiz em andamento.", "warning")
+        return redirect(url_for("game_mode_select"))
 
-    # POST: salvar resultado
-    if request.method == "POST":
-        username = request.form.get("username") or session.get("username")
-        score = int(request.form.get("score", 0))
-        if username:
-            new_score = QuizScore(username=username, score=score, played_at=datetime.utcnow())
-            db.session.add(new_score)
-            db.session.commit()
-        total = Quiz.query.count()
-        # Limpa sessão
-        session.pop('quiz_score', None)
-        session.pop('quiz_asked', None)
-        session.pop('current_quiz', None)
-        session.pop('quiz_start_time', None)
-        session.pop('quiz_total', None)
-        return render_template("quiz_result.html", score=score, total=total)
+    score = session.get('quiz_score', 0)
+    total = len(session.get('quiz_question_ids', []))
+
+    # Salva no ranking
+    username = session.get("username") or User.query.get(session["user_id"]).name
+    new_score = QuizScore(username=username, score=score, played_at=datetime.utcnow())
+    db.session.add(new_score)
+    db.session.commit()
+
+    # Limpa sessão do quiz
+    for key in ['quiz_score', 'quiz_current_index', 'quiz_question_ids']:
+        session.pop(key, None)
+
+    return render_template("quiz_result.html", score=score, total=total)
+
 
     # GET: exibir resultado
     if 'quiz_score' not in session:
