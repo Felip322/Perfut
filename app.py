@@ -674,14 +674,15 @@ def quiz_start():
     all_questions = Quiz.query.order_by(db.func.random()).limit(10).all()
     if not all_questions:
         flash("Nenhuma pergunta disponível.", "warning")
-        return redirect(url_for("quiz_start_page"))  # volta para start_page se não houver perguntas
+        return redirect(url_for("quiz_start_page"))
 
     session['quiz_question_ids'] = [q.id for q in all_questions]
     session['quiz_current_index'] = 0
     session['quiz_start_time'] = datetime.utcnow().isoformat()
 
-    # Redireciona para a primeira pergunta
-    return redirect(url_for("quiz_start", question_id=all_questions[0].id))
+    # Redireciona para a primeira pergunta do quiz
+    return redirect(url_for("quiz_play", question_id=all_questions[0].id))
+
 
 
 
@@ -749,7 +750,7 @@ def quiz_result():
         username = request.form.get("username") or session.get("username")
         score = int(request.form.get("score", 0))
         if username:
-            new_score = QuizScores(username=username, score=score, played_at=datetime.utcnow())
+            new_score = QuizScore(username=username, score=score, played_at=datetime.utcnow())
             db.session.add(new_score)
             db.session.commit()
         total = Quiz.query.count()
