@@ -626,15 +626,18 @@ def quiz_start():
 
     session['quiz_score'] = 0
     session['quiz_asked'] = []
+
+    # Seleciona 10 perguntas aleatórias
+    all_questions = Quiz.query.order_by(db.func.random()).limit(10).all()
+    session['quiz_question_ids'] = [q.id for q in all_questions]
+    session['quiz_current_index'] = 0
     session['quiz_start_time'] = datetime.utcnow().isoformat()
 
-    # Pega a primeira pergunta
-    first_question = Quiz.query.order_by(Quiz.id).first()
-    if not first_question:
+    if not all_questions:
         flash("Nenhuma pergunta disponível.", "warning")
         return redirect(url_for("game_mode_select"))
 
-    return render_template("quiz_start.html", first_question_id=first_question.id)
+    return redirect(url_for("quiz_play", question_id=all_questions[0].id))
 
 
 
@@ -645,15 +648,18 @@ def quiz_play(question_id):
     if not require_login():
         return redirect(url_for("login"))
 
-    question = Quiz.query.get(question_id)
-    if not question:
-        flash("Pergunta não encontrada.", "warning")
-        return redirect(url_for("quiz_start_page"))
+    question = Quiz.query.get_or_404(question_id)
+
+    # Marca início da pergunta
+    question_start_key = f'quiz_question_start_{question_id}'
+    if question_start_key not in session:
+        session[question_start_key] = datetime.utcnow().isoformat()
 
     return render_template(
         "quiz.html",
         question=question
     )
+
 
 
 @app.route("/quiz/start_page")
@@ -679,12 +685,22 @@ def quiz_answer(question_id):
     if not require_login():
         return redirect(url_for("login"))
 
-    # --- checar tempo ---
-    start_time_str = session.get('quiz_start_time')
-    if start_time_str:
-        start_time = datetime.fromisoformat(start_time_str)
-        if datetime.utcnow() > start_time + timedelta(minutes=2):
-            return { "time_over": True, "next_question_url": url_for("quiz_result") }
+    # Limite de 2 minutos por pergunta
+    question_start_key = f'quiz_question_start_{question_id}'
+    if question_start_key not in session:
+        session[question_start_key] = datetime.utcnow().isoformat()
+    
+    start_time = datetime.fromisoformat(session[question_start_key])
+    if datetime.utcnow() > start_time + timedelta(minutes=2):
+        # Passa para próxima pergunta
+        current_index = session.get('quiz_current_index', 0)
+        question_ids = session.get('quiz_question_ids', [])
+        if current_index + 1 < len(question_ids):
+            next_question_id = question_ids[current_index + 1]
+            session['quiz_current_index'] = current_index + 1
+            return {"time_over": True, "next_question_url": url_for("quiz_play", question_id=next_question_id)}
+        else:
+            return {"time_over": True, "next_question_url": url_for("quiz_result")}
 
     # processa resposta normalmente...
     data = request.get_json()
@@ -700,10 +716,13 @@ def quiz_answer(question_id):
     asked.append(quiz.id)
     session['quiz_asked'] = asked
 
-    remaining_questions = Quiz.query.filter(~Quiz.id.in_(asked)).all()
-    if remaining_questions:
-        next_quiz = random.choice(remaining_questions)
-        next_question_url = url_for('quiz_play', question_id=next_quiz.id)
+    current_index = session.get('quiz_current_index', 0)
+    question_ids = session.get('quiz_question_ids', [])
+
+    if current_index + 1 < len(question_ids):
+        next_question_id = question_ids[current_index + 1]
+        session['quiz_current_index'] = current_index + 1
+        next_question_url = url_for('quiz_play', question_id=next_question_id)
     else:
         next_question_url = url_for('quiz_result')
 
@@ -712,8 +731,6 @@ def quiz_answer(question_id):
         "correct_answer": getattr(quiz, f"option{quiz.correct_option}"),
         "next_question_url": next_question_url
     }
-
-
 
 
 
