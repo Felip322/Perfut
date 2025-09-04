@@ -823,14 +823,20 @@ def quiz_result():
 
 @app.route('/quiz/ranking')
 def quiz_ranking():
-    # Pegar top 10 pontuações acumuladas
+    # Pegar top 10 pontuações acumuladas e já carregar o usuário relacionado
     top_scores = (
         QuizScore.query
+        .options(joinedload(QuizScore.user))  # evita N+1 queries
         .order_by(QuizScore.score.desc(), QuizScore.played_at.desc())
         .limit(10)
         .all()
     )
-    return render_template('quiz_ranking.html', scores=top_scores)
+
+    user = None
+    if "user_id" in session:
+        user = User.query.get(session["user_id"])
+
+    return render_template('quiz_ranking.html', scores=top_scores, user=user)
 
 
 
