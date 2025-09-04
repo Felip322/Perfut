@@ -1134,10 +1134,8 @@ def game_extra_hint(round_id):
     db.session.commit()
     flash("Dica extra comprada! Veja abaixo.", "success")
     return redirect(url_for("game_play", game_id=r.game_id))
-
 @app.route("/game/result/<int:game_id>")
 def game_result(game_id):
-    # Pega o jogo e o usuário
     g_game = Game.query.get_or_404(game_id)
     user = User.query.get(g_game.user_id)
 
@@ -1152,21 +1150,16 @@ def game_result(game_id):
     # --- Atualização da pontuação semanal ---
     if g_game.mode == "weekly":
         today = datetime.utcnow().date()
-        # Pega o evento semanal ativo
         event = WeeklyEvent.query.filter_by(is_active=True).first()
         if event:
-            # Verifica se já existe pontuação do jogador hoje
             ws = WeeklyScore.query.filter_by(
                 event_id=event.id,
                 player_id=user.id,
                 play_date=today
             ).first()
-            
             if ws:
-                # Atualiza pontuação existente
                 ws.score = g_game.user_score
             else:
-                # Cria novo registro
                 ws = WeeklyScore(
                     event_id=event.id,
                     player_id=user.id,
@@ -1174,10 +1167,20 @@ def game_result(game_id):
                     play_date=today
                 )
                 db.session.add(ws)
-            
             db.session.commit()
 
-    # --- Renderiza template de resultado ---
+    # --- Recompensa de moedas pelo desempenho ---
+    total_coins = 0
+    for r in g_game.rounds:
+        if r.user_points > 0:  # acertou
+            # 1 dica → 100, 2 dicas → 90, 3 → 80, ..., 10 → 10 moedas
+            coins = max(110 - r.requested_hints * 10, 10)
+            total_coins += coins
+
+    user.coins += total_coins
+    db.session.commit()
+    flash(f"Você ganhou {total_coins} moedas pelo desempenho!", "success")
+
     return render_template(
         "result.html",
         game=g_game,
@@ -1185,7 +1188,7 @@ def game_result(game_id):
         level_up=level_up,
         new_level=new_level
     )
-    
+
 
 @app.route("/coins/watch-ad", methods=["POST"])
 def watch_ad():
