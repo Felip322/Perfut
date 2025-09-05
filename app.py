@@ -516,8 +516,18 @@ def weekly_event_start():
     db.session.add(g)
     db.session.commit()
 
+    # Marca que o jogador já iniciou hoje
+    score_entry = WeeklyScore(
+        event_id=event.id,
+        player_id=user.id,
+        play_date=today
+    )
+    db.session.add(score_entry)
+    db.session.commit()
+
     flash("Desafio diário iniciado!", "success")
     return redirect(url_for("game_play", game_id=g.id))
+
 
 
 
