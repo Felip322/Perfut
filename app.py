@@ -302,43 +302,47 @@ def register():
         name = request.form["name"].strip()
         email = request.form["email"].strip().lower()
         password = request.form["password"]
+
         if not name or not email or not password:
             flash("Preencha todos os campos.", "danger")
             return redirect(url_for("register"))
+
         if User.query.filter_by(email=email).first():
             flash("E-mail já cadastrado.", "danger")
             return redirect(url_for("register"))
-        
+
         u = User(name=name, email=email)
         u.set_password(password)
         db.session.add(u)
         db.session.commit()
         session["user_id"] = u.id
 
-      
-       # ----- Enviar e-mail de boas-vindas -----
-try:
-    msg = Message(
-        subject="Bem-vindo ao PERFUT!",
-        recipients=[email],
-        html=f"""
-        <html>
-          <body style="font-family: Arial, sans-serif; color: #333; text-align: center;">
-            <img src="https://perfut-1.onrender.com/static/logo.png" alt="Logo PERFUT" width="150" style="margin-bottom: 20px;">
-            <h2>Olá, {name}!</h2>
-            <p>Obrigado por se cadastrar no <strong>PERFUT</strong>! 🎉</p>
-            <p>Divirta-se e boa sorte nos seus jogos!</p>
-          </body>
-        </html>
-        """
-    )
-    mail.send(msg)
-except Exception as e:
-    print("Erro ao enviar e-mail de boas-vindas:", e)
-    flash("Cadastro realizado, mas não foi possível enviar o e-mail de boas-vindas.", "warning")
+        # ----- Enviar e-mail de boas-vindas -----
+        try:
+            msg = Message(
+                subject="Bem-vindo ao PERFUT!",
+                recipients=[email],
+                html=f"""
+                <html>
+                  <body style="font-family: Arial, sans-serif; color: #333; text-align: center;">
+                    <img src="https://perfut-1.onrender.com/static/logo.png" alt="Logo PERFUT" width="150" style="margin-bottom: 20px;">
+                    <h2>Olá, {name}!</h2>
+                    <p>Obrigado por se cadastrar no <strong>PERFUT</strong>! 🎉</p>
+                    <p>Divirta-se e boa sorte nos seus jogos!</p>
+                  </body>
+                </html>
+                """
+            )
+            mail.send(msg)
+        except Exception as e:
+            print("Erro ao enviar e-mail de boas-vindas:", e)
+            flash("Cadastro realizado, mas não foi possível enviar o e-mail de boas-vindas.", "warning")
 
-flash("Cadastro realizado! Boa sorte no PERFUT!", "success")
-return redirect(url_for("game_mode_select"))
+        flash("Cadastro realizado! Boa sorte no PERFUT!", "success")
+        return redirect(url_for("game_mode_select"))
+
+    return render_template("register.html")
+
 
 
 
