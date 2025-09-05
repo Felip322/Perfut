@@ -1089,7 +1089,8 @@ def game_result(game_id):
     # Busca badges do banco
     badges = Badge.query.order_by(Badge.level_required).all()
 
-    badge_levels = {b.level: b.name for b in badges}
+    badge_levels = {b.level_required: b.name for b in badges}
+
 
     # Calcula pontos totais do jogador nessa partida
     user_score = game.points  # ajuste conforme sua lógica de pontos
