@@ -476,13 +476,7 @@ def weekly_event():
     today = datetime.utcnow().date()
     
     # Pega evento ativo
-
-
-# Busca todos os eventos ativos
-weekly_events = WeeklyEvent.query.filter_by(is_active=True).all()
-
-# Pega o evento que está ativo hoje
-event = next((e for e in weekly_events if e.is_today_active), None)
+    event = WeeklyEvent.query.filter_by(is_active=True).first()
     
     # Verifica se já jogou hoje
     already_played = False
@@ -490,6 +484,7 @@ event = next((e for e in weekly_events if e.is_today_active), None)
         already_played = WeeklyScore.query.filter_by(event_id=event.id, player_id=user.id, play_date=today).first() is not None
     
     return render_template("weekly_event.html", user=user, already_played=already_played, event=event)
+
 
 @app.route("/weekly_event/start")
 def weekly_event_start():
