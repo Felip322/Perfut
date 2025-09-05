@@ -337,9 +337,9 @@ except Exception as e:
     print("Erro ao enviar e-mail de boas-vindas:", e)
     flash("Cadastro realizado, mas não foi possível enviar o e-mail de boas-vindas.", "warning")
 
-        flash("Cadastro realizado! Boa sorte no PERFUT!", "success")
-        return redirect(url_for("game_mode_select"))
-    return render_template("register.html")
+flash("Cadastro realizado! Boa sorte no PERFUT!", "success")
+return redirect(url_for("game_mode_select"))
+
 
 
 @app.route("/login", methods=["GET", "POST"])
