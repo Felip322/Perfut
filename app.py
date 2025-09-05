@@ -509,13 +509,12 @@ def weekly_event_start():
         return redirect(url_for("weekly_event"))
 
     # Cria jogo do evento semanal com 10 perguntas
-   g = Game(
-    user_id=user.id,
-    rounds_count=10,
-    themes_json=json.dumps([key for key, _ in THEMES]),
-    mode="weekly"
-)
-
+    g = Game(
+        user_id=user.id,
+        rounds_count=10,
+        themes_json=json.dumps([key for key, _ in THEMES]),
+        mode="weekly"  # <-- sem event_id aqui
+    )
     db.session.add(g)
     db.session.commit()
 
@@ -530,6 +529,7 @@ def weekly_event_start():
 
     flash("Desafio diário iniciado!", "success")
     return redirect(url_for("game_play", game_id=g.id))
+
 
 
 
