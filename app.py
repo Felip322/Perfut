@@ -1093,7 +1093,7 @@ def game_result(game_id):
 
 
     # Calcula pontos totais do jogador nessa partida
-    user_score = game.points  # ajuste conforme sua lógica de pontos
+    user_score = game.user_score  # ajuste conforme sua lógica de pontos
     earned_badges = [name for level, name in badge_levels.items() if user_score >= level]
 
     return render_template(
