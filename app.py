@@ -545,20 +545,32 @@ def game_finish(game_id):
 
     # se for evento semanal, salva no weekly_scores
     if game.mode == "weekly":
+        today = datetime.utcnow().date()
         event = WeeklyEvent.query.filter_by(is_active=True).first()
+
         if event and event.is_today_active:
-            today = datetime.utcnow().date()
-            weekly_score = WeeklyScore(
+            # Pega ou cria o registro do score
+            weekly_score = WeeklyScore.query.filter_by(
                 event_id=event.id,
                 player_id=user.id,
-                score=score,
                 play_date=today
-            )
-            db.session.add(weekly_score)
+            ).first()
+
+            if not weekly_score:
+                weekly_score = WeeklyScore(
+                    event_id=event.id,
+                    player_id=user.id,
+                    play_date=today
+                )
+                db.session.add(weekly_score)
+
+            # Atualiza o score final
+            weekly_score.score = score
             db.session.commit()
 
     flash(f"Você fez {score} pontos!", "success")
     return redirect(url_for("weekly_ranking" if game.mode == "weekly" else "index"))
+
 
 
 
