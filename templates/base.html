@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PERFUT - Football Trivia</title>
   <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
-
-  <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
   <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='logo.ico') }}">
   <link rel="icon" type="image/png" sizes="40x32" href="{{ url_for('static', filename='logo.png') }}">
@@ -27,7 +25,7 @@
       color: var(--text);
     }
 
-    /* Topbar */
+    /* --- Topbar --- */
     .topbar {
       display: flex;
       justify-content: space-between;
@@ -37,6 +35,8 @@
       border-bottom: 1px solid #214e33;
       flex-wrap: wrap;
       gap: 10px;
+      position: relative;
+      z-index: 10;
     }
 
     .topbar .brand {
@@ -71,8 +71,9 @@
       background: none;
       border: none;
       color: #fff;
-      font-size: 28px;
+      font-size: 32px;
       cursor: pointer;
+      padding: 8px;
     }
 
     .top-nav {
@@ -81,6 +82,7 @@
       gap: 10px;
       flex-wrap: wrap;
       justify-content: flex-end;
+      transition: max-height 0.3s ease;
     }
 
     .btn {
@@ -110,10 +112,6 @@
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
     }
 
-    .btn:active {
-      transform: translateY(1px) scale(0.98);
-    }
-
     .btn.primary {
       background: linear-gradient(135deg, #ffcb3f, #ffb300);
       color: #0b1f14;
@@ -126,14 +124,14 @@
       box-shadow: 0 6px 16px rgba(255, 195, 0, 0.6);
     }
 
-    /* Container */
+    /* --- Container --- */
     .container {
       max-width: 1200px;
       margin: 20px auto;
       padding: 0 15px;
     }
 
-    /* Flash messages */
+    /* --- Flash messages --- */
     .flash {
       list-style: none;
       padding: 0;
@@ -153,7 +151,7 @@
     .flash li.danger { background: #662a2a; color: #ffbaba; }
     .flash li.info { background: #2a2a66; color: #c7c7ff; }
 
-    /* Footer */
+    /* --- Footer --- */
     .footer {
       text-align: center;
       padding: 15px 0;
@@ -174,41 +172,49 @@
       text-decoration: underline;
     }
 
-    /* Responsividade */
-    @media (max-width: 768px) {
-      .menu-toggle {
-        display: block;
-      }
-      .top-nav {
-        display: none;
-        flex-direction: column;
-        gap: 8px;
-        width: 100%;
-        background: #0b2216;
-        padding: 10px 0;
-        border-top: 1px solid #214e33;
-      }
-      .top-nav.show {
-        display: flex;
-      }
-      .btn {
-        width: 100%;
-        max-width: 220px;
-        margin: 0 auto;
-      }
+    /* --- Ranking Table --- */
+    .ranking { display: flex; justify-content: center; padding: 50px 20px; background: linear-gradient(135deg, #0a1912, #0f2d1e); min-height: 80vh; animation: fadeIn 1s ease-in;}
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px);} to { opacity: 1; transform: translateY(0);} }
+    .ranking-container { max-width: 800px; width: 100%; background: #142820; padding: 35px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.55); text-align: center; }
+    .ranking-container h1 { color: #00ff88; margin-bottom: 25px; font-size: 2.3rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 2px 10px rgba(0,255,150,0.4);}
+    .table-wrapper { width: 100%; overflow-x: auto; }
+    .ranking-table { width: 100%; border-collapse: collapse; min-width: 500px; }
+    .ranking-table th, .ranking-table td { padding: 12px 16px; border-bottom: 1px solid #1f3b2c; color: #e6e6e6; font-size: 1rem; text-align: center; }
+    .ranking-table th { background: #1f3b2c; font-weight: 700; color: #00ff9d; }
+    .ranking-table tr { transition: background 0.3s ease, transform 0.2s ease; }
+    .ranking-table tr:hover { background: rgba(0,255,130,0.08); transform: scale(1.01);}
+    .player-info { display: flex; align-items: center; gap: 12px; font-weight: 600; justify-content: center;}
+    .avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #2e8b57, #3cb371); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; font-size: 0.95rem;}
+    .player-info.gold .avatar { border: 3px solid gold; }
+    .player-info.silver .avatar { border: 3px solid silver; }
+    .player-info.bronze .avatar { border: 3px solid #cd7f32; }
+    .ranking-table tr.first { background: rgba(255, 215, 0, 0.07); }
+    .ranking-table tr.second { background: rgba(192, 192, 192, 0.07); }
+    .ranking-table tr.third { background: rgba(205, 127, 50, 0.07); }
+    .pos { font-weight: bold; }
+    .level { font-weight: 600; color: #ffd700; }
+    .score { font-weight: 700; color: #00ff88; }
+    .badge { font-weight: 600; color: #00dfff; }
+    .no-players { font-size: 1.1rem; color: #c0ffc0; margin-top: 20px; font-style: italic; }
+
+    /* --- Responsividade --- */
+    @media(max-width:768px){
+      .menu-toggle { display: block; }
+      .top-nav { display: none; flex-direction: column; gap: 8px; width: 100%; background: #0b2216; padding: 10px 0; border-top: 1px solid #214e33; position: absolute; top: 60px; right: 0; z-index: 100;}
+      .top-nav.show { display: flex; }
+      .btn { width: 100%; max-width: 220px; margin: 5px auto; }
+      .ranking-container { padding: 25px; }
+      .ranking-table th, .ranking-table td { padding: 10px; font-size: 0.9rem; }
+      .avatar { width: 32px; height: 32px; font-size: 0.8rem; }
     }
 
-    @media (max-width: 480px) {
-      .topbar .brand span {
-        font-size: 16px;
-      }
-      .btn {
-        font-size: 13px;
-        padding: 8px 14px;
-      }
-      .coins {
-        font-size: 14px;
-      }
+    @media(max-width:480px){
+      .topbar .brand span { font-size: 16px; }
+      .btn { font-size: 14px; padding: 10px 16px; }
+      .coins { font-size: 14px; }
+      .ranking-container { padding: 15px; }
+      .ranking-table th, .ranking-table td { padding: 8px; font-size: 0.8rem; }
+      .avatar { width: 28px; height: 28px; font-size: 0.7rem; }
     }
   </style>
 </head>
@@ -278,7 +284,6 @@
     </div>
   </footer>
 
-  <script src="{{ url_for('static', filename='app.js') }}"></script>
   <script>
     function toggleMenu() {
       document.querySelector('.top-nav').classList.toggle('show');
