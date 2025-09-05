@@ -308,14 +308,29 @@ def register():
         if User.query.filter_by(email=email).first():
             flash("E-mail já cadastrado.", "danger")
             return redirect(url_for("register"))
+        
         u = User(name=name, email=email)
         u.set_password(password)
         db.session.add(u)
         db.session.commit()
         session["user_id"] = u.id
+
+        # ----- Enviar e-mail de boas-vindas -----
+        try:
+            msg = Message(
+                subject="Bem-vindo ao PERFUT!",
+                recipients=[email],
+                body=f"Olá {name},\n\nObrigado por se cadastrar no PERFUT! 🎉\nDivirta-se e boa sorte!"
+            )
+            mail.send(msg)
+        except Exception as e:
+            print("Erro ao enviar e-mail de boas-vindas:", e)
+            flash("Cadastro realizado, mas não foi possível enviar o e-mail de boas-vindas.", "warning")
+
         flash("Cadastro realizado! Boa sorte no PERFUT!", "success")
         return redirect(url_for("game_mode_select"))
     return render_template("register.html")
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
