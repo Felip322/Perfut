@@ -62,9 +62,8 @@
 
        <!-- Botão de pular rodada -->
 <form method="post" action="{{ url_for('game_skip', round_id=round.id) }}">
-  <button class="btn" type="submit">
-    ⏭️ Pular Rodada
-  </button>
+  <button class="btn" type="submit"><span class="emoji">⏭️</span> Pular Rodada</button>
+
 </form>
 
       </div>
@@ -84,6 +83,8 @@
 <audio id="sound-whistle" src="{{ url_for('static', filename='whistle.mp3') }}"></audio>
 
 <style>
+
+.btn .emoji {color: inherit;}
 .game-container { max-width: 600px; margin: 40px auto; padding: 0 15px; font-family: 'Arial', sans-serif; }
 .scoreboard { display: flex; justify-content: space-between; align-items: center; background: #0b2216; border-radius: 12px; padding: 15px 20px; border: 1px solid #214e33; margin-bottom: 20px; color: #fff; font-weight: bold; box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
 .player-score span { color: var(--accent); font-size: 18px; }
