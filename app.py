@@ -315,17 +315,27 @@ def register():
         db.session.commit()
         session["user_id"] = u.id
 
-        # ----- Enviar e-mail de boas-vindas -----
-        try:
-            msg = Message(
-                subject="Bem-vindo ao PERFUT!",
-                recipients=[email],
-                body=f"Olá {name},\n\nObrigado por se cadastrar no PERFUT! 🎉\nDivirta-se e boa sorte!"
-            )
-            mail.send(msg)
-        except Exception as e:
-            print("Erro ao enviar e-mail de boas-vindas:", e)
-            flash("Cadastro realizado, mas não foi possível enviar o e-mail de boas-vindas.", "warning")
+      
+       # ----- Enviar e-mail de boas-vindas -----
+try:
+    msg = Message(
+        subject="Bem-vindo ao PERFUT!",
+        recipients=[email],
+        html=f"""
+        <html>
+          <body style="font-family: Arial, sans-serif; color: #333; text-align: center;">
+            <img src="https://perfut-1.onrender.com/static/logo.png" alt="Logo PERFUT" width="150" style="margin-bottom: 20px;">
+            <h2>Olá, {name}!</h2>
+            <p>Obrigado por se cadastrar no <strong>PERFUT</strong>! 🎉</p>
+            <p>Divirta-se e boa sorte nos seus jogos!</p>
+          </body>
+        </html>
+        """
+    )
+    mail.send(msg)
+except Exception as e:
+    print("Erro ao enviar e-mail de boas-vindas:", e)
+    flash("Cadastro realizado, mas não foi possível enviar o e-mail de boas-vindas.", "warning")
 
         flash("Cadastro realizado! Boa sorte no PERFUT!", "success")
         return redirect(url_for("game_mode_select"))
