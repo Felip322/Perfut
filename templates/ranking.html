@@ -14,7 +14,7 @@
             <th>Jogador</th>
             <th>Nível</th>
             <th>Pontuação</th>
-            <th>  Categoria</th> <!-- nova coluna -->
+            <th>Categoria</th>
           </tr>
         </thead>
         <tbody>
@@ -31,16 +31,14 @@
               {% else %} {{ loop.index }} {% endif %}
             </td>
             <td>
-              <div class="player-info 
-                {% if loop.index == 1 %} gold {% elif loop.index == 2 %} silver {% elif loop.index == 3 %} bronze {% endif %}">
+              <div class="player-info">
                 <div class="avatar">{{ r[0][0] | upper }}</div>
-                <span>{{ r[0] }}</span>
+                <span class="player-name">{{ r[0] }}</span>
               </div>
             </td>
             <td class="level">{{ r[2] }}</td>
             <td class="score">{{ r[1] }}</td>
             <td class="badge">{{ r[3] }}</td>
-
           </tr>
           {% endfor %}
         </tbody>
@@ -53,34 +51,102 @@
 </section>
 
 <style>
-/* --- estilos existentes --- */
-.ranking { display: flex; justify-content: center; padding: 50px 20px; background: linear-gradient(135deg, #0a1912, #0f2d1e); min-height: 80vh; animation: fadeIn 1s ease-in;}
-@keyframes fadeIn { from { opacity: 0; transform: translateY(20px);} to { opacity: 1; transform: translateY(0);}}
-.ranking-container { max-width: 800px; width: 100%; background: #142820; padding: 35px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.55); text-align: center; }
-.ranking-container h1 { color: #00ff88; margin-bottom: 25px; font-size: 2.3rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 2px 10px rgba(0,255,150,0.4);}
+.ranking {
+  display: flex;
+  justify-content: center;
+  padding: 50px 20px;
+  background: linear-gradient(135deg, #0a1912, #0f2d1e);
+  min-height: 80vh;
+  animation: fadeIn 1s ease-in;
+}
+
+@keyframes fadeIn { 
+  from { opacity: 0; transform: translateY(20px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+
+.ranking-container {
+  max-width: 800px;
+  width: 100%;
+  background: #142820;
+  padding: 35px;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.55);
+  text-align: center;
+}
+
+.ranking-container h1 {
+  color: #00ff88;
+  margin-bottom: 25px;
+  font-size: 2.3rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 10px rgba(0,255,150,0.4);
+}
+
 .table-wrapper { width: 100%; overflow-x: auto; }
 .ranking-table { width: 100%; border-collapse: collapse; min-width: 500px; }
-.ranking-table th, .ranking-table td { padding: 12px 16px; border-bottom: 1px solid #1f3b2c; color: #e6e6e6; font-size: 1rem;}
-.ranking-table th { background: #1f3b2c; font-weight: 700; text-align: left; color: #00ff9d;}
+
+.ranking-table th, .ranking-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #1f3b2c;
+  color: #e6e6e6;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.ranking-table th { background: #1f3b2c; font-weight: 700; color: #00ff9d; }
+
 .ranking-table tr { transition: background 0.3s ease, transform 0.2s ease; }
-.ranking-table tr:hover { background: rgba(0,255,130,0.08); transform: scale(1.01);}
-.player-info { display: flex; align-items: center; gap: 12px; font-weight: 600;}
-.avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #2e8b57, #3cb371); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; font-size: 0.95rem;}
-.player-info.gold .avatar { border: 3px solid gold; }
-.player-info.silver .avatar { border: 3px solid silver; }
-.player-info.bronze .avatar { border: 3px solid #cd7f32; }
+.ranking-table tr:hover { background: rgba(0,255,130,0.08); transform: scale(1.01); }
+
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  justify-content: flex-start; /* alinhamento à esquerda */
+}
+
+.player-name {
+  text-align: left;
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2e8b57, #3cb371);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+
 .ranking-table tr.first { background: rgba(255, 215, 0, 0.07); }
 .ranking-table tr.second { background: rgba(192, 192, 192, 0.07); }
 .ranking-table tr.third { background: rgba(205, 127, 50, 0.07); }
-.pos { font-weight: bold; text-align: center; }
-.level { font-weight: 600; color: #ffd700; text-align: center; }
-.ranking-table tr.highlight { background: rgba(0,255,150,0.25) !important; font-weight: bold; color: #0a1912; }
+
+.pos { font-weight: bold; }
+.level { font-weight: 600; color: #ffd700; }
 .score { font-weight: 700; color: #00ff88; }
-.badge { font-weight: 600; color: #00dfff; text-align: center; }
-.badge-icon { margin-right: 5px; }
+.badge { font-weight: 600; color: #00dfff; }
 .no-players { font-size: 1.1rem; color: #c0ffc0; margin-top: 20px; font-style: italic; }
-/* Responsividade */
-@media(max-width:768px){ .ranking-container { padding: 25px; } .ranking-table th, .ranking-table td { padding: 10px; font-size: 0.95rem; } }
-@media(max-width:480px){ .ranking-container { padding: 15px; } .ranking-table th, .ranking-table td { padding: 8px; font-size: 0.85rem; } .avatar { width: 30px; height: 30px; font-size: 0.75rem; } }
+
+/* --- Responsividade --- */
+@media(max-width:768px){
+  .ranking-container { padding: 25px; }
+  .ranking-table th, .ranking-table td { padding: 10px; font-size: 0.9rem; }
+  .avatar { width: 32px; height: 32px; font-size: 0.8rem; }
+}
+
+@media(max-width:480px){
+  .ranking-container { padding: 15px; }
+  .ranking-table th, .ranking-table td { padding: 8px; font-size: 0.8rem; }
+  .avatar { width: 28px; height: 28px; font-size: 0.7rem; }
+}
 </style>
 {% endblock %}
