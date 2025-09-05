@@ -13,8 +13,6 @@ from itsdangerous import URLSafeTimedSerializer
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
-from models import Badge
-
 
 
 
@@ -976,17 +974,14 @@ def ranking():
         .all()
     )
 
-    rankings = []
-for name, total_score, level in rows:
-    # Seleciona a badge mais alta que o jogador atingiu
-    badge = (
-        Badge.query
-        .filter(Badge.level_required <= level)
-        .order_by(Badge.level_required.desc())
-        .first()
-    )
-    badge_name = badge.name if badge else ""
-    rankings.append((name, int(total_score), level, badge_name))
+    rankings = [(name, int(total_score), level) for name, total_score, level in rows]
+
+    current_user = User.query.get(session["user_id"])
+    if not current_user:
+        flash("Usuário não encontrado.", "danger")
+        return redirect(url_for("login"))
+
+    return render_template("ranking.html", rankings=rankings, user=current_user)
 
 
 
