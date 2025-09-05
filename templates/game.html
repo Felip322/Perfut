@@ -60,12 +60,13 @@
           <button class="btn">Dica extra (🪙 5)</button>
         </form>
 
-        <!-- Botão de pular rodada -->
-        <form method="post" action="{{ url_for('game_skip', round_id=round.id) }}">
-          <button class="btn warning" type="submit">
-            ⏭️ Pular Rodada
-          </button>
-        </form>
+       <!-- Botão de pular rodada -->
+<form method="post" action="{{ url_for('game_skip', round_id=round.id) }}">
+  <button class="btn" type="submit">
+    ⏭️ Pular Rodada
+  </button>
+</form>
+
       </div>
 
       <!-- Formulário de chute -->
