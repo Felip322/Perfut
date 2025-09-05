@@ -476,7 +476,13 @@ def weekly_event():
     today = datetime.utcnow().date()
     
     # Pega evento ativo
-    event = WeeklyEvent.query.filter_by(is_active=True).first()
+
+
+# Busca todos os eventos ativos
+weekly_events = WeeklyEvent.query.filter_by(is_active=True).all()
+
+# Pega o evento que está ativo hoje
+event = next((e for e in weekly_events if e.is_today_active), None)
     
     # Verifica se já jogou hoje
     already_played = False
