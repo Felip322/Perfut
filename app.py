@@ -959,12 +959,13 @@ def ranking():
     # Busca usuários com pontuação maior que 0
     rows = (
         db.session.query(
+            User.id,
             User.name,
             func.coalesce(score_sum.c.total_score, 0).label("total_score"),
             User.level
         )
         .outerjoin(score_sum, User.id == score_sum.c.user_id)
-        .filter(func.coalesce(score_sum.c.total_score, 0) > 0)  # só quem tem pontos
+        .filter(func.coalesce(score_sum.c.total_score, 0) > 0)
         .order_by(
             User.level.desc(),
             score_sum.c.total_score.desc(),
@@ -974,7 +975,17 @@ def ranking():
         .all()
     )
 
-    rankings = [(name, int(total_score), level) for name, total_score, level in rows]
+    rankings = []
+    for user_id, name, total_score, level in rows:
+        # Busca o badge correspondente ao nível
+        badge = (
+            db.session.query(Badge)
+            .filter(Badge.level_required <= level)
+            .order_by(Badge.level_required.desc())
+            .first()
+        )
+        badge_name = badge.name if badge else ""
+        rankings.append((name, int(total_score), level, badge_name))
 
     current_user = User.query.get(session["user_id"])
     if not current_user:
@@ -982,8 +993,6 @@ def ranking():
         return redirect(url_for("login"))
 
     return render_template("ranking.html", rankings=rankings, user=current_user)
-
-
 
 
 
