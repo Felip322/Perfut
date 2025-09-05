@@ -522,7 +522,33 @@ def weekly_event_start():
 
 
 
+@app.route("/game_finish/<int:game_id>")
+def game_finish(game_id):
+    if not require_login():
+        return redirect(url_for("login"))
 
+    game = Game.query.get_or_404(game_id)
+    user = User.query.get(session["user_id"])
+
+    # calcula a pontuação final
+    score = sum(1 for r in game.rounds if r.correct)
+
+    # se for evento semanal, salva no weekly_scores
+    if game.mode == "weekly":
+        event = WeeklyEvent.query.filter_by(is_active=True).first()
+        if event and event.is_today_active:
+            today = datetime.utcnow().date()
+            weekly_score = WeeklyScore(
+                event_id=event.id,
+                player_id=user.id,
+                score=score,
+                play_date=today
+            )
+            db.session.add(weekly_score)
+            db.session.commit()
+
+    flash(f"Você fez {score} pontos!", "success")
+    return redirect(url_for("weekly_ranking" if game.mode == "weekly" else "index"))
 
 
 
