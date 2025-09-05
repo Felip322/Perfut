@@ -707,37 +707,37 @@ def duel_result(duel_id):
         opponent_badge=opponent_badge
     )
 
+from sqlalchemy import func
+from datetime import datetime, timedelta
+
 @app.route("/weekly_ranking")
 def weekly_ranking():
     if not require_login():
         return redirect(url_for("login"))
 
+    user = User.query.get(session["user_id"])
     today = datetime.utcnow().date()
     week_start = today - timedelta(days=today.weekday())  # segunda-feira
     week_end = week_start + timedelta(days=6)             # domingo
 
-    # Evento ativo
     event = WeeklyEvent.query.filter_by(is_active=True).first()
     scores = []
 
     if event:
-        # Soma os pontos do jogador durante a semana
+        # Pega os scores da semana atual
         scores = (
-            db.session.query(
-                User.name,
-                func.sum(WeeklyScore.score).label("total_score")
-            )
+            db.session.query(WeeklyScore)
             .join(User, User.id == WeeklyScore.player_id)
             .filter(
                 WeeklyScore.event_id == event.id,
                 WeeklyScore.play_date.between(week_start, week_end)
             )
-            .group_by(User.id)
-            .order_by(func.sum(WeeklyScore.score).desc())
+            .order_by(WeeklyScore.score.desc())
             .all()
         )
 
-    return render_template("weekly_ranking.html", scores=scores, event=event)
+    return render_template("weekly_ranking.html", scores=scores, event=event, user=user)
+
 
 
 
