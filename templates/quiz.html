@@ -6,7 +6,7 @@
   <div class="quiz-header">
     <h1 class="quiz-title">Quiz!</h1>
     <p class="quiz-progress">Pergunta {{ current }}/{{ total }}</p>
-    <p class="quiz-timer">⏱ <span id="timer-display">02:00</span></p>
+    <p class="quiz-timer">⏱ <span id="timer-display">01:00</span></p>
   </div>
 
   <!-- Pergunta -->
@@ -32,7 +32,7 @@
 </div>
 
 <script>
-let timeLeft = 120; // 2 minutos
+let timeLeft = 60; // 1 minuto
 const timerElement = document.getElementById("timer-display");
 const whistleSound = document.getElementById('whistle-sound');
 const correctSound = document.getElementById('correct-sound');
