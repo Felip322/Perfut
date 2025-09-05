@@ -712,21 +712,33 @@ def weekly_ranking():
     if not require_login():
         return redirect(url_for("login"))
 
+    today = datetime.utcnow().date()
+    week_start = today - timedelta(days=today.weekday())  # segunda-feira
+    week_end = week_start + timedelta(days=6)             # domingo
+
+    # Evento ativo
     event = WeeklyEvent.query.filter_by(is_active=True).first()
     scores = []
+
     if event:
-        # Trazer objetos WeeklyScore e acessar player.name no template
+        # Soma os pontos do jogador durante a semana
         scores = (
-            WeeklyScore.query
-            .filter_by(event_id=event.id)
+            db.session.query(
+                User.name,
+                func.sum(WeeklyScore.score).label("total_score")
+            )
             .join(User, User.id == WeeklyScore.player_id)
-            .order_by(WeeklyScore.score.desc())
+            .filter(
+                WeeklyScore.event_id == event.id,
+                WeeklyScore.play_date.between(week_start, week_end)
+            )
+            .group_by(User.id)
+            .order_by(func.sum(WeeklyScore.score).desc())
             .all()
         )
 
     return render_template("weekly_ranking.html", scores=scores, event=event)
 
-from datetime import datetime, timedelta
 
 
 
