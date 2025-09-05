@@ -942,13 +942,14 @@ rows = (
     .all()
 )
 
-    rankings = [(name, int(total_score), level) for name, total_score, level in rows]
-    current_user = User.query.get(session["user_id"])
-    if not current_user:
-        flash("Usuário não encontrado.", "danger")
-        return redirect(url_for("login"))
+rankings = [(name, int(total_score), level) for name, total_score, level in rows]
+current_user = User.query.get(session["user_id"])
+if not current_user:
+    flash("Usuário não encontrado.", "danger")
+    return redirect(url_for("login"))
 
-    return render_template("ranking.html", rankings=rankings, user=current_user)
+return render_template("ranking.html", rankings=rankings, user=current_user)
+
 
 
 
