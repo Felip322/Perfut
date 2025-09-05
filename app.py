@@ -916,31 +916,31 @@ def ranking():
         u.level = total_score // 100 + 1
     db.session.commit()
 
-    # Cria ranking
-    score_sum = (
-        db.session.query(
-            Game.user_id,
-            func.coalesce(func.sum(Game.user_score), 0).label("total_score")
-        )
-        .group_by(Game.user_id)
-        .subquery()
+   # Cria ranking
+score_sum = (
+    db.session.query(
+        Game.user_id,
+        func.coalesce(func.sum(Game.user_score), 0).label("total_score")
     )
+    .group_by(Game.user_id)
+    .subquery()
+)
 
-    rows = (
-        db.session.query(
-            User.name,
-            func.coalesce(score_sum.c.total_score, 0).label("total_score"),
-            User.level
-        )
-        .outerjoin(score_sum, User.id == score_sum.c.user_id)
-        .order_by(
-            User.level.desc(),
-            score_sum.c.total_score.desc(),
-            getattr(User, "coins", 0).desc(),  # evita erro se coins não existir
-            User.name.asc()
-        )
-        .all()
+rows = (
+    db.session.query(
+        User.name,
+        func.coalesce(score_sum.c.total_score, 0).label("total_score"),
+        User.level
     )
+    .outerjoin(score_sum, User.id == score_sum.c.user_id)
+    .order_by(
+        User.level.desc(),
+        score_sum.c.total_score.desc(),
+        getattr(User, "coins", 0).desc(),
+        User.name.asc()
+    )
+    .all()
+)
 
     rankings = [(name, int(total_score), level) for name, total_score, level in rows]
     current_user = User.query.get(session["user_id"])
