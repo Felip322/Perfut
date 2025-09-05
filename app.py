@@ -156,6 +156,17 @@ class Round(db.Model):
         self.hints_order_json = json.dumps(value, ensure_ascii=False)
 
 
+class Badge(db.Model):
+    __tablename__ = "badges"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    level_required = db.Column(db.Integer, nullable=False)
+
+    def __repr__(self):
+        return f"<Badge {self.name}>"
+
+
 class DuelScore(db.Model):
     __tablename__ = "duels_scores"
     id = db.Column(db.Integer, primary_key=True)
