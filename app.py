@@ -657,16 +657,18 @@ def duel_join_page():
 
 @app.route("/duel/result/<int:duel_id>")
 def duel_result(duel_id):
+    # Busca o duelo ou retorna 404 se não existir
     duel = Duel.query.get_or_404(duel_id)
     
     # Pega os jogos mais recentes de cada jogador
     creator_game = Game.query.filter_by(user_id=duel.creator_id).order_by(Game.id.desc()).first()
     opponent_game = Game.query.filter_by(user_id=duel.opponent_id).order_by(Game.id.desc()).first()
 
+    # Pontuação de cada jogador (0 se não houver jogo)
     creator_score = creator_game.user_score if creator_game else 0
     opponent_score = opponent_game.user_score if opponent_game else 0
 
-    # Salvar na tabela DuelScore
+    # Atualiza a tabela DuelScore
     # Remove registros anteriores caso a rota seja acessada novamente
     DuelScore.query.filter_by(duel_id=duel.id).delete()
     db.session.add_all([
@@ -675,20 +677,35 @@ def duel_result(duel_id):
     ])
     db.session.commit()
 
+    # Determina o vencedor
     winner = None
     if creator_score > opponent_score:
         winner = duel.creator
     elif opponent_score > creator_score:
         winner = duel.opponent
 
+    # Opcional: badges de cada jogador (assumindo BADGE_LEVELS carregadas)
+    def get_badge(score):
+        badge = ""
+        for level, name in sorted(BADGE_LEVELS.items()):
+            if score >= level:
+                badge = name
+            else:
+                break
+        return badge
+
+    creator_badge = get_badge(creator_score)
+    opponent_badge = get_badge(opponent_score)
+
     return render_template(
         "duel_result.html",
         duel=duel,
         creator_score=creator_score,
         opponent_score=opponent_score,
-        winner=winner
+        winner=winner,
+        creator_badge=creator_badge,
+        opponent_badge=opponent_badge
     )
-
 
 @app.route("/weekly_ranking")
 def weekly_ranking():
@@ -1066,34 +1083,22 @@ def game_result(game_id):
     if not require_login():
         return redirect(url_for("login"))
 
-    g = Game.query.get_or_404(game_id)
+    game = Game.query.get_or_404(game_id)
     user = User.query.get(session["user_id"])
 
-    if g.status != "finished":
-        flash("O jogo ainda não terminou.", "info")
-        return redirect(url_for("game_play", game_id=g.id))
+    # Busca badges do banco
+    badges = Badge.query.order_by(Badge.level).all()
+    badge_levels = {b.level: b.name for b in badges}
 
-    # Calcula pontuação total
-    total_points = sum(card_points(r.requested_hints) for r in g.rounds)
-
-    # Atualiza moedas ou badges do usuário
-    user.coins += total_points
-
-    # Checa se alguma badge nova foi conquistada
-    badges_earned = []
-    for level, name in BADGE_LEVELS.items():
-        if total_points >= level and name not in user.badges:
-            user.badges.append(name)
-            badges_earned.append(name)
-
-    db.session.commit()
+    # Calcula pontos totais do jogador nessa partida
+    user_score = game.points  # ajuste conforme sua lógica de pontos
+    earned_badges = [name for level, name in badge_levels.items() if user_score >= level]
 
     return render_template(
         "result.html",
-        game=g,
+        game=game,
         user=user,
-        total_points=total_points,
-        badges_earned=badges_earned
+        earned_badges=earned_badges
     )
 
 
@@ -1117,9 +1122,7 @@ def game_play(game_id):
         g.status = "finished"
         db.session.commit()
 
-        # ----------------------------
-        # Caso modo duelo
-        # ----------------------------
+        # Se for duelo, verifica status do duelo
         if g.mode == "duel":
             duel = Duel.query.filter(
                 ((Duel.creator_id == g.user_id) | (Duel.opponent_id == g.user_id)),
@@ -1138,14 +1141,10 @@ def game_play(game_id):
                     flash("Você terminou, mas aguarde seu oponente terminar o duelo.", "info")
                     return redirect(url_for("duel_wait", duel_id=duel.id))
 
-        # ----------------------------
-        # Caso modo solo ou torneio
-        # ----------------------------
-        return redirect(url_for("game_result", game_id=g.id))  # <-- endpoint correto para solo
+        # Para solo/torneio
+        return redirect(url_for("game_result", game_id=g.id))
 
-    # ----------------------------
-    # Lógica das rodadas (mantida)
-    # ----------------------------
+    # Busca ou cria a rodada atual
     current = Round.query.filter_by(game_id=g.id, number=current_number).first()
     if not current:
         if g.mode == "duel":
@@ -1153,7 +1152,8 @@ def game_play(game_id):
                 (Duel.creator_id == g.user_id) | (Duel.opponent_id == g.user_id)
             ).first()
 
-            if not hasattr(duel, "cards_order_json") or not duel.cards_order_json:
+            # Cria lista de cartas do duelo se ainda não existir
+            if not getattr(duel, "cards_order_json", None):
                 cards = []
                 themes = g.themes
                 for i in range(duel.rounds_count):
@@ -1167,6 +1167,7 @@ def game_play(game_id):
             card_id = cards_order[current_number - 1]
             card = Card.query.get(card_id)
         else:
+            # Solo/torneio: carta sem repetição
             theme = g.themes[(current_number - 1) % len(g.themes)]
             used_card_ids = [r.card_id for r in g.rounds]
             card = Card.query.filter_by(theme=theme, difficulty=1).filter(~Card.id.in_(used_card_ids)).order_by(db.func.random()).first()
@@ -1175,6 +1176,7 @@ def game_play(game_id):
             flash("Nenhum card disponível.", "warning")
             return redirect(url_for("index"))
 
+        # Embaralha as dicas
         hints_order = card.hints[:]
         random.shuffle(hints_order)
 
@@ -1189,6 +1191,7 @@ def game_play(game_id):
         db.session.add(current)
         db.session.commit()
 
+    # Verifica tempo da rodada
     if datetime.utcnow() > current.ends_at and not current.finished:
         current.finished = True
         db.session.commit()
