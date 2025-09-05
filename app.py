@@ -181,6 +181,7 @@ class DuelScore(db.Model):
 class WeeklyEvent(db.Model):
     __tablename__ = "weekly_event"
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)  # <-- adicione esta linha
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
     is_active = db.Column(db.Boolean, default=True)
