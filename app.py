@@ -536,42 +536,55 @@ def weekly_event_start():
 
 @app.route("/game_finish/<int:game_id>")
 def game_finish(game_id):
+    # Pega o jogo
     game = Game.query.get(game_id)
     if not game:
         flash("Jogo não encontrado.", "error")
         return redirect(url_for("index"))
 
+    # Pega o usuário
     user = User.query.get(game.user_id)
 
-    # Aqui você calcula a pontuação final do jogador (exemplo)
-    final_score = game.calculate_score()  # supondo que sua classe Game tenha isso
+    # Calcula a pontuação final do jogo
+    final_score = game.calculate_score()  # sua função de cálculo de pontos
 
-    # Atualiza o WeeklyScore se for um jogo semanal
+    # ================================
+    # Atualiza o score do WeeklyEvent
+    # ================================
     if game.mode == "weekly":
         today = datetime.utcnow().date()
-        weekly_score = WeeklyScore.query.filter_by(
-            player_id=user.id,
-            event_id=WeeklyEvent.query.filter_by(is_active=True).first().id,
-            play_date=today
-        ).first()
 
-        if weekly_score:
-            weekly_score.score = final_score
-            db.session.commit()
-        else:
-            # Caso não exista por algum motivo
-            new_score = WeeklyScore(
+        # Busca o evento ativo hoje
+        event = WeeklyEvent.query.filter(WeeklyEvent.is_active == True).all()
+        event = next((e for e in event if e.is_today_active), None)
+
+        if event:
+            # Busca o registro do jogador no evento
+            weekly_score = WeeklyScore.query.filter_by(
                 player_id=user.id,
-                event_id=WeeklyEvent.query.filter_by(is_active=True).first().id,
-                play_date=today,
-                score=final_score
-            )
-            db.session.add(new_score)
+                event_id=event.id,
+                play_date=today
+            ).first()
+
+            if weekly_score:
+                # Atualiza o score existente
+                weekly_score.score = final_score
+                print(f"Atualizando score do jogador {user.id} para {final_score}")
+            else:
+                # Cria um novo registro se não existir (fallback)
+                weekly_score = WeeklyScore(
+                    player_id=user.id,
+                    event_id=event.id,
+                    play_date=today,
+                    score=final_score
+                )
+                db.session.add(weekly_score)
+                print(f"Criando score do jogador {user.id} com {final_score}")
+
             db.session.commit()
 
     flash(f"Jogo finalizado! Você marcou {final_score} pontos.", "success")
     return redirect(url_for("weekly_event"))
-
 
 
 
