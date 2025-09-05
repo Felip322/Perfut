@@ -214,15 +214,17 @@
     padding: 10px 0; 
     border-top: 1px solid #214e33; 
     position: absolute; 
-    top: 60px; 
+    top: calc(100% + 5px); /* abre logo abaixo da topbar */
     right: 0; 
     z-index: 100; 
     align-items: center; /* centraliza os botões */
   }
-
-  .top-nav.show { 
-    display: flex; 
+  
+  .top-nav.show {
+    display: flex;
   }
+}
+
 
   .btn { 
     width: 90%; 
