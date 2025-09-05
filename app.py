@@ -1187,21 +1187,26 @@ def game_hint(round_id):
 def game_extra_hint(round_id):
     if not require_login():
         return redirect(url_for("login"))
+    
     r = Round.query.get_or_404(round_id)
     user = User.query.get(session["user_id"])
+    
+    # Verifica se já foi usada a dica extra
+    if r.used_extra_hints >= 1:
+        flash("Você já usou a dica extra nesta rodada.", "warning")
+        return redirect(url_for("game_play", game_id=r.game_id))
+    
     cost = 5
     if user.coins < cost:
         flash("Moedas insuficientes para dica extra.", "warning")
         return redirect(url_for("game_play", game_id=r.game_id))
+    
     user.coins -= cost
-    r.used_extra_hints += 1
+    r.used_extra_hints = 1  # marca como usada
     db.session.commit()
-    flash("Dica extra comprada! Veja abaixo.", "success")
+    flash("Dica extra liberada! Veja abaixo.", "success")
     return redirect(url_for("game_play", game_id=r.game_id))
-@app.route("/game/result/<int:game_id>")
-def game_result(game_id):
-    g_game = Game.query.get_or_404(game_id)
-    user = User.query.get(g_game.user_id)
+
 
     # --- Cálculo de level up ---
     total_score = sum(game.user_score for game in user.games)
