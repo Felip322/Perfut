@@ -1092,7 +1092,7 @@ def game_play(game_id):
                     flash("Você terminou, mas aguarde seu oponente terminar o duelo.", "info")
                     return redirect(url_for("duel_wait", duel_id=duel.id))
         
-        return redirect(url_for("result", game_id=g.id))
+        return redirect(url_for("duel_result", game_id=game.id))
 
     # Busca a rodada atual ou cria uma nova
     current = Round.query.filter_by(game_id=g.id, number=current_number).first()
@@ -1343,7 +1343,7 @@ def game_skip(round_id):
         g.status = "finished"
         db.session.commit()
         flash("Última rodada concluída!", "info")
-        return redirect(url_for("result", game_id=g.id))
+        return redirect(url_for("duel_result", game_id=g.id))
 
     # Redireciona para a próxima rodada
     return redirect(url_for("game_play", game_id=g.id))
