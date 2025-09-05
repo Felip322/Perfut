@@ -1087,7 +1087,7 @@ def game_play(game_id):
             number=current_number,
             card_id=card.id,
             started_at=datetime.utcnow(),
-            ends_at=datetime.utcnow() + timedelta(seconds=90),
+            ends_at=datetime.utcnow() + timedelta(seconds=300),
             hints_order_json=json.dumps(hints_order, ensure_ascii=False)
         )
         db.session.add(current)
