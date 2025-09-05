@@ -1264,6 +1264,38 @@ def game_result(game_id):
 #     flash("Obrigado por assistir! Você ganhou 10 moedas.", "success")
 #     return redirect(url_for("index"))
 
+@app.route("/game/skip/<int:round_id>", methods=["POST"])
+def game_skip(round_id):
+    if not require_login():
+        return redirect(url_for("login"))
+
+    r = Round.query.get_or_404(round_id)
+    g = r.game
+    user = User.query.get(session["user_id"])
+
+    if r.finished:
+        flash("Esta rodada já foi finalizada.", "warning")
+        return redirect(url_for("game_play", game_id=g.id))
+
+    # Marca a rodada como finalizada sem pontos
+    r.finished = True
+    r.user_points = 0
+    db.session.commit()
+    flash(f"Rodada {r.number} pulada! Sem pontos ganhos.", "info")
+
+    # Verifica se há próxima rodada
+    next_number = r.number + 1
+    if next_number > g.rounds_count:
+        g.status = "finished"
+        db.session.commit()
+        flash("Última rodada concluída!", "info")
+        return redirect(url_for("game_result", game_id=g.id))
+
+    # Redireciona para a próxima rodada
+    return redirect(url_for("game_play", game_id=g.id))
+
+
+
 
 @app.route("/termos")
 def termos():
