@@ -22,10 +22,9 @@
     {% endif %}
 
     <div class="hints">
-    {% for h in hints %}
-  <div class="hint">🔎 {{ loop.index }} - {{ h }}</div>
-{% endfor %}
-
+      {% for h in hints %}
+        <div class="hint">🔎 {{ loop.index }} - {{ h }}</div>
+      {% endfor %}
     </div>
 
     {% if round.used_extra_hints > 0 %}
@@ -59,6 +58,13 @@
         <!-- Botão de dica extra -->
         <form method="post" action="{{ url_for('game_extra_hint', round_id=round.id) }}">
           <button class="btn">Dica extra (🪙 5)</button>
+        </form>
+
+        <!-- Botão de pular rodada -->
+        <form method="post" action="{{ url_for('game_skip', round_id=round.id) }}">
+          <button class="btn warning" type="submit">
+            ⏭️ Pular Rodada
+          </button>
         </form>
       </div>
 
@@ -95,6 +101,8 @@
 .btn:hover { background: #206b43; border-color: #2a9159; }
 .btn.primary { background: var(--accent); color: #0b1f14; border: none; }
 .btn.primary:hover { background: #ffd850; }
+.btn.warning { background: #b5651d; border: 1px solid #924a15; }
+.btn.warning:hover { background: #d68636; border-color: #b06623; }
 @media(max-width:480px){ .actions { flex-direction: column; } .guess-form { flex-direction: column; } .guess-form input, .guess-form button { width: 100%; } }
 </style>
 {% endblock %}
