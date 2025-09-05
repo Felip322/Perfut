@@ -1092,7 +1092,8 @@ def game_play(game_id):
                     flash("Você terminou, mas aguarde seu oponente terminar o duelo.", "info")
                     return redirect(url_for("duel_wait", duel_id=duel.id))
         
-        return redirect(url_for("duel_result", game_id=game.id))
+        # Corrigido: g.id em vez de game.id
+        return redirect(url_for("duel_result", game_id=g.id))
 
     # Busca a rodada atual ou cria uma nova
     current = Round.query.filter_by(game_id=g.id, number=current_number).first()
