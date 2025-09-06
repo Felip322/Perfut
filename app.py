@@ -769,7 +769,6 @@ def duel_result(duel_id):
     opponent_score = opponent_game.user_score if opponent_game else 0
 
     # Atualiza a tabela DuelScore
-    # Remove registros anteriores caso a rota seja acessada novamente
     DuelScore.query.filter_by(duel_id=duel.id).delete()
     db.session.add_all([
         DuelScore(duel_id=duel.id, user_id=duel.creator_id, score=creator_score),
@@ -784,13 +783,13 @@ def duel_result(duel_id):
     elif opponent_score > creator_score:
         winner = duel.opponent
 
-    # Opcional: badges de cada jogador (assumindo BADGE_LEVELS carregadas)
+    # Pega badges do banco
     def get_badge(score):
         badge = ""
-        for level, name in sorted(BADGE_LEVELS.items()):
-            if score >= level:
-                badge = name
-            else:
+        badges = Badge.query.order_by(Badge.level_required.desc()).all()
+        for b in badges:
+            if score >= b.level_required:
+                badge = b.name
                 break
         return badge
 
@@ -807,8 +806,7 @@ def duel_result(duel_id):
         opponent_badge=opponent_badge
     )
 
-from sqlalchemy import func
-from datetime import datetime, timedelta
+
 
 @app.route("/weekly_ranking")
 def weekly_ranking():
