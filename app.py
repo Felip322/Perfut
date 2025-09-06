@@ -570,7 +570,7 @@ def game_finish(game_id):
                 weekly_score.score = final_score
                 print(f"Atualizando score do jogador {user.id} para {final_score}")
             else:
-                # Cria um novo registro se não existir (fallback)
+                # Cria um novo registro se não existir
                 weekly_score = WeeklyScore(
                     player_id=user.id,
                     event_id=event.id,
@@ -582,12 +582,49 @@ def game_finish(game_id):
 
             db.session.commit()
 
-    flash(f"Jogo finalizado! Você marcou {final_score} pontos.", "success")
-    return redirect(url_for("weekly_event"))
+        flash(f"Jogo finalizado! Você marcou {final_score} pontos no evento semanal.", "success")
+        return redirect(url_for("weekly_result", event_id=event.id))
+
+    # ================================
+    # Fluxo de duelo
+    # ================================
+    elif game.mode == "duel":
+        duel = Duel.query.filter(
+            (Duel.creator_id == game.user_id) | (Duel.opponent_id == game.user_id)
+        ).order_by(Duel.id.desc()).first()
+
+        flash(f"Jogo finalizado! Você marcou {final_score} pontos no duelo.", "success")
+        return redirect(url_for("duel_result", duel_id=duel.id))
+
+    # ================================
+    # Fluxo padrão (solo/torneio)
+    # ================================
+    else:
+        flash(f"Jogo finalizado! Você marcou {final_score} pontos.", "success")
+        return redirect(url_for("game_result", game_id=game.id))
 
 
 
 
+
+@app.route("/weekly_result/<int:event_id>")
+def weekly_result(event_id):
+    if not require_login():
+        return redirect(url_for("login"))
+
+    event = WeeklyEvent.query.get_or_404(event_id)
+
+    # Pega todos os scores do evento
+    scores = WeeklyScore.query.filter_by(event_id=event.id).order_by(WeeklyScore.score.desc()).all()
+
+    user_score = WeeklyScore.query.filter_by(event_id=event.id, user_id=session["user_id"]).first()
+
+    return render_template(
+        "weekly_result.html",
+        event=event,
+        scores=scores,
+        user_score=user_score
+    )
 
 
 
