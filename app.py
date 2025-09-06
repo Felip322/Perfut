@@ -621,20 +621,43 @@ def weekly_result(event_id):
     if not require_login():
         return redirect(url_for("login"))
 
+    # Busca o evento, retorna 404 se não existir
     event = WeeklyEvent.query.get_or_404(event_id)
 
-    # Pega todos os scores do evento
-    scores = WeeklyScore.query.filter_by(event_id=event.id).order_by(WeeklyScore.score.desc()).all()
+    # Busca todos os scores do evento, do maior para o menor
+    scores = (
+        WeeklyScore.query
+        .filter_by(event_id=event.id)
+        .order_by(WeeklyScore.score.desc())
+        .all()
+    )
 
-    user_score = WeeklyScore.query.filter_by(event_id=event.id, user_id=session["user_id"]).first()
+    # Busca o score do usuário logado
+    user_score = WeeklyScore.query.filter_by(event_id=event.id, player_id=session["user_id"]).first()
+
+    # Acrescenta badge e nível de cada jogador
+    scores_with_badges = []
+    for s in scores:
+        badge = (
+            db.session.query(Badge)
+            .filter(Badge.level_required <= s.player.level)
+            .order_by(Badge.level_required.desc())
+            .first()
+        )
+        badge_name = badge.name if badge else ""
+        scores_with_badges.append({
+            "player": s.player,
+            "score": s.score,
+            "level": s.player.level,
+            "badge": badge_name
+        })
 
     return render_template(
         "weekly_result.html",
         event=event,
-        scores=scores,
+        scores=scores_with_badges,
         user_score=user_score
     )
-
 
 
 
