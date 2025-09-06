@@ -1507,28 +1507,26 @@ def game_skip(round_id):
     db.session.commit()
     flash(f"Rodada {r.number} pulada! Sem pontos ganhos.", "info")
 
-  # Dentro da função game_skip ou game_play
-# Verifica se há próxima rodada
-next_number = r.number + 1
-if next_number > g.rounds_count:
-    g.status = "finished"
-    db.session.commit()
-    flash("Última rodada concluída!", "info")
+    # Verifica se há próxima rodada
+    next_number = r.number + 1
+    if next_number > g.rounds_count:
+        g.status = "finished"
+        db.session.commit()
+        flash("Última rodada concluída!", "info")
 
-    # Verifica se é um duelo
-    duel = Duel.query.filter(
-        (Duel.creator_id == g.user_id) | (Duel.opponent_id == g.user_id)
-    ).order_by(Duel.id.desc()).first()
+        # Verifica se é um duelo
+        duel = Duel.query.filter(
+            (Duel.creator_id == g.user_id) | (Duel.opponent_id == g.user_id)
+        ).order_by(Duel.id.desc()).first()
 
-    if duel:
-        # Se for duelo, redireciona para resultado do duelo
-        return redirect(url_for("duel_result", duel_id=duel.id))
-    else:
-        # Caso não seja duelo, redireciona para resultado da partida solo
-        return redirect(url_for("game_result", game_id=g.id))
+        if duel:
+            return redirect(url_for("duel_result", duel_id=duel.id))
+        else:
+            return redirect(url_for("game_result", game_id=g.id))
 
-# Se ainda houver rodadas, continua para a próxima
-return redirect(url_for("game_play", game_id=g.id))
+    # Redireciona para a próxima rodada
+    return redirect(url_for("game_play", game_id=g.id))
+
 
 
 
