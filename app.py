@@ -1075,22 +1075,13 @@ def forgot_password():
         return redirect(url_for("login"))
     return render_template("forgot_password.html")
 
-# --- Ranking
 @app.route("/ranking")
 def ranking():
     if "user_id" not in session:
         flash("Faça login para ver o ranking.", "warning")
         return redirect(url_for("login"))
 
-    # Atualiza nível somente de usuários que jogaram
-    users = User.query.all()
-    for u in users:
-        total_score = sum(g.user_score for g in u.games)
-        if total_score > 0:  # só atualiza se o usuário jogou
-            u.level = total_score // 100 + 1
-    db.session.commit()
-
-    # Cria subquery com total de pontos por usuário
+    # Subquery: total de pontos por usuário
     score_sum = (
         db.session.query(
             Game.user_id,
@@ -1100,28 +1091,37 @@ def ranking():
         .subquery()
     )
 
-    # Busca usuários com pontuação maior que 0
+    # Busca usuários que jogaram (total_score > 0)
     rows = (
         db.session.query(
             User.id,
             User.name,
-            func.coalesce(score_sum.c.total_score, 0).label("total_score"),
-            User.level
+            User.coins,
+            User.level,
+            func.coalesce(score_sum.c.total_score, 0).label("total_score")
         )
         .outerjoin(score_sum, User.id == score_sum.c.user_id)
         .filter(func.coalesce(score_sum.c.total_score, 0) > 0)
         .order_by(
             User.level.desc(),
-            score_sum.c.total_score.desc(),
-            getattr(User, "coins", 0).desc(),
+            func.coalesce(score_sum.c.total_score, 0).desc(),
+            User.coins.desc(),
             User.name.asc()
         )
         .all()
     )
 
     rankings = []
-    for user_id, name, total_score, level in rows:
-        # Busca o badge correspondente ao nível
+    for user_id, name, coins, level, total_score in rows:
+        # Atualiza nível do usuário se necessário
+        new_level = total_score // 100 + 1
+        if level != new_level:
+            user = User.query.get(user_id)
+            user.level = new_level
+            db.session.commit()
+            level = new_level
+
+        # Busca badge correspondente ao nível
         badge = (
             db.session.query(Badge)
             .filter(Badge.level_required <= level)
@@ -1131,13 +1131,13 @@ def ranking():
         badge_name = badge.name if badge else ""
         rankings.append((name, int(total_score), level, badge_name))
 
+    # Usuário atual
     current_user = User.query.get(session["user_id"])
     if not current_user:
         flash("Usuário não encontrado.", "danger")
         return redirect(url_for("login"))
 
     return render_template("ranking.html", rankings=rankings, user=current_user)
-
 
 
 
