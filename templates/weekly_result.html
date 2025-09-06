@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="weekly-result">
+  <div class="container">
+    <h1>Resultado do Desafio Semanal: {{ event.name }}</h1>
+    <p>Período: {{ event.start_date.strftime('%d/%m/%Y') }} até {{ event.end_date.strftime('%d/%m/%Y') }}</p>
+
+    <table class="ranking-table">
+      <thead>
+        <tr>
+          <th>Posição</th>
+          <th>Jogador</th>
+          <th>Pontuação</th>
+          <th>Nível</th>
+          <th>Badge</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for idx, score in enumerate(scores, start=1) %}
+        <tr {% if score.player.id == user_score.player_id %}class="highlight"{% endif %}>
+          <td>{{ idx }}</td>
+          <td>{{ score.player.name }}</td>
+          <td>{{ score.score }}</td>
+          <td>{{ score.level }}</td>
+          <td>{{ score.badge }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% if user_score %}
+    <div class="user-score">
+      <p>Seu score: {{ user_score.score }}</p>
+    </div>
+    {% endif %}
+
+    <div class="actions">
+      <a href="{{ url_for('weekly_event') }}" class="btn btn-primary">Voltar ao Desafio Semanal</a>
+      <a href="{{ url_for('index') }}" class="btn btn-secondary">Voltar ao Início</a>
+    </div>
+  </div>
+</section>
+
+<style>
+.weekly-result {
+    padding: 2rem;
+}
+.ranking-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+.ranking-table th, .ranking-table td {
+    border: 1px solid #ddd;
+    padding: 0.5rem 1rem;
+    text-align: center;
+}
+.ranking-table th {
+    background-color: #f2f2f2;
+}
+.highlight {
+    background-color: #d1e7dd;
+    font-weight: bold;
+}
+.user-score {
+    margin-top: 1rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+.actions {
+    margin-top: 2rem;
+}
+.actions .btn {
+    margin-right: 1rem;
+}
+</style>
+{% endblock %}
