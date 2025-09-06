@@ -492,52 +492,51 @@ def weekly_event_start():
     if not require_login():
         return redirect(url_for("login"))
 
-    user_id = session.get("user_id")
-    user = User.query.get(user_id)
-
-    # 🔥 segurança extra
+    user = User.query.get(session["user_id"])
     if not user:
-        flash("Usuário não encontrado. Faça login novamente.", "danger")
-        session.pop("user_id", None)  # limpa sessão inválida
+        flash("Usuário não encontrado.", "danger")
         return redirect(url_for("login"))
 
     today = datetime.utcnow().date()
 
-    # Busca evento ativo
-    weekly_events = WeeklyEvent.query.filter_by(is_active=True).all()
-    event = next((e for e in weekly_events if e.is_today_active), None)
-
+    # Busca o evento ativo
+    event = WeeklyEvent.query.filter_by(is_active=True).first()
     if not event:
         flash("Nenhum evento ativo no momento.", "warning")
         return redirect(url_for("index"))
 
     # Verifica se já jogou hoje
-    if WeeklyScore.query.filter_by(event_id=event.id, player_id=user.id, play_date=today).first():
+    already_played = WeeklyScore.query.filter_by(
+        event_id=event.id, player_id=user.id, play_date=today
+    ).first()
+
+    if already_played:
         flash("Você já jogou hoje!", "info")
         return redirect(url_for("weekly_event"))
 
-    # Cria jogo do evento semanal com 10 perguntas
+    # Cria jogo (10 rodadas para evento semanal)
     g = Game(
         user_id=user.id,
         rounds_count=10,
         themes_json=json.dumps([key for key, _ in THEMES]),
-        mode="weekly",
-        event_id=event.id
+        mode="weekly"
     )
     db.session.add(g)
     db.session.commit()
 
-    # Marca que o jogador já iniciou hoje
+    # Registra a participação na tabela weekly_scores
     score_entry = WeeklyScore(
         event_id=event.id,
         player_id=user.id,
+        score=0,  # começa com 0
         play_date=today
     )
     db.session.add(score_entry)
     db.session.commit()
 
-    flash("Desafio diário iniciado!", "success")
+    flash("Desafio semanal iniciado!", "success")
     return redirect(url_for("game_play", game_id=g.id))
+
 
 
 
@@ -824,6 +823,10 @@ def weekly_ranking():
         return redirect(url_for("login"))
 
     user = User.query.get(session["user_id"])
+    if not user:
+        flash("Usuário não encontrado.", "danger")
+        return redirect(url_for("login"))
+
     today = datetime.utcnow().date()
     week_start = today - timedelta(days=today.weekday())  # segunda-feira
     week_end = week_start + timedelta(days=6)             # domingo
@@ -832,10 +835,10 @@ def weekly_ranking():
     scores = []
 
     if event:
-        # Agrupa scores da semana por jogador
+        # Pega todos os scores válidos da semana atual
         scores = (
             db.session.query(
-                User.id,
+                WeeklyScore.player_id,
                 User.name,
                 func.sum(WeeklyScore.score).label("total_score")
             )
@@ -844,12 +847,13 @@ def weekly_ranking():
                 WeeklyScore.event_id == event.id,
                 WeeklyScore.play_date.between(week_start, week_end)
             )
-            .group_by(User.id, User.name)
-            .order_by(func.sum(WeeklyScore.score).desc(), User.name.asc())
+            .group_by(WeeklyScore.player_id, User.name)
+            .order_by(func.sum(WeeklyScore.score).desc())
             .all()
         )
 
     return render_template("weekly_ranking.html", scores=scores, event=event, user=user)
+
 
 
 
