@@ -20,7 +20,7 @@
           <tr class="
             {% if loop.index == 1 %} first {% elif loop.index == 2 %} second 
             {% elif loop.index == 3 %} third {% endif %}
-            {% if user and user.id == r.player.id %} highlight {% endif %}">
+            {% if user and user.id == r.id %} highlight {% endif %}">
             <td class="pos">
               {% if loop.index == 1 %} 🥇 
               {% elif loop.index == 2 %} 🥈 
@@ -30,11 +30,11 @@
             <td>
               <div class="player-info 
                 {% if loop.index == 1 %} gold {% elif loop.index == 2 %} silver {% elif loop.index == 3 %} bronze {% endif %}">
-                <div class="avatar">{{ r.player.name[0] | upper }}</div>
-                <span>{{ r.player.name }}</span>
+                <div class="avatar">{{ r.name[0] | upper }}</div>
+                <span>{{ r.name }}</span>
               </div>
             </td>
-            <td class="score">{{ r.score }}</td>
+            <td class="score">{{ r.total_score }}</td>
           </tr>
           {% endfor %}
         </tbody>
