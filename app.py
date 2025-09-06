@@ -824,19 +824,25 @@ def weekly_ranking():
     scores = []
 
     if event:
-        # Pega os scores da semana atual
+        # Agrupa scores da semana por jogador
         scores = (
-            db.session.query(WeeklyScore)
+            db.session.query(
+                User.id,
+                User.name,
+                func.sum(WeeklyScore.score).label("total_score")
+            )
             .join(User, User.id == WeeklyScore.player_id)
             .filter(
                 WeeklyScore.event_id == event.id,
                 WeeklyScore.play_date.between(week_start, week_end)
             )
-            .order_by(WeeklyScore.score.desc())
+            .group_by(User.id, User.name)
+            .order_by(func.sum(WeeklyScore.score).desc(), User.name.asc())
             .all()
         )
 
     return render_template("weekly_ranking.html", scores=scores, event=event, user=user)
+
 
 
 
