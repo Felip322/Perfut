@@ -1464,13 +1464,19 @@ def game_skip(round_id):
     db.session.commit()
     flash(f"Rodada {r.number} pulada! Sem pontos ganhos.", "info")
 
-    # Verifica se há próxima rodada
-    next_number = r.number + 1
-    if next_number > g.rounds_count:
-        g.status = "finished"
-        db.session.commit()
-        flash("Última rodada concluída!", "info")
-        return redirect(url_for("duel_result", game_id=g.id))
+   # Verifica se há próxima rodada
+next_number = r.number + 1
+if next_number > g.rounds_count:
+    g.status = "finished"
+    db.session.commit()
+    flash("Última rodada concluída!", "info")
+
+    # Buscar duelo relacionado ao jogo
+    duel = Duel.query.filter(
+        (Duel.creator_id == g.user_id) | (Duel.opponent_id == g.user_id)
+    ).order_by(Duel.id.desc()).first()
+
+    return redirect(url_for("duel_result", duel_id=duel.id))
 
     # Redireciona para a próxima rodada
     return redirect(url_for("game_play", game_id=g.id))
