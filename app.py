@@ -492,10 +492,18 @@ def weekly_event_start():
     if not require_login():
         return redirect(url_for("login"))
 
-    user = User.query.get(session["user_id"])
+    user_id = session.get("user_id")
+    user = User.query.get(user_id)
+
+    # 🔥 segurança extra
+    if not user:
+        flash("Usuário não encontrado. Faça login novamente.", "danger")
+        session.pop("user_id", None)  # limpa sessão inválida
+        return redirect(url_for("login"))
+
     today = datetime.utcnow().date()
 
-    # Busca o evento ativo do dia
+    # Busca evento ativo
     weekly_events = WeeklyEvent.query.filter_by(is_active=True).all()
     event = next((e for e in weekly_events if e.is_today_active), None)
 
@@ -513,7 +521,8 @@ def weekly_event_start():
         user_id=user.id,
         rounds_count=10,
         themes_json=json.dumps([key for key, _ in THEMES]),
-        mode="weekly"  # <-- sem event_id aqui
+        mode="weekly",
+        event_id=event.id
     )
     db.session.add(g)
     db.session.commit()
@@ -529,6 +538,7 @@ def weekly_event_start():
 
     flash("Desafio diário iniciado!", "success")
     return redirect(url_for("game_play", game_id=g.id))
+
 
 
 
